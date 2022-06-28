@@ -1,0 +1,11 @@
+
+resolver: lts-18.16
+
+packages:
+- .
+
+
+extra-deps:
+- stylist-2.4.0.2@sha256:2ecd9e93d50ff6761c69a3c9464aba6081ccf0aa79f6bf9862d9bee54ca2a544,3998
+
+

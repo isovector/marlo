@@ -1,0 +1,78 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           go-go
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/isovector/go-go#readme>
+homepage:       https://github.com/isovector/go-go#readme
+bug-reports:    https://github.com/isovector/go-go/issues
+author:         Sandy Maguire
+maintainer:     sandy@sandymaguire.me
+copyright:      Sandy Maguire
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/isovector/go-go
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_go_go
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , mtl
+    , network-uri
+    , scalpel
+    , stylist
+    , tagsoup
+    , text
+  default-language: Haskell2010
+
+executable go-go-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_go_go
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , go-go
+    , mtl
+    , network-uri
+    , scalpel
+    , stylist
+    , tagsoup
+    , text
+  default-language: Haskell2010
+
+test-suite go-go-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_go_go
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , go-go
+    , mtl
+    , network-uri
+    , scalpel
+    , stylist
+    , tagsoup
+    , text
+  default-language: Haskell2010
