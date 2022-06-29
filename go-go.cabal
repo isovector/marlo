@@ -32,6 +32,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , containers
     , mtl
     , network-uri
     , scalpel
@@ -49,6 +50,7 @@ executable go-go-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , go-go
     , mtl
     , network-uri
@@ -68,6 +70,7 @@ test-suite go-go-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , go-go
     , mtl
     , network-uri

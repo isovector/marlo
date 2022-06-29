@@ -7,18 +7,20 @@ module Lib where
 
 import           Control.Applicative (optional, empty, (<|>), liftA2)
 import           Control.Monad.Reader
+import           Data.Char (isAlphaNum, isLetter)
 import           Data.Foldable (for_)
+import           Data.List (genericLength, isSuffixOf)
+import           Data.Maybe (mapMaybe, fromJust, fromMaybe)
+import           Data.Ratio ((%))
+import           Data.Set (Set)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import           Data.Traversable (for)
+import           Debug.Trace (traceM)
 import           Network.URI
 import           Text.HTML.Scalpel
-import Data.Traversable (for)
-import Data.Ratio ((%))
-import Data.List (genericLength)
-import Debug.Trace (traceM)
-import Data.Maybe (mapMaybe, fromJust)
-import Data.Char (isAlphaNum, isLetter)
 
 
 data Env = Env
@@ -38,13 +40,30 @@ gif = do
     True -> pure a
     False -> empty
 
+uniqueImgs :: Ranker (Set URI)
+uniqueImgs
+  = fmap ( S.fromList
+         . filter (not . freeImage)
+         . mapMaybe parseURI
+         . fmap T.unpack
+         )
+  . chroots "img"
+  $ attr "src" "img"
+
+freeImage :: URI -> Bool
+freeImage uri = fromMaybe False $ do
+  auth <- uriAuthority uri
+  pure $ isSuffixOf "gravatar.com" $ uriRegName auth
 
 
 countOf :: Selector -> Ranker Int
 countOf sel = fmap length $ chroots sel $ pure ()
 
 numScripts :: Ranker Int
-numScripts = fmap length $ chroots "script" $ pure ()
+numScripts = countOf "script"
+
+numForms :: Ranker Int
+numForms = countOf "form"
 
 tagClass :: String -> String -> Selector
 tagClass a b = TagString a @: [hasClass b]
@@ -167,7 +186,7 @@ bad = do
 
 main :: IO ()
 main = do
-  let r = liftA2 (,) (uriKeywords <$> currentURI) titleKeywords
+  let r = fmap S.size uniqueImgs
 
   putStrLn "GOOD"
   goods <- good

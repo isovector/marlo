@@ -27,6 +27,7 @@ dependencies:
 - text
 - tagsoup
 - stylist
+- containers
 
 library:
   source-dirs: src
