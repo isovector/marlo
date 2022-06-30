@@ -28,6 +28,7 @@ dependencies:
 - tagsoup
 - stylist
 - containers
+- monoidal-containers
 
 library:
   source-dirs: src

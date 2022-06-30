@@ -7,5 +7,6 @@ packages:
 
 extra-deps:
 - stylist-2.4.0.2@sha256:2ecd9e93d50ff6761c69a3c9464aba6081ccf0aa79f6bf9862d9bee54ca2a544,3998
+- monoidal-containers-0.6.2.0@sha256:97289baf716f22fdae04b4fcbee066453d2f4c630ef3f631aeeab61ee713841e,2309
 
 
