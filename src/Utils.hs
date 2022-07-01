@@ -23,12 +23,12 @@ runRanker :: URI -> Text -> Ranker a -> Maybe a
 runRanker u t = flip runReader (Env u) . scrapeStringLikeT t
 
 
-invertMap :: URI -> Set Text -> InverseIndex
-invertMap u t = InverseIndex $ M.fromList $ fmap (, [u]) $ S.toList t
+invertMap :: URI -> Set Text -> InverseIndex_
+invertMap u t = InverseIndex_ $ M.fromList $ fmap (, [u]) $ S.toList t
 
 
-findDocs :: InverseIndex -> Text -> [URI]
-findDocs (InverseIndex c) kw = fromMaybe [] $ M.lookup kw c
+findDocs :: InverseIndex_ -> Text -> [URI]
+findDocs (InverseIndex_ c) kw = fromMaybe [] $ M.lookup kw c
 
 
 countOf :: Selector -> Ranker Int

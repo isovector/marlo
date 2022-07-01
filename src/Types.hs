@@ -15,6 +15,7 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import           Network.URI
 import           Text.HTML.Scalpel
+import Data.String (IsString)
 
 
 data Env = Env
@@ -41,7 +42,12 @@ data Stuff = Stuff
   } deriving (Eq, Ord, Show)
 
 
-newtype InverseIndex = InverseIndex
+newtype Keyword = Keyword
+  { getKeyword :: Text
+  } deriving (Eq, Ord, Show, IsString)
+
+
+newtype InverseIndex_ = InverseIndex_
   { getInverseIndex :: MonoidalMap Text [URI]
   } deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 

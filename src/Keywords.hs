@@ -11,8 +11,8 @@ import           Text.HTML.Scalpel
 import           Types
 
 
-keywordify :: Text -> Maybe Text
-keywordify = elim . T.strip . T.filter isLetter . T.toLower
+keywordify :: Text -> Maybe Keyword
+keywordify = elim . Keyword . T.strip . T.filter isLetter . T.toLower
   where
     elim "" = Nothing
     elim "a" = Nothing
@@ -59,11 +59,11 @@ keywordify = elim . T.strip . T.filter isLetter . T.toLower
     elim x = Just x
 
 
-uriKeywords :: URI -> [Text]
+uriKeywords :: URI -> [Keyword]
 uriKeywords = mapMaybe keywordify . T.split (\x -> x ==  '/' || x == '-') . T.pack . uriPath
 
 
-posWords :: Ranker [(Int, Text)]
+posWords :: Ranker [(Int, Keyword)]
 posWords = do
   w <- texts "p"
   pure $ mapMaybe (traverse keywordify) $ zip [0..] $ T.words $ T.concat w
