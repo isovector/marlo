@@ -29,6 +29,7 @@ dependencies:
 - stylist
 - containers
 - monoidal-containers
+- rel8
 
 library:
   source-dirs: src
