@@ -30,6 +30,7 @@ dependencies:
 - containers
 - monoidal-containers
 - rel8
+- hasql
 
 library:
   source-dirs: src

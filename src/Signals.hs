@@ -59,7 +59,7 @@ title :: Ranker Text
 title = text "title"
 
 
-titleKeywords :: Ranker [Text]
+titleKeywords :: Ranker [Keyword]
 titleKeywords = fmap (mapMaybe keywordify . T.words) title
 
 

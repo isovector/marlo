@@ -38,6 +38,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , hasql
     , monoidal-containers
     , mtl
     , network-uri
@@ -59,6 +60,7 @@ executable go-go-exe
       base >=4.7 && <5
     , containers
     , go-go
+    , hasql
     , monoidal-containers
     , mtl
     , network-uri
@@ -81,6 +83,7 @@ test-suite go-go-test
       base >=4.7 && <5
     , containers
     , go-go
+    , hasql
     , monoidal-containers
     , mtl
     , network-uri
