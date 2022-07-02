@@ -6,6 +6,8 @@
 
 module Spider where
 
+import qualified Data.Set as S
+import Data.Set (Set)
 import           Control.Exception (catch)
 import           Control.Monad (forever, when, void)
 import           Control.Monad.Reader (runReaderT)
@@ -41,8 +43,8 @@ import Data.Functor ((<&>))
 import Control.Applicative (liftA2)
 import Keywords (posWords)
 
-main :: IO ()
-main = spiderMain
+-- main :: IO ()
+main = searchMain
 
 --
 
@@ -162,7 +164,32 @@ buildEdges conn did ls = do
     pure eid
 
 
--- getDocs :: [Keyword] -> Query [DocId]
+getDocs :: [WordId] -> Query (Discovery Expr)
+getDocs [] = do
+  where_ $ true ==. false
+  pure $ lit $ Discovery (DocId 0) "" Discovered
+getDocs wids = distinct $ do
+  d <- each discoverySchema
+  for_ wids $ \wid -> do
+    w <- each indexSchema
+    where_ $ d_docId d ==. i_docId w &&. i_wordId w ==. lit wid
+  pure d
+
+
+search :: Connection -> [Keyword] -> IO [Text]
+search conn kws = do
+  Right wids <- flip run conn $ statement () $ select $ getWordIds kws
+  let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
+  print not_in_corpus
+  Right docs <- flip run conn $ statement () $ select $ getDocs $ fmap w_wordId wids
+  pure $ fmap d_uri docs
+
+
+
+searchMain :: IO [Text]
+searchMain = do
+  Right conn <- acquire connectionSettings
+  search conn ["intelligence", "math", "machine", "functional", "whale", "critique", "ptsd", "jerkishness"]
 
 
 
@@ -200,6 +227,4 @@ downloadBody url = do
              $ lookup hContentType
              $ HTTP.responseHeaders resp
     pure $ (mime, ) $ toStrict $ decodeUtf8 $ HTTP.responseBody resp
-
-
 
