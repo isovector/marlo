@@ -42,10 +42,16 @@ newtype WordId = WordId
   }
   deriving newtype (Show, DBType, DBEq)
 
+newtype IndexId = IndexId
+  { unIndexId :: Int64
+  }
+  deriving newtype (Show, DBType, DBEq)
+
 data DiscoveryState
   = Discovered
   | Explored
   | Pruned
+  | Errored
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DiscoveryState
 
@@ -67,9 +73,10 @@ data Words f = Words
   deriving anyclass Rel8able
 
 data Index f = Index
-  { i_docId :: Column f DocId
+  { i_id :: Column f IndexId
+  , i_docId :: Column f DocId
   , i_wordId :: Column f WordId
-  , i_positions :: Column f [Int16]
+  , i_position :: Column f Int16
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -166,13 +173,17 @@ edgesSchema = TableSchema
       }
   }
 
+nextIndexId :: Query (Expr IndexId)
+nextIndexId = fmap coerce $ pure $ nextval "index_id_seq"
+
 {-
 
+CREATE SEQUENCE index_id_seq;
 CREATE TABLE IF NOT EXISTS index (
+  id int8 PRIMARY KEY,
   doc_id int8 NOT NULL,
   word_id int8 NOT NULL,
-  positions int4[] NOT NULL,
-  PRIMARY KEY(doc_id, word_id)
+  position int4 NOT NULL
 );
 
 -}
@@ -182,9 +193,10 @@ indexSchema = TableSchema
   { name    = "index"
   , schema  = Just "public"
   , columns = Index
-      { i_docId = "doc_id"
+      { i_id = "id"
+      , i_docId = "doc_id"
       , i_wordId = "word_id"
-      , i_positions = "positions"
+      , i_position = "position"
       }
   }
 

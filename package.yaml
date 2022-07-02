@@ -33,6 +33,8 @@ dependencies:
 - hasql
 - http-client
 - http-client-tls
+- http-types
+- bytestring
 
 library:
   source-dirs: src

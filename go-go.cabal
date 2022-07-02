@@ -38,10 +38,12 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , containers
     , hasql
     , http-client
     , http-client-tls
+    , http-types
     , monoidal-containers
     , mtl
     , network-uri
@@ -61,11 +63,13 @@ executable go-go-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , containers
     , go-go
     , hasql
     , http-client
     , http-client-tls
+    , http-types
     , monoidal-containers
     , mtl
     , network-uri
@@ -86,11 +90,13 @@ test-suite go-go-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , containers
     , go-go
     , hasql
     , http-client
     , http-client-tls
+    , http-types
     , monoidal-containers
     , mtl
     , network-uri

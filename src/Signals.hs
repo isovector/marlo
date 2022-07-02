@@ -16,6 +16,7 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
+import Data.Char (toLower)
 
 
 gif :: Ranker Text
@@ -65,12 +66,59 @@ titleKeywords = fmap (mapMaybe keywordify . T.words) title
 
 link :: Ranker (Link URI)
 link = do
+  here <- asks e_uri
   t    <- T.strip <$> text "a"
   guard $ not $ T.null t
   href <- attr "href" "a"
   case parseURIReference (T.unpack href) of
-    Nothing -> empty
-    Just uri -> pure $ Link t uri
+    Just uri | isAcceptableLink uri ->
+      pure $ Link t $ normalizeURI $ relativeTo uri here
+    _ -> empty
+
+
+normalizeURI :: URI -> URI
+normalizeURI uri = uri { uriFragment = "" }
+
+
+isAcceptableLink :: URI -> Bool
+isAcceptableLink uri
+  | Just auth <- uriAuthority uri = and
+      [ any (== uriScheme uri) ["http:", "https:"]
+      , not $ any (`isSuffixOf` path)
+          [ ".pdf"
+          , ".png"
+          , ".gif"
+          , ".jpg"
+          , ".jpeg"
+          , ".tif"
+          , ".tiff"
+          , ".epub"
+          , ".zip"
+          , ".7g"
+          , ".tar"
+          ]
+      , not $ any (isOnDomain $ uriRegName auth)
+          [ "twitter.com"
+          , "facebook.com"
+          , "youtube.com"
+          , "pintrest.com"
+          , "imgur.com"
+          , "instagram.com"
+          , "google.com"
+          , "amazon.com"
+          , "tiktok.com"
+          , "snapchat.com"
+          , "linkedin.com"
+          , "tumblr.com"
+          ]
+      ]
+    | otherwise = False
+  where
+    path = fmap toLower $ uriPath uri
+
+
+isOnDomain :: String -> String -> Bool
+isOnDomain x dom = dom == x || isSuffixOf ('.' : dom) x
 
 
 links :: Ranker [Link URI]
