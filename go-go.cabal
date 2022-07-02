@@ -29,6 +29,7 @@ library
       Keywords
       Lib
       Signals
+      Spider
       Types
       Utils
   other-modules:
@@ -39,6 +40,8 @@ library
       base >=4.7 && <5
     , containers
     , hasql
+    , http-client
+    , http-client-tls
     , monoidal-containers
     , mtl
     , network-uri
@@ -61,6 +64,8 @@ executable go-go-exe
     , containers
     , go-go
     , hasql
+    , http-client
+    , http-client-tls
     , monoidal-containers
     , mtl
     , network-uri
@@ -84,6 +89,8 @@ test-suite go-go-test
     , containers
     , go-go
     , hasql
+    , http-client
+    , http-client-tls
     , monoidal-containers
     , mtl
     , network-uri

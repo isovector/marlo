@@ -64,3 +64,4 @@ has r = True <$ r <|> pure False
 posKeywordsToInv :: [(Int, Text)] -> Set Text
 posKeywordsToInv = S.fromList . fmap snd
 
+

@@ -63,7 +63,7 @@ titleKeywords :: Ranker [Keyword]
 titleKeywords = fmap (mapMaybe keywordify . T.words) title
 
 
-link :: Ranker Link
+link :: Ranker (Link URI)
 link = do
   t    <- T.strip <$> text "a"
   guard $ not $ T.null t
@@ -73,7 +73,7 @@ link = do
     Just uri -> pure $ Link t uri
 
 
-links :: Ranker [Link]
+links :: Ranker [Link URI]
 links = chroots "a" link
 
 

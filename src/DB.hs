@@ -15,29 +15,30 @@
 
 module DB where
 
-import           Data.Coerce (coerce)
-import           Data.Int (Int64, Int16)
-import           Data.Text (Text)
-import           GHC.Generics (Generic)
-import qualified Rel8
-import           Rel8 hiding (Enum)
-import           Types
-import Hasql.Connection (Settings, settings, acquire)
-import Hasql.Session (run, statement)
+import Data.Coerce (coerce)
 import Data.Functor.Identity
+import Data.Int (Int64, Int16)
+import Data.Text (Text)
+import GHC.Generics (Generic)
+import Hasql.Connection (Settings, settings)
+import Rel8 hiding (Enum)
+import Types
+import Network.URI (URI)
+import qualified Data.Text as T
+
 
 newtype EdgeId = EdgeId
-  { getEdgeId :: Int64
+  { unEdgeId :: Int64
   }
   deriving newtype (Show, DBType, DBEq)
 
 newtype DocId = DocId
-  { getDocId :: Int64
+  { unDocId :: Int64
   }
   deriving newtype (Show, DBType, DBEq)
 
 newtype WordId = WordId
-  { getWordId :: Int64
+  { unWordId :: Int64
   }
   deriving newtype (Show, DBType, DBEq)
 
@@ -89,8 +90,12 @@ data InverseIndex f = InverseIndex
   deriving stock Generic
   deriving anyclass Rel8able
 
+nextDocId :: Query (Expr DocId)
+nextDocId = fmap coerce $ pure $ nextval "doc_id_seq"
+
 {-
 
+CREATE SEQUENCE doc_id_seq;
 CREATE TABLE IF NOT EXISTS discovery (
   doc_id int8 PRIMARY KEY,
   uri TEXT UNIQUE NOT NULL,
@@ -110,8 +115,12 @@ discoverySchema = TableSchema
       }
   }
 
+nextWordId :: Query (Expr WordId)
+nextWordId = fmap coerce $ pure $ nextval "word_id_seq"
+
 {-
 
+CREATE SEQUENCE word_id_seq;
 CREATE TABLE IF NOT EXISTS words (
   id int8 PRIMARY KEY,
   word TEXT UNIQUE NOT NULL
@@ -130,8 +139,12 @@ wordsSchema = TableSchema
       }
   }
 
+nextEdgeId :: Query (Expr EdgeId)
+nextEdgeId = fmap coerce $ pure $ nextval "edge_id_seq"
+
 {-
 
+CREATE SEQUENCE edge_id_seq;
 CREATE TABLE IF NOT EXISTS edges (
   id int8 PRIMARY KEY,
   src TEXT NOT NULL,
@@ -222,22 +235,23 @@ connectionSettings :: Settings
 connectionSettings = settings "localhost" 5432 "postgres" "" "db"
 
 
-nextDiscovered :: Query (Discovery Expr)
-nextDiscovered = limit 1 $ do
-  d <- each discoverySchema
-  where_ $ d_state d ==. lit Discovered
-  pure d
 
-
-markExplored :: DiscoveryState -> Discovery Identity -> Update ()
-markExplored ds d = Update
-  { target = discoverySchema
-  , from = pure ()
-  , set = \ _ dis -> dis { d_state = lit ds }
-  , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId d)
-  , returning = pure ()
-  }
-
+simpInsert
+    :: ( Table Expr (Transpose Expr names)
+       , Table Name names
+       , Transpose Name (Transpose Expr names) ~ names
+       , Columns names ~ Columns (Transpose Expr names)
+       )
+    => TableSchema names
+    -> Query (Transpose Expr names)
+    -> Insert ()
+simpInsert s e =
+  Insert
+    { into = s
+    , rows = e
+    , onConflict = DoNothing
+    , returning = pure ()
+    }
 
 litInsert
   :: ( Table Name (Transpose Name (Query a))
@@ -250,33 +264,5 @@ litInsert
   => TableSchema (Transpose Name (Query a))
   -> f a
   -> Insert ()
-litInsert s e =
-  Insert
-    { into = s
-    , rows = pure $ values e
-    , onConflict = DoNothing
-    , returning = pure ()
-    }
-
-
-
-
-
-
-
-
--- main :: IO Int64
-main = do
-  Right connect <- acquire connectionSettings
-  flip run connect $ statement () $ select nextDiscovered
-  -- flip run connect $ statement () $ update $ markExplored Explored res
-    -- Insert
-    --   { into = discoverySchema
-    --   , rows = pure $ lit $ Discovery (DocId 1) "http://yo.com/yo" Discovered
-    --   , onConflict = DoNothing
-    --   , returning = NumberOfRowsAffected
-    --   }
-
-
-
+litInsert s = simpInsert s . pure . values
 

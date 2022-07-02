@@ -3,6 +3,9 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveTraversable #-}
 
 module Types where
 
@@ -25,11 +28,11 @@ data Env = Env
 type Ranker = ScraperT Text (Reader Env)
 
 
-data Link = Link
+data Link a = Link
   { l_text :: Text
-  , l_uri :: URI
+  , l_uri :: a
   }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 
 data Stuff = Stuff

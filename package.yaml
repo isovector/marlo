@@ -31,6 +31,8 @@ dependencies:
 - monoidal-containers
 - rel8
 - hasql
+- http-client
+- http-client-tls
 
 library:
   source-dirs: src
