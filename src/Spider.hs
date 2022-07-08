@@ -6,25 +6,35 @@
 
 module Spider where
 
-import qualified Data.Set as S
-import Data.Set (Set)
+import           Control.Applicative (liftA2)
 import           Control.Exception (catch)
+import           Control.Exception.Base
 import           Control.Monad (forever, when, void)
 import           Control.Monad.Reader (runReaderT)
 import           DB
+import           Data.Bifunctor (first, second)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import           Data.Coerce (coerce)
+import           Data.Containers.ListUtils (nubOrd)
 import           Data.Foldable (for_, find)
 import           Data.Function (on)
+import           Data.Functor ((<&>))
+import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
+import           Data.Int (Int64, Int16)
 import           Data.Map (Map)
 import qualified Data.Map as M
+import           Data.Set (Set)
+import qualified Data.Set as S
+import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Lazy (toStrict)
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
+import           Keywords (posWords)
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
@@ -34,14 +44,6 @@ import           Signals
 import           Text.HTML.Scalpel (scrapeURL)
 import           Types
 import           Utils (runRanker)
-import Data.Text (Text)
-import Data.Coerce (coerce)
-import Data.Bifunctor (first, second)
-import Data.Int (Int64, Int16)
-import Data.Containers.ListUtils (nubOrd)
-import Data.Functor ((<&>))
-import Control.Applicative (liftA2)
-import Keywords (posWords)
 
 -- main :: IO ()
 main = searchMain
@@ -181,6 +183,7 @@ search conn kws = do
   Right wids <- flip run conn $ statement () $ select $ getWordIds kws
   let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
   print not_in_corpus
+  putStrLn $ showQuery $ getDocs $ fmap w_wordId wids
   Right docs <- flip run conn $ statement () $ select $ getDocs $ fmap w_wordId wids
   pure $ fmap d_uri docs
 
@@ -189,9 +192,15 @@ search conn kws = do
 searchMain :: IO [Text]
 searchMain = do
   Right conn <- acquire connectionSettings
-  search conn ["intelligence", "math", "machine", "functional", "whale", "critique", "ptsd", "jerkishness"]
+  search conn ["chess", "checkers", "religious"]
 
 
+-- things still to do:
+-- - only index in en
+-- - cache/zip results
+-- - ranking
+-- - do we get a 404 if we hit a random url?
+-- -
 
 spiderMain :: IO ()
 spiderMain = do
@@ -213,7 +222,7 @@ spiderMain = do
             putStrLn $ "explored " <> show (d_docId disc)
             flip run conn $ statement () $ update $ markExplored Explored disc
           )
-          (\(HTTP.HttpExceptionRequest{}) -> do
+          (\SomeException{} -> do
             putStrLn $ "errored on " <> show (d_docId disc)
             flip run conn $ statement () $ update $ markExplored Errored disc
           )

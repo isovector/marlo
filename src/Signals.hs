@@ -96,11 +96,15 @@ isAcceptableLink uri
           , ".zip"
           , ".7g"
           , ".tar"
+          , ".doc"
+          , ".docx"
+          , ".rtf"
           ]
       , not $ any (isOnDomain $ uriRegName auth)
           [ "twitter.com"
           , "facebook.com"
           , "youtube.com"
+          , "youtu.be"
           , "pintrest.com"
           , "imgur.com"
           , "instagram.com"
@@ -110,6 +114,8 @@ isAcceptableLink uri
           , "snapchat.com"
           , "linkedin.com"
           , "tumblr.com"
+          , "archive.org"
+          , "vimeo.org"
           ]
       ]
     | otherwise = False

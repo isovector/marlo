@@ -35,6 +35,11 @@ dependencies:
 - http-client-tls
 - http-types
 - bytestring
+- streaming
+- streaming-bytestring
+- streaming-utils
+- warc
+- HTTP
 
 library:
   source-dirs: src
