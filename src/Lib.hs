@@ -1,6 +1,6 @@
 module Lib where
 
-import           Data.Foldable (fold)
+import           Data.Foldable (fold, for_)
 import           Data.Functor ((<&>))
 import           Data.Maybe (catMaybes)
 import           Data.Text (Text)
@@ -9,6 +9,8 @@ import           Keywords
 import           Network.URI
 import           Types
 import           Utils
+import Signals (rankStuff)
+import Ranking (rank)
 
 
 good :: IO [(URI, Text)]
@@ -35,17 +37,20 @@ bad = do
        ]
 
 
-main :: IO InverseIndex
+main :: IO ()
 main = do
   let r = posWords
 
   putStrLn "GOOD"
   goods <- good
   bads <- bad
+  for_ goods $ \(uri, txt) -> print $ runRanker uri txt rankStuff
+  putStrLn "BAD"
+  for_ bads $ \(uri, txt) -> print $ runRanker uri txt rankStuff
 
-  let z = goods <&> \(uri, txt) ->
-            fmap (invertMap uri . posKeywordsToInv) $ runRanker uri txt posWords
-  let x = bads  <&> \(uri, txt) ->
-            fmap (invertMap uri . posKeywordsToInv) $ runRanker uri txt posWords
-  pure $ fold $ catMaybes $ z <> x
+--   let z = goods <&> \(uri, txt) ->
+--             fmap (invertMap uri . posKeywordsToInv) $ runRanker uri txt posWords
+--   let x = bads  <&> \(uri, txt) ->
+--             fmap (invertMap uri . posKeywordsToInv) $ runRanker uri txt posWords
+--   pure $ fold $ catMaybes $ z <> x
 

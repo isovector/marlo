@@ -2,7 +2,7 @@
 
 module Keywords where
 
-import           Data.Char (isLetter)
+import           Data.Char (isLetter, GeneralCategory (..), generalCategory)
 import           Data.Maybe (mapMaybe)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -10,9 +10,17 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 
+isKeywordLetter :: Char -> Bool
+isKeywordLetter c =
+  any (== generalCategory c)
+    [ UppercaseLetter
+    , LowercaseLetter
+    , TitlecaseLetter
+    ]
+
 
 keywordify :: Text -> Maybe Keyword
-keywordify = elim . Keyword . T.strip . T.filter isLetter . T.toLower
+keywordify = elim . Keyword . T.strip . T.filter isKeywordLetter . T.toLower
   where
     elim "" = Nothing
     elim "a" = Nothing

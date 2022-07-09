@@ -72,6 +72,8 @@ data Words f = Words
   deriving stock Generic
   deriving anyclass Rel8able
 
+deriving instance Show (Words Identity)
+
 data Index f = Index
   { i_id :: Column f IndexId
   , i_docId :: Column f DocId

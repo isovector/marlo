@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Signals where
 
 import           Control.Applicative (optional, empty)
 import           Control.Monad.Reader
-import           Data.List (isSuffixOf)
+import           Data.List (isSuffixOf, partition)
 import           Data.Maybe (mapMaybe, fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -16,7 +17,7 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
-import Data.Char (toLower)
+import Data.Char (toLower, isAlpha)
 
 
 gif :: Ranker Text
@@ -79,6 +80,30 @@ link = do
 normalizeURI :: URI -> URI
 normalizeURI uri = uri { uriFragment = "" }
 
+hasBootstrap :: Ranker Bool
+hasBootstrap = fmap or $ chroots "link" $ do
+  href <- attr "href" "link"
+  pure $ T.isInfixOf "bootstrap.min" href
+
+hasGoogleAnalytics :: Ranker Bool
+hasGoogleAnalytics = fmap or $ chroots "script" $ do
+  t <- text "script"
+  pure $ any (flip T.isInfixOf t)
+    [ "GoogleAnalyticsObject"
+    , "google-analytics"
+    , "googleAnalyticsCode"
+    , "UA-"
+    ]
+
+tweet :: Ranker Bool
+tweet = do
+  c <- attr "class" "blockquote"
+  pure $ c == "twitter-tweet"
+
+tweets :: Ranker Int
+tweets = fmap length $ chroots "blockquote" tweet
+
+-- iframe to youtube
 
 isAcceptableLink :: URI -> Bool
 isAcceptableLink uri
@@ -131,22 +156,43 @@ links :: Ranker [Link URI]
 links = chroots "a" link
 
 
-headingParaRatio :: Ranker (Int, Int)
-headingParaRatio = do
+paraHeadingRatio :: Ranker (Int, Int)
+paraHeadingRatio = do
   headings <- fmap join $ for [1..5] $ \i -> chroots (tagSelector $ "h" <> show i) $ pure ()
   paras <- chroots "p" $ pure ()
-  pure $ (length paras , length headings)
+  pure $ (length paras, length headings)
 
+
+romanPage :: Ranker Double
+romanPage = do
+  ts <- fmap (filter isAlpha . T.unpack . T.concat) $ texts "p"
+  let (non, rs) = partition (not . isKeywordLetter) ts
+      lnon = fromIntegral $ length non
+      lrs = fromIntegral $ length rs
+  pure $ lrs / (lnon + lrs)
+
+
+hasGoogleAds :: Ranker Bool
+hasGoogleAds = fmap or $ chroots "script" $ do
+  src <- attr "src" "script"
+  pure $ T.isInfixOf "adsbygoogle" src
 
 rankStuff :: Ranker Stuff
 rankStuff =
   Stuff
     <$> fmap length links
     <*> fmap length (chroots "img" gif)
+    <*> fmap length uniqueImgs
     <*> numScripts
     <*> author
-    <*> headingParaRatio
+    <*> paraHeadingRatio
     <*> hasSticky
+    <*> tweets
+    <*> hasBootstrap
+    <*> hasGoogleAnalytics
+    <*> hasGoogleAds
+    <*> numForms
+    <*> romanPage
 
 
 hasSticky :: Ranker Bool

@@ -2,30 +2,25 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TupleSections         #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeApplications      #-}
+
+{-# OPTIONS_GHC -Wall              #-}
 
 module Spider where
 
-import           Control.Applicative (liftA2)
-import           Control.Exception (catch)
+import           Control.Applicative (liftA2, liftA3)
 import           Control.Exception.Base
 import           Control.Monad (forever, when, void)
-import           Control.Monad.Reader (runReaderT)
 import           DB
 import           Data.Bifunctor (first, second)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
-import           Data.Coerce (coerce)
 import           Data.Containers.ListUtils (nubOrd)
-import           Data.Foldable (for_, find)
-import           Data.Function (on)
+import           Data.Foldable (for_)
 import           Data.Functor ((<&>))
-import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
-import           Data.Int (Int64, Int16)
-import           Data.Map (Map)
+import           Data.Int (Int16)
 import qualified Data.Map as M
-import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -39,11 +34,11 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
-import           Rel8
+import           Rel8 hiding (index)
 import           Signals
-import           Text.HTML.Scalpel (scrapeURL)
 import           Types
 import           Utils (runRanker)
+import Ranking (rank)
 
 -- main :: IO ()
 main = searchMain
@@ -67,11 +62,11 @@ markExplored ds d = Update
   }
 
 
-docIdFor :: URI -> Query (Expr DocId)
+docIdFor :: URI -> Query (Discovery Expr)
 docIdFor uri = do
   dis <- each discoverySchema
   where_ $ d_uri dis ==. lit (T.pack $ show uri)
-  pure $ d_docId dis
+  pure dis
 
 
 getWordIds :: [Keyword] -> Query (Words Expr)
@@ -115,7 +110,7 @@ insertKeywords did kws = Insert
 indexWords :: Connection -> DocId -> [(Int, Keyword)] -> IO ()
 indexWords conn did pos = do
   let kws = nubOrd $ fmap snd pos
-  flip run conn $ statement () $ insert $ createWordIds kws
+  void $ flip run conn $ statement () $ insert $ createWordIds kws
   Right ws <- flip run conn $ statement () $ select $ getWordIds kws
   let word_map = M.fromList $ ws <&> \(Words a b) -> (Keyword b, a)
       pos' = fmap (second (word_map M.!)) pos
@@ -123,26 +118,26 @@ indexWords conn did pos = do
   pure res
 
 
-getDocId :: Connection -> URI -> IO DocId
+getDocId :: Connection -> URI -> IO (Discovery Identity)
 getDocId conn uri = do
     Right dids <- flip run conn $ statement () $ select $ docIdFor uri
     case dids of
       [did] -> pure did
       [] -> do
-        putStrLn $ "discovering " <> show uri
-        Right dids <- flip run conn $ statement () $ insert $ discover uri
-        pure $ head dids
+        -- putStrLn $ "discovering " <> show uri
+        Right dids' <- flip run conn $ statement () $ insert $ discover uri
+        pure $ head dids'
       _ -> error $ "invalid database state: " <> show dids
 
 
-discover :: URI -> Insert [DocId]
+discover :: URI -> Insert [Discovery Identity]
 discover uri = Insert
   { into = discoverySchema
   , rows = do
       docid <- nextDocId
       pure $ Discovery docid (lit $ T.pack $ show uri) $ lit Discovered
   , onConflict = DoNothing
-  , returning = Projection d_docId
+  , returning = Projection id
   }
 
 
@@ -162,7 +157,7 @@ buildEdges conn did ls = do
   ldocs <- (traverse . traverse) (getDocId conn) ls
   for ldocs $ \l -> do
     -- putStrLn $ "edge ->" <> show (did, l_uri l)
-    Right [eid] <- flip run conn $ statement () $ insert $ addEdge did l
+    Right [eid] <- flip run conn $ statement () $ insert $ addEdge did $ fmap d_docId l
     pure eid
 
 
@@ -183,7 +178,7 @@ search conn kws = do
   Right wids <- flip run conn $ statement () $ select $ getWordIds kws
   let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
   print not_in_corpus
-  putStrLn $ showQuery $ getDocs $ fmap w_wordId wids
+  -- putStrLn $ showQuery $ getDocs $ fmap w_wordId wids
   Right docs <- flip run conn $ statement () $ select $ getDocs $ fmap w_wordId wids
   pure $ fmap d_uri docs
 
@@ -192,7 +187,7 @@ search conn kws = do
 searchMain :: IO [Text]
 searchMain = do
   Right conn <- acquire connectionSettings
-  search conn ["chess", "checkers", "religious"]
+  search conn ["ranking"]
 
 
 -- things still to do:
@@ -214,25 +209,38 @@ spiderMain = do
         putStrLn $ "fetching " <> T.unpack url
         catch
           (do
-            (mime, body) <- downloadBody $ T.unpack url
-            when (mime == Just "text/html" && isAcceptableLink uri) $ do
-              let Just (ls, ws) = runRanker uri body $ liftA2 (,) links posWords
-              buildEdges conn (d_docId disc) ls
-              indexWords conn (d_docId disc) ws
-            putStrLn $ "explored " <> show (d_docId disc)
-            flip run conn $ statement () $ update $ markExplored Explored disc
+            (Just mime, body) <- downloadBody $ T.unpack url
+            index conn uri mime body
           )
           (\SomeException{} -> do
             putStrLn $ "errored on " <> show (d_docId disc)
-            flip run conn $ statement () $ update $ markExplored Errored disc
+            void $ flip run conn $ statement () $ update $ markExplored Errored disc
           )
 
+
+
+index :: Connection -> URI -> ByteString -> Text -> IO ()
+index conn uri mime body = do
+  disc <- getDocId conn uri
+  let did = d_docId disc
+  when (mime == "text/html" && isAcceptableLink uri) $ do
+    let Just (ls, ws, stuff) = runRanker uri body $ liftA3 (,,) links posWords rankStuff
+    void $ buildEdges conn did ls
+    indexWords conn did ws
+    when (rank stuff > 0) $
+       putStrLn $ show uri <> "   : " <> show (rank stuff)
+  -- putStrLn $ "explored " <> show did
+  void $ flip run conn $ statement () $ update $ markExplored Explored disc
+
+
+mimeToContentType :: ByteString -> ByteString
+mimeToContentType = BS.takeWhile (/= ';')
 
 downloadBody :: String -> IO (Maybe ByteString, T.Text)
 downloadBody url = do
     manager <- maybe HTTP.getGlobalManager pure Nothing
     resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
-    let mime = fmap (BS.takeWhile (/= ';'))
+    let mime = fmap mimeToContentType
              $ lookup hContentType
              $ HTTP.responseHeaders resp
     pure $ (mime, ) $ toStrict $ decodeUtf8 $ HTTP.responseBody resp
