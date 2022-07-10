@@ -17,14 +17,12 @@ module DB where
 
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int64, Int16)
+import Data.Int (Int64, Int16, Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
 import Types
-import Network.URI (URI)
-import qualified Data.Text as T
 
 
 newtype EdgeId = EdgeId
@@ -59,6 +57,7 @@ data Discovery f = Discovery
   { d_docId :: Column f DocId
   , d_uri   :: Column f Text
   , d_state :: Column f DiscoveryState
+  , d_depth :: Column f Int32
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -108,7 +107,8 @@ CREATE SEQUENCE doc_id_seq;
 CREATE TABLE IF NOT EXISTS discovery (
   doc_id int8 PRIMARY KEY,
   uri TEXT UNIQUE NOT NULL,
-  state VARCHAR(10) NOT NULL
+  state VARCHAR(10) NOT NULL,
+  depth int4 NOT NULL
 );
 
 -}
@@ -121,6 +121,7 @@ discoverySchema = TableSchema
       { d_docId = "doc_id"
       , d_uri   = "uri"
       , d_state = "state"
+      , d_depth = "depth"
       }
   }
 
@@ -276,4 +277,32 @@ litInsert
   -> f a
   -> Insert ()
 litInsert s = simpInsert s . pure . values
+
+
+rootNodes :: Insert ()
+rootNodes = Insert
+  { into = discoverySchema
+  , rows = do
+      d <- nextDocId
+      z <- values
+            [ "https://astralcodexten.substack.com"
+            , "https://blog.plover.com/"
+            , "https://overcomingbias.com/"
+            , "https://marginalrevolution.com/"
+            , "https://lesswrong.com/"
+            , "http://www.paulgraham.com/articles.html"
+            , "https://apxhard.substack.com/"
+            , "https://what-if.xkcd.com/"
+            , "https://jeremykun.com/"
+            , "https://sandymaguire.me/"
+            ]
+      pure Discovery
+        { d_docId = d
+        , d_uri = z
+        , d_state = lit Discovered
+        , d_depth = 0
+        }
+  , onConflict = DoNothing
+  , returning = pure ()
+  }
 

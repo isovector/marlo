@@ -55,6 +55,16 @@ executables:
     dependencies:
     - go-go
 
+  spider:
+    main:                Main.hs
+    source-dirs:         app/Spider
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - go-go
+
 tests:
   go-go-test:
     main:                Spec.hs

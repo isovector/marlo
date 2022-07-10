@@ -18,8 +18,9 @@ import qualified Data.ByteString.Char8 as BS
 import           Data.Containers.ListUtils (nubOrd)
 import           Data.Foldable (for_)
 import           Data.Functor ((<&>))
+import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
-import           Data.Int (Int16)
+import           Data.Int (Int16, Int32)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -34,11 +35,12 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
+import           Ranking (rank)
 import           Rel8 hiding (index)
 import           Signals
 import           Types
 import           Utils (runRanker)
-import Ranking (rank)
+import qualified Rel8 as R8
 
 -- main :: IO ()
 main = searchMain
@@ -46,7 +48,7 @@ main = searchMain
 --
 
 nextDiscovered :: Query (Discovery Expr)
-nextDiscovered = limit 1 $ do
+nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> (d_docId >$< asc)) $ do
   d <- each discoverySchema
   where_ $ d_state d ==. lit Discovered
   pure d
@@ -118,25 +120,34 @@ indexWords conn did pos = do
   pure res
 
 
-getDocId :: Connection -> URI -> IO (Discovery Identity)
-getDocId conn uri = do
+getDocId :: Connection -> Int32 -> URI -> IO (Discovery Identity)
+getDocId conn depth uri = do
     Right dids <- flip run conn $ statement () $ select $ docIdFor uri
     case dids of
       [did] -> pure did
       [] -> do
         -- putStrLn $ "discovering " <> show uri
-        Right dids' <- flip run conn $ statement () $ insert $ discover uri
+        Right dids' <- flip run conn $ statement () $ insert $ discover depth uri
         pure $ head dids'
       _ -> error $ "invalid database state: " <> show dids
 
 
-discover :: URI -> Insert [Discovery Identity]
-discover uri = Insert
+discover :: Int32 -> URI -> Insert [Discovery Identity]
+discover depth uri = Insert
   { into = discoverySchema
   , rows = do
       docid <- nextDocId
-      pure $ Discovery docid (lit $ T.pack $ show uri) $ lit Discovered
-  , onConflict = DoNothing
+      pure $
+        Discovery
+          docid
+          (lit $ T.pack $ show uri)
+          (lit Discovered)
+          (lit $ depth + 1)
+  , onConflict = DoUpdate $ Upsert
+                  { index = d_docId
+                  , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
+                  , updateWhere = \new old -> d_docId new ==. d_docId old
+                  }
   , returning = Projection id
   }
 
@@ -152,25 +163,29 @@ addEdge src (Link anchor dst) = Insert
   }
 
 
-buildEdges :: Connection -> DocId -> [Link URI] -> IO [EdgeId]
-buildEdges conn did ls = do
-  ldocs <- (traverse . traverse) (getDocId conn) ls
+buildEdges :: Connection -> Discovery Identity -> [Link URI] -> IO [EdgeId]
+buildEdges conn disc ls = do
+  ldocs <- (traverse . traverse) (getDocId conn $ d_depth disc) ls
   for ldocs $ \l -> do
     -- putStrLn $ "edge ->" <> show (did, l_uri l)
-    Right [eid] <- flip run conn $ statement () $ insert $ addEdge did $ fmap d_docId l
+    Right [eid] <- flip run conn $ statement () $ insert $ addEdge (d_docId disc) $ fmap d_docId l
     pure eid
 
 
 getDocs :: [WordId] -> Query (Discovery Expr)
 getDocs [] = do
   where_ $ true ==. false
-  pure $ lit $ Discovery (DocId 0) "" Discovered
+  pure $ lit $ Discovery (DocId 0) "" Discovered 0
 getDocs wids = distinct $ do
-  d <- each discoverySchema
-  for_ wids $ \wid -> do
-    w <- each indexSchema
-    where_ $ d_docId d ==. i_docId w &&. i_wordId w ==. lit wid
-  pure d
+  d <- distinct $ foldr1 intersect $ do
+    wid <- wids
+    pure $ do
+      w <- each indexSchema
+      where_ $ i_wordId w ==. lit wid
+      pure $ i_docId w
+  doc <- each discoverySchema
+  where_ $ d_docId doc ==. d
+  pure doc
 
 
 search :: Connection -> [Keyword] -> IO [Text]
@@ -187,7 +202,7 @@ search conn kws = do
 searchMain :: IO [Text]
 searchMain = do
   Right conn <- acquire connectionSettings
-  search conn ["ranking"]
+  search conn ["lithium"]
 
 
 -- things still to do:
@@ -200,6 +215,7 @@ searchMain = do
 spiderMain :: IO ()
 spiderMain = do
   Right conn <- acquire connectionSettings
+  void $ flip run conn $ statement () $ insert rootNodes
   forever $ do
     Right [disc] <- flip run conn $ statement () $ select nextDiscovered
     let url = d_uri disc
@@ -210,7 +226,7 @@ spiderMain = do
         catch
           (do
             (Just mime, body) <- downloadBody $ T.unpack url
-            index conn uri mime body
+            index conn (d_depth disc) uri mime body
           )
           (\SomeException{} -> do
             putStrLn $ "errored on " <> show (d_docId disc)
@@ -219,13 +235,13 @@ spiderMain = do
 
 
 
-index :: Connection -> URI -> ByteString -> Text -> IO ()
-index conn uri mime body = do
-  disc <- getDocId conn uri
+index :: Connection -> Int32 -> URI -> ByteString -> Text -> IO ()
+index conn depth uri mime body = do
+  disc <- getDocId conn depth uri
   let did = d_docId disc
   when (mime == "text/html" && isAcceptableLink uri) $ do
     let Just (ls, ws, stuff) = runRanker uri body $ liftA3 (,,) links posWords rankStuff
-    void $ buildEdges conn did ls
+    void $ buildEdges conn disc ls
     indexWords conn did ws
     when (rank stuff > 0) $
        putStrLn $ show uri <> "   : " <> show (rank stuff)

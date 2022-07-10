@@ -74,7 +74,7 @@ withRec conn rec = do
       flip S.mapM_ (yo $ toStream $ recContent rec) $ \(hs, body) -> liftIO $ do
         for_ (parseURI $ (\ (Uri uri) -> BS.unpack uri) $ unsafeGetWarcHeader (recHeader rec) warcTargetUri) $ \uri ->
           for_ (findHeader HdrContentType hs) $ \mime ->
-            index conn uri (BS.pack mime) body
+            index conn 100 uri (BS.pack mime) body
         -- liftIO $ print $ (unsafeGetWarcHeader (recHeader rec) warcTargetUri, findHeader HdrContentType hs)
         -- error "yo"
     _ -> flip S.mapM_ (toStream $ recContent rec) $ const $ pure ()
