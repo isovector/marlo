@@ -18,7 +18,7 @@ import qualified Data.ByteString.Char8 as BS
 import           Data.Containers.ListUtils (nubOrd)
 import           Data.Foldable (for_)
 import           Data.Functor ((<&>))
-import           Data.Functor.Contravariant ((>$<))
+import           Data.Functor.Contravariant ((>$<), (>$))
 import           Data.Functor.Identity (Identity)
 import           Data.Int (Int16, Int32)
 import qualified Data.Map as M
@@ -26,7 +26,7 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Lazy (toStrict)
-import           Data.Text.Lazy.Encoding (decodeUtf8)
+import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
@@ -41,6 +41,7 @@ import           Signals
 import           Types
 import           Utils (runRanker)
 import qualified Rel8 as R8
+import qualified Data.ByteString.Lazy as BSL
 
 -- main :: IO ()
 main = searchMain
@@ -48,7 +49,7 @@ main = searchMain
 --
 
 nextDiscovered :: Query (Discovery Expr)
-nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> (d_docId >$< asc)) $ do
+nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> (nullaryFunction @Double "RANDOM" >$ asc)) $ do
   d <- each discoverySchema
   where_ $ d_state d ==. lit Discovered
   pure d
@@ -143,6 +144,7 @@ discover depth uri = Insert
           (lit $ T.pack $ show uri)
           (lit Discovered)
           (lit $ depth + 1)
+          (lit "")
   , onConflict = DoUpdate $ Upsert
                   { index = d_docId
                   , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
@@ -175,7 +177,7 @@ buildEdges conn disc ls = do
 getDocs :: [WordId] -> Query (Discovery Expr)
 getDocs [] = do
   where_ $ true ==. false
-  pure $ lit $ Discovery (DocId 0) "" Discovered 0
+  pure $ lit $ Discovery (DocId 0) "" Discovered 0 ""
 getDocs wids = distinct $ do
   d <- distinct $ foldr1 intersect $ do
     wid <- wids
@@ -202,7 +204,7 @@ search conn kws = do
 searchMain :: IO [Text]
 searchMain = do
   Right conn <- acquire connectionSettings
-  search conn ["lithium"]
+  search conn ["date", "duration", "calculator"]
 
 
 -- things still to do:
@@ -225,13 +227,31 @@ spiderMain = do
         putStrLn $ "fetching " <> T.unpack url
         catch
           (do
-            (Just mime, body) <- downloadBody $ T.unpack url
-            index conn (d_depth disc) uri mime body
+            (Just mime, raw_body) <- downloadBody $ T.unpack url
+            let body = decodeUtf8 raw_body
+            continue conn (d_depth disc) uri mime raw_body body
           )
           (\SomeException{} -> do
             putStrLn $ "errored on " <> show (d_docId disc)
             void $ flip run conn $ statement () $ update $ markExplored Errored disc
           )
+
+continue :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
+continue conn depth uri mime raw_body body = do
+  disc <- getDocId conn depth uri
+  when (mime == "text/html" && isAcceptableLink uri) $ do
+    let Just ls = runRanker uri body links
+    void $ buildEdges conn disc ls
+  -- putStrLn $ "explored " <> show did
+  void $ flip run conn $ statement () $ update $ Update
+    { target = discoverySchema
+    , from = pure ()
+    , set = \ _ dis -> dis { d_state = lit Explored
+                           , d_data  = lit raw_body
+                           }
+    , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
+    , returning = pure ()
+    }
 
 
 
@@ -252,12 +272,12 @@ index conn depth uri mime body = do
 mimeToContentType :: ByteString -> ByteString
 mimeToContentType = BS.takeWhile (/= ';')
 
-downloadBody :: String -> IO (Maybe ByteString, T.Text)
+downloadBody :: String -> IO (Maybe ByteString, ByteString)
 downloadBody url = do
     manager <- maybe HTTP.getGlobalManager pure Nothing
     resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
     let mime = fmap mimeToContentType
              $ lookup hContentType
              $ HTTP.responseHeaders resp
-    pure $ (mime, ) $ toStrict $ decodeUtf8 $ HTTP.responseBody resp
+    pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
 

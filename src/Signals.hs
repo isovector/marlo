@@ -78,7 +78,7 @@ link = do
 
 
 normalizeURI :: URI -> URI
-normalizeURI uri = uri { uriFragment = "" }
+normalizeURI uri = uri { uriFragment = "", uriQuery = "" }
 
 hasBootstrap :: Ranker Bool
 hasBootstrap = fmap or $ chroots "link" $ do
@@ -124,6 +124,14 @@ isAcceptableLink uri
           , ".doc"
           , ".docx"
           , ".rtf"
+          , ".mp4"
+          , ".mp3"
+          , ".mpv"
+          , ".avi"
+          , ".ogg"
+          , ".mkv"
+          , ".bmp"
+          , ".gz"
           ]
       , not $ any (isOnDomain $ uriRegName auth)
           [ "twitter.com"
@@ -140,7 +148,8 @@ isAcceptableLink uri
           , "linkedin.com"
           , "tumblr.com"
           , "archive.org"
-          , "vimeo.org"
+          , "vimeo.com"
+          , "tinyurl.com"
           ]
       ]
     | otherwise = False

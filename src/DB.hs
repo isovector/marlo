@@ -23,6 +23,7 @@ import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
 import Types
+import Data.ByteString (ByteString)
 
 
 newtype EdgeId = EdgeId
@@ -58,6 +59,7 @@ data Discovery f = Discovery
   , d_uri   :: Column f Text
   , d_state :: Column f DiscoveryState
   , d_depth :: Column f Int32
+  , d_data :: Column f ByteString
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -108,7 +110,8 @@ CREATE TABLE IF NOT EXISTS discovery (
   doc_id int8 PRIMARY KEY,
   uri TEXT UNIQUE NOT NULL,
   state VARCHAR(10) NOT NULL,
-  depth int4 NOT NULL
+  depth int4 NOT NULL,
+  data bytea NOT NULL
 );
 
 -}
@@ -122,6 +125,7 @@ discoverySchema = TableSchema
       , d_uri   = "uri"
       , d_state = "state"
       , d_depth = "depth"
+      , d_data  = "data"
       }
   }
 
@@ -301,6 +305,7 @@ rootNodes = Insert
         , d_uri = z
         , d_state = lit Discovered
         , d_depth = 0
+        , d_data = ""
         }
   , onConflict = DoNothing
   , returning = pure ()
