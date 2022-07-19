@@ -40,6 +40,7 @@ dependencies:
 - streaming-utils
 - warc
 - HTTP
+- fgl
 
 library:
   source-dirs: src

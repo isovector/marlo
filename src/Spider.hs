@@ -145,6 +145,7 @@ discover depth uri = Insert
           (lit Discovered)
           (lit $ depth + 1)
           (lit "")
+          (lit 0)
   , onConflict = DoUpdate $ Upsert
                   { index = d_docId
                   , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
@@ -177,7 +178,7 @@ buildEdges conn disc ls = do
 getDocs :: [WordId] -> Query (Discovery Expr)
 getDocs [] = do
   where_ $ true ==. false
-  pure $ lit $ Discovery (DocId 0) "" Discovered 0 ""
+  pure $ lit $ Discovery (DocId 0) "" Discovered 0 "" 0
 getDocs wids = distinct $ do
   d <- distinct $ foldr1 intersect $ do
     wid <- wids

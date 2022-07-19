@@ -51,6 +51,7 @@ data DiscoveryState
   | Explored
   | Pruned
   | Errored
+  | Unacceptable
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DiscoveryState
 
@@ -60,6 +61,7 @@ data Discovery f = Discovery
   , d_state :: Column f DiscoveryState
   , d_depth :: Column f Int32
   , d_data :: Column f ByteString
+  , d_rank :: Column f Double
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -111,6 +113,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   uri TEXT UNIQUE NOT NULL,
   state VARCHAR(10) NOT NULL,
   depth int4 NOT NULL,
+  rank float8 NOT NULL,
   data bytea NOT NULL
 );
 
@@ -126,6 +129,7 @@ discoverySchema = TableSchema
       , d_state = "state"
       , d_depth = "depth"
       , d_data  = "data"
+      , d_rank = "rank"
       }
   }
 
@@ -306,6 +310,7 @@ rootNodes = Insert
         , d_state = lit Discovered
         , d_depth = 0
         , d_data = ""
+        , d_rank = 0
         }
   , onConflict = DoNothing
   , returning = pure ()

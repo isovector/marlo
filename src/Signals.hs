@@ -119,6 +119,7 @@ isAcceptableLink uri
           , ".tiff"
           , ".epub"
           , ".zip"
+          , ".tgz"
           , ".7g"
           , ".tar"
           , ".doc"
@@ -143,14 +144,20 @@ isAcceptableLink uri
           , "instagram.com"
           , "google.com"
           , "amazon.com"
+          , "flickr.com"
+          , "wp.me"
           , "tiktok.com"
           , "snapchat.com"
+          , "spoilertv.com"
           , "linkedin.com"
           , "tumblr.com"
           , "archive.org"
           , "vimeo.com"
           , "tinyurl.com"
           ]
+      , not (isOnDomain (uriRegName auth) "wikipedia.org")
+          || (isOnDomain (uriRegName auth) "wikipedia.org"
+              && isOnDomain (uriRegName auth) "en.wikipedia.org")
       ]
     | otherwise = False
   where
@@ -206,4 +213,7 @@ rankStuff =
 
 hasSticky :: Ranker Bool
 hasSticky = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "sticky"
+
+hasModal :: Ranker Bool
+hasModal = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "modal"
 

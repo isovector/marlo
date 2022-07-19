@@ -53,6 +53,13 @@ packages:
       sha256: 1eac606b34f75ecdb76c75a9ca90be32ddc56f16b8895c2136c4d368c20cd42e
   original:
     hackage: json-stream-0.4.4.1@sha256:272cd4aed5d0d9c97978620c1435cd91acaa39c8bddb28cbace9284f58ddc364,4985
+- completed:
+    hackage: graph-utils-0.3.7@sha256:aad4856e5567daa99401db2c78b90c240d9b5c9dd789438c51786d9eeabf10e8,1169
+    pantry-tree:
+      size: 433
+      sha256: a1a3806ca76639eba09f89d1e6f97cbcead5dac34a5e06fd49482f6a8c1f1132
+  original:
+    hackage: graph-utils-0.3.7@sha256:aad4856e5567daa99401db2c78b90c240d9b5c9dd789438c51786d9eeabf10e8,1169
 snapshots:
 - completed:
     size: 586286
