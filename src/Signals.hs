@@ -81,10 +81,19 @@ link = do
 
 normalizeURI :: URI -> URI
 normalizeURI uri = uri
-  { uriPath = dropWhileEnd (== '/') $ uriPath uri
+  { uriAuthority =
+      fmap (\x -> x { uriRegName = canonicalDomains $ uriRegName x } ) $ uriAuthority uri
+  , uriPath = dropWhileEnd (== '/') $ uriPath uri
   , uriFragment = ""
   , uriQuery = ""
   }
+
+canonicalDomains :: String -> String
+canonicalDomains
+  = T.unpack
+  . T.replace "m.wikipedia.org" "wikipedia.org"
+  . T.replace "new.reddit.com" "old.reddit.com"
+  . T.pack
 
 hasBootstrap :: Ranker Bool
 hasBootstrap = fmap or $ chroots "link" $ do
@@ -152,6 +161,9 @@ isAcceptableLink uri
           , "amazon.com"
           , "flickr.com"
           , "spotify.com"
+          , "last.fm"
+          , "goodreads.com"
+          , "ghostarchive.org"
           , "wp.me"
           , "tiktok.com"
           , "snapchat.com"
