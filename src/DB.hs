@@ -15,6 +15,7 @@
 
 module DB where
 
+import Data.ByteString (ByteString)
 import Data.Coerce (coerce)
 import Data.Functor.Identity
 import Data.Int (Int64, Int16, Int32)
@@ -22,8 +23,6 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
-import Types
-import Data.ByteString (ByteString)
 
 
 newtype EdgeId = EdgeId
@@ -54,6 +53,13 @@ data DiscoveryState
   | Unacceptable
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DiscoveryState
+
+data Asset f = Asset
+  { a_uri   :: Column f Text
+  , a_size :: Column f Int64
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
 
 data Discovery f = Discovery
   { d_docId :: Column f DocId
@@ -105,6 +111,25 @@ data InverseIndex f = InverseIndex
 
 nextDocId :: Query (Expr DocId)
 nextDocId = fmap coerce $ pure $ nextval "doc_id_seq"
+
+{-
+
+CREATE TABLE IF NOT EXISTS assets (
+  uri TEXT PRIMARY KEY NOT NULL,
+  size int8 NOT NULL
+);
+
+-}
+
+assetSchema :: TableSchema (Asset Name)
+assetSchema = TableSchema
+  { name    = "assets"
+  , schema  = Just "public"
+  , columns = Asset
+      { a_uri   = "uri"
+      , a_size = "size"
+      }
+  }
 
 {-
 

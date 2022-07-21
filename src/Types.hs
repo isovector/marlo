@@ -19,13 +19,17 @@ import           Data.Text (Text)
 import           Network.URI
 import           Text.HTML.Scalpel
 import Data.String (IsString)
+import Network.HTTP.Client (Manager)
+import Hasql.Connection (Connection)
 
 
 data Env = Env
-  { e_uri :: URI
+  { e_uri  :: URI
+  , e_mgr  :: Manager
+  , e_conn :: Connection
   }
 
-type Ranker = ScraperT Text (Reader Env)
+type Ranker = ScraperT Text (ReaderT Env IO)
 
 
 data Link a = Link

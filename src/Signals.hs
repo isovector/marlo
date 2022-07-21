@@ -7,7 +7,7 @@ module Signals where
 import           Control.Applicative (optional, empty)
 import           Control.Monad.Reader
 import           Data.List (isSuffixOf, partition, dropWhileEnd)
-import           Data.Maybe (mapMaybe, fromMaybe)
+import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -20,6 +20,8 @@ import           Types
 import           Utils
 import Data.Char (toLower, isAlpha)
 import Debug.Trace (traceM)
+import Data.Int (Int64)
+import Assets (getAssetSizes)
 
 
 gif :: Ranker Text
@@ -73,10 +75,22 @@ link = do
   t    <- T.strip <$> text "a"
   guard $ not $ T.null t
   href <- attr "href" "a"
+  fmap (Link t) $ normalizeLink href
+
+normalizeLink :: Text -> Ranker URI
+normalizeLink href = do
+  here <- asks e_uri
   case parseURIReference (T.unpack href) of
     Just (flip relativeTo here -> uri) | isAcceptableLink uri ->
-      pure $ Link t $ normalizeURI uri
-    _ -> empty
+      pure $ normalizeURI uri
+    x -> empty
+
+normalizeAsset :: Text -> Ranker URI
+normalizeAsset href = do
+  here <- asks e_uri
+  case parseURIReference (escapeURIString isUnescapedInURI $ T.unpack href) of
+    Just (flip relativeTo here -> uri) -> pure uri
+    x -> empty
 
 
 normalizeURI :: URI -> URI
@@ -128,6 +142,8 @@ isAcceptableLink uri
           [ ".pdf"
           , ".png"
           , ".gif"
+          , ".js"
+          , ".css"
           , ".jpg"
           , ".jpeg"
           , ".tif"
@@ -158,6 +174,7 @@ isAcceptableLink uri
           , "imgur.com"
           , "instagram.com"
           , "google.com"
+          , "archive.today"
           , "amazon.com"
           , "flickr.com"
           , "spotify.com"
@@ -181,6 +198,29 @@ isAcceptableLink uri
     | otherwise = False
   where
     path = fmap toLower $ uriPath uri
+
+
+jsBundleSize :: Ranker Int64
+jsBundleSize = do
+  s <- chroots "script" $ attr "src" "script"
+  inline <- texts "script"
+  ls <- traverse normalizeAsset s
+  (mgr, conn) <- asks $ (,) <$> e_mgr <*> e_conn
+  szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
+  pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
+
+cssBundleSize :: Ranker Int64
+cssBundleSize = do
+  s <-
+    chroots "link" $ do
+      rel <- attr "rel" "link"
+      guard $ rel == "stylesheet"
+      attr "href" "link"
+  inline <- texts "style"
+  ls <- traverse normalizeAsset s
+  (mgr, conn) <- asks $ (,) <$> e_mgr <*> e_conn
+  szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
+  pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
 
 
 isOnDomain :: String -> String -> Bool

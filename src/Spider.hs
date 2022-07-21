@@ -207,8 +207,9 @@ spiderMain = do
 continue :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
 continue conn depth uri mime raw_body body = do
   disc <- getDocId conn depth uri
+  mgr <- HTTP.getGlobalManager
   when (mime == "text/html" && isAcceptableLink uri) $ do
-    let Just ls = runRanker uri body links
+    Just ls <-  runRanker (Env uri mgr conn) body links
     void $ buildEdges conn disc ls
   -- putStrLn $ "explored " <> show did
   void $ flip run conn $ statement () $ update $ Update
@@ -226,10 +227,11 @@ continue conn depth uri mime raw_body body = do
 index :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
 index conn depth uri mime raw_body body = do
   disc <- getDocId conn depth uri
+  mgr <- HTTP.getGlobalManager
   let did = d_docId disc
   case (mime == "text/html" && isAcceptableLink uri) of
     True -> do
-      let Just (ls, ws, t) = runRanker uri body $ liftA3 (,,) links posWords title
+      Just (ls, ws, t) <- runRanker (Env uri mgr conn) body $ liftA3 (,,) links posWords title
       void $ buildEdges conn disc ls
       indexWords conn did ws
       void $ flip run conn $ statement () $ update $ Update
@@ -249,8 +251,9 @@ indexFromDB :: Connection -> Discovery Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   let did = d_docId disc
+  mgr <- HTTP.getGlobalManager
   when (isAcceptableLink uri) $ do
-    let Just (ws) = runRanker uri (decodeUtf8 $ d_data disc) $ posWords
+    Just ws <- runRanker (Env uri mgr conn) (decodeUtf8 $ d_data disc) $ posWords
     -- void $ buildEdges conn disc ls
     indexWords conn did ws
     -- when (rank stuff > 0) $
@@ -263,22 +266,23 @@ mimeToContentType = BS.takeWhile (/= ';')
 
 downloadBody :: String -> IO (Maybe ByteString, ByteString)
 downloadBody url = do
-    manager <- maybe HTTP.getGlobalManager pure Nothing
-    resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
-    let mime = fmap mimeToContentType
-             $ lookup hContentType
-             $ HTTP.responseHeaders resp
-    pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
+  manager <- HTTP.getGlobalManager
+  resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
+  let mime = fmap mimeToContentType
+            $ lookup hContentType
+            $ HTTP.responseHeaders resp
+  pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
 
 
 debugRankerInDb :: DocId -> Ranker a -> IO (Maybe a)
 debugRankerInDb did r = do
   Right conn <- acquire connectionSettings
+  mgr <- HTTP.getGlobalManager
   Right [d] <-
     flip run conn $ statement () $ select $ do
       d <- each discoverySchema
       where_ $ d_docId d ==. lit did
       pure d
-  pure $ runRanker (unsafeURI $ T.unpack $ d_uri d) (decodeUtf8 $ d_data d) r
+  runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ d_data d) r
 
 

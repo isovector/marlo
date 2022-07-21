@@ -49,6 +49,7 @@ dependencies:
 - warp
 - servant-lucid
 - lucid
+- http-client
 
 library:
   source-dirs: src

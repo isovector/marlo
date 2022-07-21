@@ -44,6 +44,8 @@ import qualified Streaming.ByteString as BSS
 import           Streaming.Pipes (fromStreamingByteString, toStream)
 import qualified Streaming.Prelude as S
 import           Utils (unsafeURI, runRanker, paginate)
+import qualified Network.HTTP.Client.TLS as HTTP
+import Types
 
 
 
@@ -64,7 +66,8 @@ main = do
 updateTitle :: Connection -> Discovery Identity -> IO ()
 updateTitle conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
-  let Just t = runRanker uri (T.decodeUtf8 $ d_data disc) title
+  mgr <- HTTP.getGlobalManager
+  Just t <- runRanker (Env uri mgr conn) (T.decodeUtf8 $ d_data disc) title
   print $ (uri, t)
   void $ flip run conn $ statement () $ update $
     Update

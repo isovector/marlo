@@ -25,8 +25,8 @@ paginate size page q =
     offset (page * size) q
 
 
-runRanker :: URI -> Text -> Ranker a -> Maybe a
-runRanker u t = flip runReader (Env u) . scrapeStringLikeT t
+runRanker :: Env -> Text -> Ranker a -> IO (Maybe a)
+runRanker e t = flip runReaderT e . scrapeStringLikeT t
 
 
 invertMap :: URI -> Set Text -> InverseIndex_
