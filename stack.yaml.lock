@@ -54,12 +54,40 @@ packages:
   original:
     hackage: json-stream-0.4.4.1@sha256:272cd4aed5d0d9c97978620c1435cd91acaa39c8bddb28cbace9284f58ddc364,4985
 - completed:
-    hackage: graph-utils-0.3.7@sha256:aad4856e5567daa99401db2c78b90c240d9b5c9dd789438c51786d9eeabf10e8,1169
+    hackage: hasql-streams-streaming-0.1.0.0@sha256:5cc8a739475143af79c20b227bafa1867876ba02c8ecc10895f7d784e1e05105,985
     pantry-tree:
-      size: 433
-      sha256: a1a3806ca76639eba09f89d1e6f97cbcead5dac34a5e06fd49482f6a8c1f1132
+      size: 186
+      sha256: 2cc6a80c1e4d371797f62b4025195acc4ca8645203acd694443bf60b8a78acc1
   original:
-    hackage: graph-utils-0.3.7@sha256:aad4856e5567daa99401db2c78b90c240d9b5c9dd789438c51786d9eeabf10e8,1169
+    hackage: hasql-streams-streaming-0.1.0.0@sha256:5cc8a739475143af79c20b227bafa1867876ba02c8ecc10895f7d784e1e05105,985
+- completed:
+    hackage: hasql-streams-core-0.1.0.0@sha256:a166ed6fff3ab24d00eae872a876ec4580574e1a94f1a4b63cf999e4e73c3d29,932
+    pantry-tree:
+      size: 180
+      sha256: a71dc8188dd3d8dbd7e073afbd3c50f7669db93ec069317d3ec2a3d54af0109a
+  original:
+    hackage: hasql-streams-core-0.1.0.0@sha256:a166ed6fff3ab24d00eae872a876ec4580574e1a94f1a4b63cf999e4e73c3d29,932
+- completed:
+    hackage: hasql-transaction-io-0.1.0.0@sha256:e08cc6b623a5b0ef32da44badd64605842e2e9f9c074d706efe326dc314c52e8,1580
+    pantry-tree:
+      size: 823
+      sha256: 6fa84bbf36ecb195fb2020ebc4d03588c0a8c4a6bf0a266f14999b954f1cb5f9
+  original:
+    hackage: hasql-transaction-io-0.1.0.0@sha256:e08cc6b623a5b0ef32da44badd64605842e2e9f9c074d706efe326dc314c52e8,1580
+- completed:
+    hackage: hasql-1.5@sha256:d7df28a866adcd1afb4027b518d425c6bc210031e5c98e0dd8e6c41ebed35d05,6577
+    pantry-tree:
+      size: 2567
+      sha256: 9e6c465c5cbfaca8cbd4170c55b363edac918593db323e1a18164e682360b4f2
+  original:
+    hackage: hasql-1.5
+- completed:
+    hackage: servant-lucid-0.9.0.5@sha256:c46780eefc12544b862af1dd7c7f88715e5fb45d954da538b0641d42c7b5f5c6,1787
+    pantry-tree:
+      size: 392
+      sha256: 7d529522482f4f83a62430a0fe245afc6272a5b9a63f2581388ac602654806c0
+  original:
+    hackage: servant-lucid-0.9.0.5@sha256:c46780eefc12544b862af1dd7c7f88715e5fb45d954da538b0641d42c7b5f5c6,1787
 snapshots:
 - completed:
     size: 586286

@@ -8,7 +8,7 @@
 
 module Spider where
 
-import           Control.Applicative (liftA2, liftA3)
+import           Control.Applicative (liftA3)
 import           Control.Exception.Base
 import           Control.Monad (forever, when, void)
 import           DB
@@ -16,16 +16,13 @@ import           Data.Bifunctor (first, second)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import           Data.Containers.ListUtils (nubOrd)
-import           Data.Foldable (for_)
 import           Data.Functor ((<&>))
 import           Data.Functor.Contravariant ((>$<), (>$))
 import           Data.Functor.Identity (Identity)
 import           Data.Int (Int16, Int32)
 import qualified Data.Map as M
-import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Text.Lazy (toStrict)
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
@@ -39,12 +36,9 @@ import           Ranking (rank)
 import           Rel8 hiding (index)
 import           Signals
 import           Types
-import           Utils (runRanker)
+import           Utils (runRanker, unsafeURI)
 import qualified Rel8 as R8
 import qualified Data.ByteString.Lazy as BSL
-
--- main :: IO ()
-main = searchMain
 
 --
 
@@ -146,6 +140,7 @@ discover depth uri = Insert
           (lit $ depth + 1)
           (lit "")
           (lit 0)
+          (lit "")
   , onConflict = DoUpdate $ Upsert
                   { index = d_docId
                   , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
@@ -174,38 +169,6 @@ buildEdges conn disc ls = do
     Right [eid] <- flip run conn $ statement () $ insert $ addEdge (d_docId disc) $ fmap d_docId l
     pure eid
 
-
-getDocs :: [WordId] -> Query (Discovery Expr)
-getDocs [] = do
-  where_ $ true ==. false
-  pure $ lit $ Discovery (DocId 0) "" Discovered 0 "" 0
-getDocs wids = distinct $ do
-  d <- distinct $ foldr1 intersect $ do
-    wid <- wids
-    pure $ do
-      w <- each indexSchema
-      where_ $ i_wordId w ==. lit wid
-      pure $ i_docId w
-  doc <- each discoverySchema
-  where_ $ d_docId doc ==. d
-  pure doc
-
-
-search :: Connection -> [Keyword] -> IO [Text]
-search conn kws = do
-  Right wids <- flip run conn $ statement () $ select $ getWordIds kws
-  let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
-  print not_in_corpus
-  -- putStrLn $ showQuery $ getDocs $ fmap w_wordId wids
-  Right docs <- flip run conn $ statement () $ select $ getDocs $ fmap w_wordId wids
-  pure $ fmap d_uri docs
-
-
-
-searchMain :: IO [Text]
-searchMain = do
-  Right conn <- acquire connectionSettings
-  search conn ["date", "duration", "calculator"]
 
 
 -- things still to do:
@@ -268,6 +231,18 @@ index conn depth uri mime body = do
        putStrLn $ show uri <> "   : " <> show (rank stuff)
   -- putStrLn $ "explored " <> show did
   void $ flip run conn $ statement () $ update $ markExplored Explored disc
+
+indexFromDB :: Connection -> Discovery Identity -> IO ()
+indexFromDB conn disc = do
+  let uri = unsafeURI $ T.unpack $ d_uri disc
+  let did = d_docId disc
+  when (isAcceptableLink uri) $ do
+    let Just (ws) = runRanker uri (decodeUtf8 $ d_data disc) $ posWords
+    -- void $ buildEdges conn disc ls
+    indexWords conn did ws
+    -- when (rank stuff > 0) $
+    --    putStrLn $ show uri <> "   : " <> show (rank stuff)
+  -- putStrLn $ "explored " <> show did
 
 
 mimeToContentType :: ByteString -> ByteString

@@ -62,6 +62,7 @@ data Discovery f = Discovery
   , d_depth :: Column f Int32
   , d_data :: Column f ByteString
   , d_rank :: Column f Double
+  , d_title :: Column f Text
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -114,7 +115,8 @@ CREATE TABLE IF NOT EXISTS discovery (
   state VARCHAR(10) NOT NULL,
   depth int4 NOT NULL,
   rank float8 NOT NULL,
-  data bytea NOT NULL
+  data bytea NOT NULL,
+  title TEXT UNIQUE NOT NULL
 );
 
 -}
@@ -130,6 +132,7 @@ discoverySchema = TableSchema
       , d_depth = "depth"
       , d_data  = "data"
       , d_rank = "rank"
+      , d_title = "title"
       }
   }
 
@@ -235,22 +238,6 @@ inverseIndexSchema = TableSchema
 
 
 
-test :: [Keyword] -> Query (Expr [DocId])
-test kws' = do
-  ws  <- each wordsSchema
-  kws <- values $ fmap lit $ coerce @_ @[Text] kws'
-  where_ $ w_word ws ==. kws
-  ii <- each inverseIndexSchema
-  where_ $ ii_wordId ii ==. w_wordId ws
-  pure $ ii_docs ii
-  -- z <- aggregate $ fmap listAgg $ pure $ ii_docs ii
-  -- _
-
-  -- -- where_ $ pure $ w_word ws `elem` kws
-  -- pure [ws]
-
---   where_ $ ws
-
 connectionSettings :: Settings
 connectionSettings = settings "localhost" 5432 "postgres" "" "db"
 
@@ -311,6 +298,7 @@ rootNodes = Insert
         , d_depth = 0
         , d_data = ""
         , d_rank = 0
+        , d_title = ""
         }
   , onConflict = DoNothing
   , returning = pure ()

@@ -31,6 +31,7 @@ library
       Keywords
       Lib
       Ranking
+      Search
       Signals
       Spider
       Types
@@ -42,26 +43,34 @@ library
       src
   build-depends:
       HTTP
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , containers
     , fgl
     , hasql
+    , hasql-streams-streaming
+    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
+    , lucid
     , monoidal-containers
     , mtl
     , network-uri
     , rel8
     , scalpel
+    , servant-lucid
+    , servant-server
     , streaming
     , streaming-bytestring
     , streaming-utils
     , stylist
     , tagsoup
     , text
+    , wai
     , warc
+    , warp
   default-language: Haskell2010
 
 executable go-go-exe
@@ -74,27 +83,35 @@ executable go-go-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , containers
     , fgl
     , go-go
     , hasql
+    , hasql-streams-streaming
+    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
+    , lucid
     , monoidal-containers
     , mtl
     , network-uri
     , rel8
     , scalpel
+    , servant-lucid
+    , servant-server
     , streaming
     , streaming-bytestring
     , streaming-utils
     , stylist
     , tagsoup
     , text
+    , wai
     , warc
+    , warp
   default-language: Haskell2010
 
 executable spider
@@ -106,27 +123,35 @@ executable spider
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , containers
     , fgl
     , go-go
     , hasql
+    , hasql-streams-streaming
+    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
+    , lucid
     , monoidal-containers
     , mtl
     , network-uri
     , rel8
     , scalpel
+    , servant-lucid
+    , servant-server
     , streaming
     , streaming-bytestring
     , streaming-utils
     , stylist
     , tagsoup
     , text
+    , wai
     , warc
+    , warp
   default-language: Haskell2010
 
 test-suite go-go-test
@@ -139,25 +164,33 @@ test-suite go-go-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , containers
     , fgl
     , go-go
     , hasql
+    , hasql-streams-streaming
+    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
+    , lucid
     , monoidal-containers
     , mtl
     , network-uri
     , rel8
     , scalpel
+    , servant-lucid
+    , servant-server
     , streaming
     , streaming-bytestring
     , streaming-utils
     , stylist
     , tagsoup
     , text
+    , wai
     , warc
+    , warp
   default-language: Haskell2010

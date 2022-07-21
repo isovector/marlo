@@ -1,11 +1,15 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ViewPatterns          #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 
 module Index where
 
 import           Control.Monad (void)
 import           Control.Monad.IO.Class
+import           DB
 import           DB (connectionSettings)
 import           Data.Bifunctor (bimap, first, second)
 import           Data.ByteString (ByteString)
@@ -14,24 +18,74 @@ import qualified Data.ByteString.Char8 as BS8
 import           Data.ByteString.Streaming.HTTP (runResourceT, ResourceT)
 import           Data.Char (isSpace)
 import           Data.Foldable (for_)
+import           Data.Function ((&))
 import           Data.Maybe (fromJust)
 import           Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import           Data.Tuple (swap)
 import           Data.Warc
 import           Hasql.Connection (acquire, Connection)
+import           Hasql.CursorTransactionIO.TransactionIO (cursorTransactionIO)
+import           Hasql.Session
+import           Hasql.Streaming (streamingQuery)
+import           Hasql.TransactionIO.Sessions
 import           Network.HTTP (rspHeaders, parseRequestHead, parseResponseHead, RequestData)
 import           Network.HTTP.Client (parseRequest)
 import           Network.HTTP.Headers
 import           Network.URI (parseURI)
-import           Spider (index)
+import           Rel8
+import           Spider (index, indexFromDB)
 import qualified Streaming.ByteString as BSS
 import           Streaming.Pipes (fromStreamingByteString, toStream)
 import qualified Streaming.Prelude as S
+import Data.Functor.Contravariant ((>$<))
+import Control.Exception (SomeException(SomeException), catch)
+import Data.Functor.Identity (Identity)
+import qualified Data.Text as T
+import Utils (unsafeURI, runRanker)
+import Signals (title)
+
+
+paginate page q =
+  limit size $
+    offset (page * size) q
+  where
+    size = 100
 
 
 main :: IO ()
 main = do
+  Right conn <- acquire connectionSettings
+  for_ [0 .. 17408] $ \page -> do
+    Right docs <-
+      flip run conn $ statement () $ select $ paginate page $ orderBy (d_docId >$< asc) $ do
+            d <- each discoverySchema
+            where_ $ d_state d ==. lit Explored
+            pure d
+    for_ docs $ \doc -> do
+      catch (updateTitle conn doc) $ \(SomeException _) -> do
+        putStrLn "errored ^"
+
+
+updateTitle :: Connection -> Discovery Identity -> IO ()
+updateTitle conn disc = do
+  let uri = unsafeURI $ T.unpack $ d_uri disc
+  let Just t = runRanker uri (T.decodeUtf8 $ d_data disc) title
+  print $ (uri, t)
+  void $ flip run conn $ statement () $ update $
+    Update
+      { target = discoverySchema
+      , from = pure ()
+      , set = \_ d -> d { d_title = lit t }
+      , updateWhere = \_ d -> d_docId d ==. lit (d_docId disc)
+      , returning = pure ()
+      }
+
+
+
+
+warcIndexMain :: IO ()
+warcIndexMain = do
   Right conn <- acquire connectionSettings
   runResourceT $ do
     let warc = parseWarc $ fromStreamingByteString $ BSS.readFile "/home/sandy/CC-MAIN-20220516041337-20220516071337-00000.warc"
@@ -60,7 +114,7 @@ hush :: Either a b -> Maybe b
 hush (Left _) = Nothing
 hush (Right b) = Just b
 
-unsafeGetWarcHeader :: RecordHeader -> Field c -> c
+unsafeGetWarcHeader :: RecordHeader -> Data.Warc.Field c -> c
 unsafeGetWarcHeader r
   = either (const $ error "fromRight") id
   . fromJust
@@ -74,7 +128,7 @@ withRec conn rec = do
       flip S.mapM_ (yo $ toStream $ recContent rec) $ \(hs, body) -> liftIO $ do
         for_ (parseURI $ (\ (Uri uri) -> BS.unpack uri) $ unsafeGetWarcHeader (recHeader rec) warcTargetUri) $ \uri ->
           for_ (findHeader HdrContentType hs) $ \mime ->
-            index conn 100 uri (BS.pack mime) body
+            Spider.index conn 100 uri (BS.pack mime) body
         -- liftIO $ print $ (unsafeGetWarcHeader (recHeader rec) warcTargetUri, findHeader HdrContentType hs)
         -- error "yo"
     _ -> flip S.mapM_ (toStream $ recContent rec) $ const $ pure ()

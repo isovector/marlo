@@ -41,6 +41,14 @@ dependencies:
 - warc
 - HTTP
 - fgl
+- hasql-streams-streaming
+- hasql-transaction-io
+- servant-server
+- wai
+- aeson
+- warp
+- servant-lucid
+- lucid
 
 library:
   source-dirs: src
