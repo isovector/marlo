@@ -193,7 +193,7 @@ spiderMain = do
           (do
             (Just mime, raw_body) <- downloadBody $ T.unpack url
             let body = decodeUtf8 raw_body
-            continue conn (d_depth disc) uri mime raw_body body
+            index conn (d_depth disc) uri mime raw_body body
           )
           (\SomeException{} -> do
             putStrLn $ "errored on " <> show (d_docId disc)
@@ -219,18 +219,27 @@ continue conn depth uri mime raw_body body = do
 
 
 
-index :: Connection -> Int32 -> URI -> ByteString -> Text -> IO ()
-index conn depth uri mime body = do
+index :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
+index conn depth uri mime raw_body body = do
   disc <- getDocId conn depth uri
   let did = d_docId disc
-  when (mime == "text/html" && isAcceptableLink uri) $ do
-    let Just (ls, ws, stuff) = runRanker uri body $ liftA3 (,,) links posWords rankStuff
-    void $ buildEdges conn disc ls
-    indexWords conn did ws
-    when (rank stuff > 0) $
-       putStrLn $ show uri <> "   : " <> show (rank stuff)
-  -- putStrLn $ "explored " <> show did
-  void $ flip run conn $ statement () $ update $ markExplored Explored disc
+  case (mime == "text/html" && isAcceptableLink uri) of
+    True -> do
+      let Just (ls, ws, t) = runRanker uri body $ liftA3 (,,) links posWords title
+      void $ buildEdges conn disc ls
+      indexWords conn did ws
+      void $ flip run conn $ statement () $ update $ Update
+        { target = discoverySchema
+        , from = pure ()
+        , set = \ _ dis -> dis { d_state = lit Explored
+                               , d_title = lit t
+                               , d_data  = lit raw_body
+                              }
+        , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
+        , returning = pure ()
+        }
+    False -> do
+      void $ flip run conn $ statement () $ update $ markExplored Explored disc
 
 indexFromDB :: Connection -> Discovery Identity -> IO ()
 indexFromDB conn disc = do

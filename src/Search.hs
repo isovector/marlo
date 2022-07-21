@@ -66,24 +66,38 @@ import Data.Maybe (fromMaybe)
 
 data Search a
   = Terms [a]
+  -- -- | Phrase [a]
   -- -- | Or Search Search
   -- -- | Not Keyword
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
-compileSearch :: Search WordId -> Query (Discovery Expr)
-compileSearch (Terms []) = do
+blah = do
   where_ $ true ==. false
   pure $ lit $ Discovery (DocId 0) "" Discovered 0 "" 0 ""
+
+byDocId m = do
+  d <- m
+  doc <- each discoverySchema
+  where_ $ d_docId doc ==. d
+  pure doc
+
+compileSearch :: Search WordId -> Query (Discovery Expr)
+compileSearch (Terms []) = blah
+-- compileSearch (Phrase []) = blah
+-- compileSearch (Phrase wids) = do
+--   byDocId $ distinct $ foldr1 intersect $ do
+--     wid <- wids
+--     pure $ do
+--       w <- each indexSchema
+--       where_ $ i_wordId w ==. lit wid
+--       pure $ i_docId w
 compileSearch (Terms wids) = distinct $ do
-  d <- distinct $ foldr1 intersect $ do
+  byDocId $ distinct $ foldr1 intersect $ do
     wid <- wids
     pure $ do
       w <- each indexSchema
       where_ $ i_wordId w ==. lit wid
       pure $ i_docId w
-  doc <- each discoverySchema
-  where_ $ d_docId doc ==. d
-  pure doc
 
 
 evaluateTerm :: Connection -> Search Keyword -> IO (Search WordId)
@@ -92,6 +106,11 @@ evaluateTerm conn (Terms kws) = do
   let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
   print not_in_corpus
   pure $ Terms $ fmap w_wordId wids
+-- evaluateTerm conn (Phrase kws) = do
+--   Right wids <- flip run conn $ statement () $ select $ getWordIds kws
+--   let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
+--   print not_in_corpus
+--   pure $ Phrase $ fmap w_wordId wids
 
 
 
