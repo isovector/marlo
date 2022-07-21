@@ -55,7 +55,7 @@ import           Rel8 hiding (index)
 import           Signals
 import           Spider (getWordIds)
 import           Types
-import           Utils (runRanker, unsafeURI)
+import           Utils (runRanker, unsafeURI, paginate)
 import Servant.HTML.Lucid (HTML)
 import qualified Lucid as L
 import Control.Monad.IO.Class (liftIO)
@@ -117,7 +117,10 @@ evaluateTerm conn (Terms kws) = do
 -- API specification
 type TestApi =
        Get '[HTML] (L.Html ())
-  :<|> "search" :> QueryParam "q" [Keyword] :> Get '[HTML] (L.Html ())
+  :<|> "search"
+        :> QueryParam "q" [Keyword]
+        :> QueryParam "p" Int
+        :> Get '[HTML] (L.Html ())
 
 
 instance FromHttpApiData [Keyword] where
@@ -137,13 +140,19 @@ home =
         L.input_ [ L.type_ "submit", L.value_ "Search!" ]
 
 
-search :: Maybe [Keyword] -> Handler (L.Html ())
-search Nothing = pure $ "Give me some keywords, punk!"
-search (Just kws) = do
+search :: Maybe [Keyword] -> Maybe Int -> Handler (L.Html ())
+search Nothing _ = pure $ "Give me some keywords, punk!"
+search (Just kws) page = do
   docs <- liftIO $ do
     Right conn <- acquire connectionSettings
     swid <- evaluateTerm conn $ Terms kws
-    Right docs <- flip run conn $ statement () $ select $ limit 10 $ orderBy (d_rank >$< desc) $ compileSearch swid
+    Right docs <-
+      flip run conn
+        $ statement ()
+        $ select
+        $ paginate 20 (fromIntegral $ Prelude.max 0 $ maybe 0 (subtract 1) page)
+        $ orderBy (d_rank >$< desc)
+        $ compileSearch swid
     pure docs
   pure $
     L.html_ $ do

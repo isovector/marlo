@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Signals where
 
 import           Control.Applicative (optional, empty)
 import           Control.Monad.Reader
-import           Data.List (isSuffixOf, partition)
+import           Data.List (isSuffixOf, partition, dropWhileEnd)
 import           Data.Maybe (mapMaybe, fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -18,6 +19,7 @@ import           Text.HTML.Scalpel
 import           Types
 import           Utils
 import Data.Char (toLower, isAlpha)
+import Debug.Trace (traceM)
 
 
 gif :: Ranker Text
@@ -72,13 +74,17 @@ link = do
   guard $ not $ T.null t
   href <- attr "href" "a"
   case parseURIReference (T.unpack href) of
-    Just uri | isAcceptableLink uri ->
-      pure $ Link t $ normalizeURI $ relativeTo uri here
+    Just (flip relativeTo here -> uri) | isAcceptableLink uri ->
+      pure $ Link t $ normalizeURI uri
     _ -> empty
 
 
 normalizeURI :: URI -> URI
-normalizeURI uri = uri { uriFragment = "", uriQuery = "" }
+normalizeURI uri = uri
+  { uriPath = dropWhileEnd (== '/') $ uriPath uri
+  , uriFragment = ""
+  , uriQuery = ""
+  }
 
 hasBootstrap :: Ranker Bool
 hasBootstrap = fmap or $ chroots "link" $ do
@@ -145,6 +151,7 @@ isAcceptableLink uri
           , "google.com"
           , "amazon.com"
           , "flickr.com"
+          , "spotify.com"
           , "wp.me"
           , "tiktok.com"
           , "snapchat.com"

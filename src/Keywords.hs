@@ -73,6 +73,11 @@ uriKeywords = mapMaybe keywordify . T.split (\x -> x ==  '/' || x == '-') . T.pa
 
 posWords :: Ranker [(Int, Keyword)]
 posWords = do
-  w <- texts "p"
-  pure $ mapMaybe (traverse keywordify) $ zip [0..] $ T.words $ T.concat w
+  w0 <- texts "title"
+  w1 <- texts "p"
+  w2 <- texts "div"
+  w3 <- texts "span"
+  w4 <- texts "li"
+  pure $ mapMaybe (traverse keywordify) $ zip [0..] $ T.words $ T.intercalate " " $
+    w0 <> w1 <> w2 <> w3 <> w4
 

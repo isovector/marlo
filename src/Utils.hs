@@ -17,6 +17,12 @@ import qualified Data.Text as T
 import           Network.URI
 import           Text.HTML.Scalpel
 import Types
+import Rel8 (limit, offset)
+
+
+paginate size page q =
+  limit size $
+    offset (page * size) q
 
 
 runRanker :: URI -> Text -> Ranker a -> Maybe a

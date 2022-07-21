@@ -32,7 +32,6 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
-import           Ranking (rank)
 import           Rel8 hiding (index)
 import           Signals
 import           Types
@@ -188,17 +187,22 @@ spiderMain = do
     case parseURI $ T.unpack url of
       Nothing -> error $ "died on bad URI: " <> show url
       Just uri -> do
-        putStrLn $ "fetching " <> T.unpack url
-        catch
-          (do
-            (Just mime, raw_body) <- downloadBody $ T.unpack url
-            let body = decodeUtf8 raw_body
-            index conn (d_depth disc) uri mime raw_body body
-          )
-          (\SomeException{} -> do
-            putStrLn $ "errored on " <> show (d_docId disc)
-            void $ flip run conn $ statement () $ update $ markExplored Errored disc
-          )
+        case isAcceptableLink uri of
+          True -> do
+            putStrLn $ "fetching " <> T.unpack url
+            catch
+              (do
+                (Just mime, raw_body) <- downloadBody $ T.unpack url
+                let body = decodeUtf8 raw_body
+                index conn (d_depth disc) uri mime raw_body body
+              )
+              (\SomeException{} -> do
+                putStrLn $ "errored on " <> show (d_docId disc)
+                void $ flip run conn $ statement () $ update $ markExplored Errored disc
+              )
+          False -> do
+            putStrLn $ "ignoring " <> T.unpack url
+            void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
 continue :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
 continue conn depth uri mime raw_body body = do
@@ -265,4 +269,16 @@ downloadBody url = do
              $ lookup hContentType
              $ HTTP.responseHeaders resp
     pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
+
+
+debugRankerInDb :: DocId -> Ranker a -> IO (Maybe a)
+debugRankerInDb did r = do
+  Right conn <- acquire connectionSettings
+  Right [d] <-
+    flip run conn $ statement () $ select $ do
+      d <- each discoverySchema
+      where_ $ d_docId d ==. lit did
+      pure d
+  pure $ runRanker (unsafeURI $ T.unpack $ d_uri d) (decodeUtf8 $ d_data d) r
+
 
