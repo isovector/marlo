@@ -35,7 +35,7 @@ import           Data.Foldable (for_, toList)
 import           Data.Functor ((<&>))
 import           Data.Functor.Contravariant ((>$<), (>$))
 import           Data.Functor.Identity (Identity)
-import           Data.Int (Int16, Int32)
+import           Data.Int (Int16, Int32, Int64)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -110,19 +110,25 @@ compileSearch (Terms wids) =
         pure $ i_docId w
 
 
-getSnippet :: DocId -> [WordId] -> Query (Expr Text)
+getSnippet :: DocId -> [WordId] -> Query (Expr Bool, Expr Text)
 getSnippet d [] = do
   where_ $ lit True ==. lit False
-  pure $ lit ""
-getSnippet d (w : ws) = fmap snd $ orderBy (fst >$< asc) $ do
-  i <- each indexSchema
-  where_ $ i_docId i ==. lit d &&. i_wordId i ==. lit w
+  pure $ lit (False, "")
+getSnippet d ws@(w : _) = do
+  i <- limit 1 $ do
+      i <- each indexSchema
+      where_ $ i_docId i ==. lit d &&. i_wordId i ==. lit w
+      pure i
   let p = i_position i
-  j <- each indexSchema
-  where_ $ i_docId i ==. lit d &&. abs (i_position j - p) <=. 5
+  wid <-
+    limit 10 $ fmap snd $ orderBy (fst >$< asc) $ do
+      j <- each indexSchema
+      where_ $ i_docId j ==. lit d &&. ( (-5 <=. i_position j - p &&. i_position j - p <=. 5)
+                                       )
+      pure (i_position j, i_wordId j)
   w <- each wordsSchema
-  where_ $ w_wordId w ==. i_wordId j
-  pure (i_position j, w_word w)
+  where_ $ w_wordId w ==. wid
+  pure (in_ (w_wordId w) $ fmap lit ws , w_word w)
 
 
 
@@ -186,15 +192,12 @@ search (Just kws) mpage = do
         $ paginate pagesize (fromIntegral pagenum)
         $ let x = orderBy (d_rank >$< desc) $ compileSearch swid
            in liftA2 (,) (countRows x) x
-    for_ docs $ \doc ->
-      putStrLn $ showQuery $ getSnippet (d_docId doc) $ toList swid
-    -- (_, snips) <- fmap partitionEithers $
-    --   for docs $ \doc ->
-    --     flip run conn
-    --       $ statement ()
-    --       $ select
-    --       $ getSnippet (d_docId doc) $ toList swid
-    let snips = repeat ["Lorem ipsum"]
+    (_, snips) <- fmap partitionEithers $
+      for docs $ \doc ->
+        flip run conn
+          $ statement ()
+          $ select
+          $ getSnippet (d_docId doc) $ toList swid
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
     L.html_ $ do
@@ -212,13 +215,19 @@ encodeQuery :: Search Keyword -> Text
 encodeQuery (Terms keys) = T.intercalate "+" $ coerce keys
 encodeQuery (Phrase keys) = "\"" <> (T.intercalate "+" $ coerce keys) <> "\""
 
-searchResult :: Discovery Rel8.Result -> [Text] -> L.Html ()
+searchResult :: Discovery Rel8.Result -> [(Bool, Text)] -> L.Html ()
 searchResult d snip =
   L.div_ [L.class_ "result"] $ do
     L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_uri d
     L.br_ []
     L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_title d
-    L.p_ [L.class_ "snippet"] $ L.toHtml $ T.intercalate " " snip
+    L.p_ [L.class_ "snippet"] $ foldMap (uncurry boldify) snip
+
+boldify :: Bool -> Text -> L.Html ()
+boldify False t = L.toHtml $ t <> " "
+boldify True t = L.strong_ $ L.toHtml $ t <> " "
+
+
 
 server :: Server TestApi
 server = pure home :<|> search :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
