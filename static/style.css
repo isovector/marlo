@@ -1,0 +1,13 @@
+body {
+  background: red;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#query {
+  font-size: 16pt;
+  width: 40em;
+  padding: 0.5em;
+}
+

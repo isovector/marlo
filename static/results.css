@@ -1,0 +1,30 @@
+body {
+  background: red;
+}
+
+.result {
+  margin-bottom: 1em;
+  background: white;
+  width: 50em;
+  padding: 1em;
+  font-family: sans;
+}
+
+.url {
+  display: block;
+}
+
+.url a:link, .url a:visited {
+  color: #444;
+  text-decoration: none;
+  font-size: 10pt;
+}
+
+.title {
+  display: block;
+}
+
+.title a {
+  text-decoration: none;
+}
+

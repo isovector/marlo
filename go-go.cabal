@@ -70,6 +70,7 @@ library
     , tagsoup
     , text
     , wai
+    , wai-app-static
     , warc
     , warp
   default-language: Haskell2010
@@ -111,6 +112,7 @@ executable go-go-exe
     , tagsoup
     , text
     , wai
+    , wai-app-static
     , warc
     , warp
   default-language: Haskell2010
@@ -151,6 +153,7 @@ executable spider
     , tagsoup
     , text
     , wai
+    , wai-app-static
     , warc
     , warp
   default-language: Haskell2010
@@ -192,6 +195,7 @@ test-suite go-go-test
     , tagsoup
     , text
     , wai
+    , wai-app-static
     , warc
     , warp
   default-language: Haskell2010

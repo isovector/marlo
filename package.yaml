@@ -50,6 +50,7 @@ dependencies:
 - servant-lucid
 - lucid
 - http-client
+- wai-app-static
 
 library:
   source-dirs: src

@@ -37,16 +37,16 @@ bad = do
        ]
 
 
-main :: IO ()
-main = do
-  let r = posWords
+-- main :: IO ()
+-- main = do
+--   let r = posWords
 
-  putStrLn "GOOD"
-  goods <- good
-  bads <- bad
-  for_ goods $ \(uri, txt) -> print $ runRanker uri txt rankStuff
-  putStrLn "BAD"
-  for_ bads $ \(uri, txt) -> print $ runRanker uri txt rankStuff
+--   putStrLn "GOOD"
+--   goods <- good
+--   bads <- bad
+--   for_ goods $ \(uri, txt) -> print $ runRanker uri txt rankStuff
+--   putStrLn "BAD"
+--   for_ bads $ \(uri, txt) -> print $ runRanker uri txt rankStuff
 
 --   let z = goods <&> \(uri, txt) ->
 --             fmap (invertMap uri . posKeywordsToInv) $ runRanker uri txt posWords
