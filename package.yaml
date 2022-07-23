@@ -52,6 +52,8 @@ dependencies:
 - http-client
 - wai-app-static
 - async
+- megaparsec
+- parser-combinators
 
 library:
   source-dirs: src

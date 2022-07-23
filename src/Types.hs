@@ -65,3 +65,12 @@ newtype InverseIndex_ = InverseIndex_
   { getInverseIndex :: MonoidalMap Text [URI]
   } deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
 
+data Search a
+  = Term a
+  | Phrase [a]
+  | Negate (Search a)
+  | And (Search a) (Search a)
+  | Or (Search a) (Search a)
+  | SiteLike Text
+  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+

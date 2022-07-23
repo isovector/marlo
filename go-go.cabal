@@ -33,6 +33,7 @@ library
       Lib
       Ranking
       Search
+      Search.Parser
       Signals
       Spider
       Types
@@ -57,9 +58,11 @@ library
     , http-client-tls
     , http-types
     , lucid
+    , megaparsec
     , monoidal-containers
     , mtl
     , network-uri
+    , parser-combinators
     , rel8
     , scalpel
     , servant-lucid
@@ -100,9 +103,11 @@ executable go-go-exe
     , http-client-tls
     , http-types
     , lucid
+    , megaparsec
     , monoidal-containers
     , mtl
     , network-uri
+    , parser-combinators
     , rel8
     , scalpel
     , servant-lucid
@@ -142,9 +147,11 @@ executable spider
     , http-client-tls
     , http-types
     , lucid
+    , megaparsec
     , monoidal-containers
     , mtl
     , network-uri
+    , parser-combinators
     , rel8
     , scalpel
     , servant-lucid
@@ -185,9 +192,11 @@ test-suite go-go-test
     , http-client-tls
     , http-types
     , lucid
+    , megaparsec
     , monoidal-containers
     , mtl
     , network-uri
+    , parser-combinators
     , rel8
     , scalpel
     , servant-lucid

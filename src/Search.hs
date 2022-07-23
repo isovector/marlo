@@ -15,70 +15,43 @@
 
 module Search where
 
-import           Data.Aeson
-import           Data.Proxy
-import           GHC.Generics
-import qualified Network.Wai as W
-import qualified Network.Wai.Handler.Warp as W
-import           Servant
-import           Servant.Server.Generic ()
-import           Control.Applicative (liftA2, liftA3)
-import           Control.Exception.Base
-import           Control.Monad (forever, when, void)
+import           Control.Applicative (liftA2)
+import           Control.Monad (when)
+import           Control.Monad.IO.Class (liftIO)
 import           DB
-import           Data.Bifunctor (first, second)
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Containers.ListUtils (nubOrd)
+import           Data.Bifunctor (first)
+import           Data.Coerce (coerce)
+import           Data.Either (partitionEithers)
 import           Data.Foldable (for_, toList)
-import           Data.Functor ((<&>))
-import           Data.Functor.Contravariant ((>$<), (>$))
-import           Data.Functor.Identity (Identity)
-import           Data.Int (Int16, Int32, Int64)
-import qualified Data.Map as M
+import           Data.Functor.Contravariant ((>$<))
+import           Data.Maybe (fromMaybe, listToMaybe)
+import           Data.Proxy
 import qualified Data.Set as S
+import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Text.Encoding (decodeUtf8)
-import           Data.Text.Lazy (toStrict)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
-import           Keywords (posWords)
-import qualified Network.HTTP.Client as HTTP
-import qualified Network.HTTP.Client.TLS as HTTP
-import           Network.HTTP.Types (hContentType)
-import           Network.URI (parseURI, URI)
-import           Ranking (rank)
-import qualified Rel8 as R8
-import           Rel8 hiding (index)
-import           Signals
-import           Spider (getWordIds)
-import           Types
-import           Utils (runRanker, unsafeURI, paginate)
-import Servant.HTML.Lucid (HTML)
 import qualified Lucid as L
-import Control.Monad.IO.Class (liftIO)
-import Data.String (fromString)
-import Data.Maybe (fromMaybe, listToMaybe)
-import Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
-import WaiAppStatic.Types (MaxAge(NoMaxAge))
-import Data.Coerce (coerce)
-import Data.Either (partitionEithers)
+import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
+import qualified Network.Wai.Handler.Warp as W
+import           Rel8 hiding (index)
+import           Search.Parser (searchParser)
+import           Servant
+import           Servant.HTML.Lucid (HTML)
+import           Servant.Server.Generic ()
+import           Spider (getWordIds)
+import           Text.Megaparsec (parse, errorBundlePretty)
+import           Types
+import           Utils (paginate)
+import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 
 
-
-data Search a
-  = Terms [a]
-  | Phrase [a]
-  -- -- | Or Search Search
-  -- -- | Not Keyword
-  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 blah = do
   where_ $ true ==. false
-  pure $ lit $ Discovery (DocId 0) "" Discovered 0 "" 0 ""
+  pure $ lit $ DocId 0
 
 byDocId m = do
   d <- m
@@ -86,11 +59,10 @@ byDocId m = do
   where_ $ d_docId doc ==. d
   pure doc { d_data = "" }
 
-compileSearch :: Search WordId -> Query (Discovery Expr)
-compileSearch (Terms []) = blah
+compileSearch :: Search WordId -> Query (Expr DocId)
 compileSearch (Phrase []) = blah
 compileSearch (Phrase wids@(w1 : wr)) = do
-  byDocId $ distinct $ do
+  distinct $ do
     i1 <- each indexSchema
     where_ $ i_wordId i1 ==. lit w1
     let p1 = i_position i1
@@ -100,14 +72,21 @@ compileSearch (Phrase wids@(w1 : wr)) = do
         w <- each indexSchema
         where_ $ i_wordId w ==. lit wid &&. i_position w ==. p1 + lit ix &&. i_docId w ==. i_docId i1
         pure $ i_docId w
-compileSearch (Terms wids) =
-  byDocId $
-    distinct $ foldr1 intersect $ do
-      wid <- wids
-      pure $ do
-        w <- each indexSchema
-        where_ $ i_wordId w ==. lit wid
-        pure $ i_docId w
+compileSearch (Term wid) =
+  distinct $ do
+    w <- each indexSchema
+    where_ $ i_wordId w ==. lit wid
+    pure $ i_docId w
+compileSearch (Negate q) = do
+  except (fmap d_docId $ each discoverySchema) $ compileSearch q
+compileSearch (And q1 q2) = do
+  intersect (compileSearch q1) $ compileSearch q2
+compileSearch (Or q1 q2) = do
+  union (compileSearch q1) $ compileSearch q2
+compileSearch (SiteLike t) = do
+  d <- each discoverySchema
+  where_ $ like (lit $ "%" <> t <> "%") (d_uri d)
+  pure $ d_docId d
 
 
 getSnippet :: DocId -> [WordId] -> Query (Expr Bool, Expr Text)
@@ -136,16 +115,20 @@ getSnippet d ws@(w : _) = do
 
 
 evaluateTerm :: Connection -> Search Keyword -> IO (Search WordId)
-evaluateTerm conn (Terms kws) = do
-  Right wids <- flip run conn $ statement () $ select $ getWordIds kws
-  let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
-  print not_in_corpus
-  pure $ Terms $ fmap w_wordId wids
+evaluateTerm conn (Term kw) = do
+  Right [wids] <- flip run conn $ statement () $ select $ getWordIds [kw]
+  -- let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
+  -- print not_in_corpus
+  pure $ Term $ w_wordId wids
 evaluateTerm conn (Phrase kws) = do
   Right wids <- flip run conn $ statement () $ select $ getWordIds kws
   let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
   print not_in_corpus
   pure $ Phrase $ fmap w_wordId wids
+evaluateTerm conn (Negate q) = Negate <$> evaluateTerm conn q
+evaluateTerm conn (And q1 q2) = And <$> evaluateTerm conn q1 <*> evaluateTerm conn q2
+evaluateTerm conn (Or q1 q2) = Or <$> evaluateTerm conn q1 <*> evaluateTerm conn q2
+evaluateTerm conn (SiteLike t) = pure $ SiteLike t
 
 
 
@@ -153,7 +136,7 @@ evaluateTerm conn (Phrase kws) = do
 type TestApi =
        Get '[HTML] (L.Html ())
   :<|> "search"
-        :> QueryParam "q" [Keyword]
+        :> QueryParam "q" (Search Keyword)
         :> QueryParam "p" Int
         :> Get '[HTML] (L.Html ())
   :<|> Raw
@@ -175,24 +158,22 @@ home =
           L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
 
 
-search :: Maybe [Keyword] -> Maybe Int -> Handler (L.Html ())
+search :: Maybe (Search Keyword) -> Maybe Int -> Handler (L.Html ())
 search Nothing _ = pure $ "Give me some keywords, punk!"
-search (Just kws) mpage = do
-  let q = Terms kws
-
-      pagenum = Prelude.max 0 $ maybe 0 (subtract 1) mpage
+search (Just q) mpage = do
+  let pagenum = Prelude.max 0 $ maybe 0 (subtract 1) mpage
       pagesize :: Num a => a
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
     Right conn <- acquire connectionSettings
     swid <- evaluateTerm conn q
-    writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch swid
+    writeFile "/tmp/lastquery.sql" $ showQuery $ byDocId $ compileSearch swid
     Right (cnt, docs) <- fmap (fmap unzip) $
       flip run conn
         $ statement ()
         $ select
         $ paginate pagesize (fromIntegral pagenum)
-        $ let x = orderBy (d_rank >$< desc) $ compileSearch swid
+        $ let x = orderBy (d_rank >$< desc) $ byDocId $ compileSearch swid
            in liftA2 (,) (countRows x) x
     putStrLn "finished finding"
     (_, snips) <- fmap partitionEithers $
@@ -207,7 +188,12 @@ search (Just kws) mpage = do
   pure $
     L.html_ $ do
       L.head_ $ do
-        L.title_ $ "marlo search - results for " <> fromString (show kws) <> " (" <> fromString (show cnt) <> ")"
+        L.title_ $ mconcat
+          [ "marlo search - results for "
+          , L.toHtml (encodeQuery q)
+          , " (" <> fromString (show cnt)
+          , ")"
+          ]
         L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
       L.body_ $ do
         for_ (zip docs snips) $ uncurry searchResult
@@ -217,8 +203,12 @@ search (Just kws) mpage = do
           L.a_ [L.href_ $ "/search?q=" <> encodeQuery q <> "&p=" <> T.pack (show (pagenum + 2))  ] "Next"
 
 encodeQuery :: Search Keyword -> Text
-encodeQuery (Terms keys) = T.intercalate "+" $ coerce keys
+encodeQuery (Term kw) = coerce kw
 encodeQuery (Phrase keys) = "\"" <> (T.intercalate "+" $ coerce keys) <> "\""
+encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
+encodeQuery (And q1 q2) = encodeQuery q1 <> "+" <> encodeQuery q2
+encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
+encodeQuery (SiteLike t) = "site:" <> t
 
 searchResult :: Discovery Rel8.Result -> [(Bool, Text)] -> L.Html ()
 searchResult d snip =
@@ -235,6 +225,9 @@ boldify True t = L.strong_ $ L.toHtml $ t <> " "
 
 server :: Server TestApi
 server = pure home :<|> search :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
+
+instance FromHttpApiData (Search Keyword) where
+  parseQueryParam = first (T.pack . errorBundlePretty) . parse searchParser ""
 
 runTestServer :: W.Port -> IO ()
 runTestServer port = W.run port $ serve (Proxy @TestApi) server
