@@ -167,12 +167,12 @@ home =
   L.html_ $ do
     L.head_ $ do
       L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
-      L.title_ "Yo"
+      L.title_ "marlo search"
     L.body_ $ do
-      L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
-        L.h1_ "mar"
-        L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
-        -- L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "Search!" ]
+      L.div_ [L.class_ "box"] $ do
+        L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
+          L.h1_ "mar"
+          L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
 
 
 search :: Maybe [Keyword] -> Maybe Int -> Handler (L.Html ())
@@ -207,7 +207,7 @@ search (Just kws) mpage = do
   pure $
     L.html_ $ do
       L.head_ $ do
-        L.title_ $ "Search Results for " <> fromString (show kws) <> " (" <> fromString (show cnt) <> ")"
+        L.title_ $ "marlo search - results for " <> fromString (show kws) <> " (" <> fromString (show cnt) <> ")"
         L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
       L.body_ $ do
         for_ (zip docs snips) $ uncurry searchResult
