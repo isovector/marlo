@@ -45,6 +45,7 @@ library
   build-depends:
       HTTP
     , aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -86,6 +87,7 @@ executable go-go-exe
   build-depends:
       HTTP
     , aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -127,6 +129,7 @@ executable spider
   build-depends:
       HTTP
     , aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -169,6 +172,7 @@ test-suite go-go-test
   build-depends:
       HTTP
     , aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers

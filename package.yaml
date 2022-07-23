@@ -51,6 +51,7 @@ dependencies:
 - lucid
 - http-client
 - wai-app-static
+- async
 
 library:
   source-dirs: src

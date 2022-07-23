@@ -6,7 +6,7 @@ module Signals where
 
 import           Control.Applicative (optional, empty)
 import           Control.Monad.Reader
-import           Data.List (isSuffixOf, partition, dropWhileEnd)
+import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
 import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -18,7 +18,7 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
-import Data.Char (toLower, isAlpha)
+import Data.Char (toLower, isAlpha, isDigit)
 import Debug.Trace (traceM)
 import Data.Int (Int64)
 import Assets (getAssetSizes)
@@ -164,6 +164,12 @@ isAcceptableLink uri
           , ".mkv"
           , ".bmp"
           , ".gz"
+          , ".py"
+          , ".xls"
+          , ".xlsl"
+          , ".ppt"
+          , ".ipyn"
+          , ".ipynb"
           ]
       , not $ any (isOnDomain $ uriRegName auth)
           [ "twitter.com"
@@ -179,9 +185,11 @@ isAcceptableLink uri
           , "flickr.com"
           , "spotify.com"
           , "last.fm"
+          , "goo.gl"
           , "goodreads.com"
           , "ghostarchive.org"
           , "wp.me"
+          , "reddit.com"
           , "tiktok.com"
           , "snapchat.com"
           , "spoilertv.com"
@@ -190,14 +198,77 @@ isAcceptableLink uri
           , "archive.org"
           , "vimeo.com"
           , "tinyurl.com"
+          , "mega.nz"
+          , "anonfiles.com"
+          , "mediafire.com"
+          , "gofile.io"
           ]
       , not (isOnDomain (uriRegName auth) "wikipedia.org")
           || (isOnDomain (uriRegName auth) "wikipedia.org"
               && isOnDomain (uriRegName auth) "en.wikipedia.org")
+      , specificAllowRules uri
       ]
     | otherwise = False
   where
     path = fmap toLower $ uriPath uri
+
+
+(==>) :: Bool -> Bool -> Bool
+(==>) x y = not x || y
+
+specificAllowRules :: URI -> Bool
+specificAllowRules uri
+  | Just auth <- uriAuthority uri =
+    let on_domain = isOnDomain (uriRegName auth)
+     in not $ or
+     -- Succeeds if none of the following are true
+  [ isInfixOf "/tag/" path
+  , isInfixOf "/tags/" path
+  , isInfixOf "/tagged/" path
+  , isInfixOf "/search/" path
+  , isInfixOf "/category/" path
+  , isInfixOf "/categories/" path
+  , isInfixOf "/collections/" path
+  , isInfixOf "/topic/" path
+  , isInfixOf "/product/" path
+  , isInfixOf "/products/" path
+  , isInfixOf "/feed/" path
+  , isInfixOf "/feeds/" path
+  , isInfixOf "/author/" path
+  , isInfixOf "/authors/" path
+  , on_domain "github.com" ==> isInfixOf "/commit/" path
+  , on_domain "github.com" ==> isInfixOf "/commits/" path
+  , on_domain "github.com" ==> isInfixOf "/blob/" path
+  , on_domain "github.com" ==> isInfixOf "/edit/" path
+  , isYearMonthPage path
+  ]
+  | otherwise = False
+  where
+    path = fmap toLower $ uriPath uri
+
+isYearMonthPage :: String -> Bool
+isYearMonthPage p =
+  case fmap T.unpack $ T.split (== '/') $ T.pack p of
+    ["", year@(y:_:_:_:[]), month@(_:_:[]), ""]
+      | all isDigit year
+      , all isDigit month
+      , elem y ['1', '2']
+      -> True
+    ["", year@(y:_:_:_:[]), month@(_:_:[])]
+      | all isDigit year
+      , all isDigit month
+      , elem y ['1', '2']
+      -> True
+    ["", year@(y:_:_:_:[]), ""]
+      | all isDigit year
+      , elem y ['1', '2']
+      -> True
+    ["", year@(y:_:_:_:[])]
+      | all isDigit year
+      , elem y ['1', '2']
+      -> True
+    _ -> False
+
 
 
 jsBundleSize :: Ranker Int64

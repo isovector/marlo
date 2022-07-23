@@ -170,7 +170,7 @@ home =
       L.title_ "Yo"
     L.body_ $
       L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
-        L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q" ]
+        L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
         -- L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "Search!" ]
 
 
@@ -192,8 +192,10 @@ search (Just kws) mpage = do
         $ paginate pagesize (fromIntegral pagenum)
         $ let x = orderBy (d_rank >$< desc) $ compileSearch swid
            in liftA2 (,) (countRows x) x
+    putStrLn "finished finding"
     (_, snips) <- fmap partitionEithers $
-      for docs $ \doc ->
+      for docs $ \doc -> do
+        putStrLn $ "building snippet for " <> show (d_docId doc)
         flip run conn
           $ statement ()
           $ select

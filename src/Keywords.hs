@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Keywords where
 
@@ -9,6 +10,8 @@ import qualified Data.Text as T
 import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
+import Data.Int (Int16)
+import Control.Monad (join)
 
 isKeywordLetter :: Char -> Bool
 isKeywordLetter c =
@@ -78,6 +81,10 @@ posWords = do
   w2 <- texts "div"
   w3 <- texts "span"
   w4 <- texts "li"
-  pure $ mapMaybe (traverse keywordify) $ zip [0..] $ T.words $ T.intercalate " " $
-    w0 <> w1 <> w2 <> w3 <> w4
+  pure
+    $ mapMaybe (traverse keywordify)
+    $ zip [0..]
+    $ take (fromIntegral $ maxBound @Int16)
+    $ join
+    $ fmap (T.words . T.intercalate " ") [w0, w1, w2, w3, w4]
 

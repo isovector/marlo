@@ -46,20 +46,22 @@ import qualified Streaming.Prelude as S
 import           Utils (unsafeURI, runRanker, paginate)
 import qualified Network.HTTP.Client.TLS as HTTP
 import Types
+import Control.Concurrent.Async (forConcurrently_)
 
 
 
 main :: IO ()
 main = do
   Right conn <- acquire connectionSettings
-  for_ [0 .. 17408] $ \page -> do
+  for_ [0 .. 174080] $ \page -> do
     Right docs <-
-      flip run conn $ statement () $ select $ paginate 100 page $ orderBy (d_docId >$< asc) $ do
+      flip run conn $ statement () $ select $ paginate 10 page $ orderBy (d_docId >$< asc) $ do
             d <- each discoverySchema
             where_ $ d_state d ==. lit Explored
             pure d
-    for_ docs $ \doc -> do
-      catch (updateTitle conn doc) $ \(SomeException _) -> do
+    for_ (fmap d_uri docs) print
+    forConcurrently_ docs $ \doc -> do
+      catch (indexFromDB conn doc) $ \(SomeException _) -> do
         putStrLn "errored ^"
 
 

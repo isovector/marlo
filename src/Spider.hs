@@ -109,7 +109,7 @@ indexWords conn did pos = do
   void $ flip run conn $ statement () $ insert $ createWordIds kws
   Right ws <- flip run conn $ statement () $ select $ getWordIds kws
   let word_map = M.fromList $ ws <&> \(Words a b) -> (Keyword b, a)
-      pos' = fmap (second (word_map M.!)) pos
+      pos' = fmap (second (word_map M.!)) $ take (fromIntegral $ maxBound @Int16) pos
   Right res <- flip run conn $ statement () $ insert $ insertKeywords did pos'
   pure res
 
