@@ -1,13 +1,52 @@
+:root {
+--rosso-corsa: #d00000ff;
+--plum: #8f3985ff;
+--mango: #fabd02ff;
+--prussian-blue: #032b43ff;
+--baby-powder: #fbfef9ff;
+}
+
 body {
-  background: red;
+  background: var(--mango);
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+h1 {
+  padding: 0;
+  font-size: 12em;
+  color: var(--rosso-corsa);
+  font-family: 'Morganite Black Italic';
+  font-weight: normal;
+  top: 0.626em;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-right: 0.05em;
+  position: relative;
+  z-index: 10;
+
+  margin-top: 0;
+  text-align: right;
+}
+
+h1::after {
+  content: "lo";
+  color: var(--prussian-blue);
 }
 
 #query {
   font-size: 16pt;
   width: 40em;
   padding: 0.5em;
+  background-color: var(--baby-powder);
+  color: var(--prussian-blue);
+  z-index: 0;
 }
 
+@font-face {
+  font-family: 'Morganite Black Italic';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
+}

@@ -1,9 +1,12 @@
+* > * {
+  margin-top: 1em;
+}
+
 body {
-  background: red;
+  background: #fabd02;
 }
 
 .result {
-  margin-bottom: 1em;
   background: white;
   width: 50em;
   padding: 1em;
