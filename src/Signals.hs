@@ -195,6 +195,7 @@ isAcceptableLink uri
           , "spoilertv.com"
           , "linkedin.com"
           , "tumblr.com"
+          , "scribd.com"
           , "archive.org"
           , "vimeo.com"
           , "tinyurl.com"
@@ -202,6 +203,7 @@ isAcceptableLink uri
           , "anonfiles.com"
           , "mediafire.com"
           , "gofile.io"
+          , "archive.today"
           ]
       , not (isOnDomain (uriRegName auth) "wikipedia.org")
           || (isOnDomain (uriRegName auth) "wikipedia.org"
@@ -236,13 +238,13 @@ specificAllowRules uri
   , isInfixOf "/feeds/" path
   , isInfixOf "/author/" path
   , isInfixOf "/authors/" path
-  , on_domain "github.com" ==> isInfixOf "/commit/" path
-  , on_domain "github.com" ==> isInfixOf "/commits/" path
-  , on_domain "github.com" ==> isInfixOf "/blob/" path
-  , on_domain "github.com" ==> isInfixOf "/edit/" path
+  , on_domain "github.com" && isInfixOf "/commit/" path
+  , on_domain "github.com" && isInfixOf "/commits/" path
+  , on_domain "github.com" && isInfixOf "/blob/" path
+  , on_domain "github.com" && isInfixOf "/edit/" path
   , isYearMonthPage path
   ]
-  | otherwise = False
+  | otherwise = error "yo"
   where
     path = fmap toLower $ uriPath uri
 

@@ -84,7 +84,7 @@ byDocId m = do
   d <- m
   doc <- each discoverySchema
   where_ $ d_docId doc ==. d
-  pure doc
+  pure doc { d_data = "" }
 
 compileSearch :: Search WordId -> Query (Discovery Expr)
 compileSearch (Terms []) = blah
@@ -168,8 +168,9 @@ home =
     L.head_ $ do
       L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
       L.title_ "Yo"
-    L.body_ $
+    L.body_ $ do
       L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
+        L.h1_ "mar"
         L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
         -- L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "Search!" ]
 
@@ -185,6 +186,7 @@ search (Just kws) mpage = do
   (cnt, docs, snips) <- liftIO $ do
     Right conn <- acquire connectionSettings
     swid <- evaluateTerm conn q
+    writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch swid
     Right (cnt, docs) <- fmap (fmap unzip) $
       flip run conn
         $ statement ()
@@ -200,6 +202,7 @@ search (Just kws) mpage = do
           $ statement ()
           $ select
           $ getSnippet (d_docId doc) $ toList swid
+    putStrLn "done"
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
     L.html_ $ do
@@ -221,7 +224,6 @@ searchResult :: Discovery Rel8.Result -> [(Bool, Text)] -> L.Html ()
 searchResult d snip =
   L.div_ [L.class_ "result"] $ do
     L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_uri d
-    L.br_ []
     L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_title d
     L.p_ [L.class_ "snippet"] $ foldMap (uncurry boldify) snip
 
