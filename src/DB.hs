@@ -28,22 +28,22 @@ import Rel8 hiding (Enum)
 newtype EdgeId = EdgeId
   { unEdgeId :: Int64
   }
-  deriving newtype (Show, DBType, DBEq, DBOrd)
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 newtype DocId = DocId
   { unDocId :: Int64
   }
-  deriving newtype (Show, DBType, DBEq, DBOrd)
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 newtype WordId = WordId
   { unWordId :: Int64
   }
-  deriving newtype (Show, DBType, DBEq, DBOrd)
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 newtype IndexId = IndexId
   { unIndexId :: Int64
   }
-  deriving newtype (Show, DBType, DBEq, DBOrd)
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 data DiscoveryState
   = Discovered

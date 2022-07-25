@@ -15,9 +15,11 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Network.URI
+import           Rel8 (limit, offset)
+import           System.TimeIt (timeItT)
 import           Text.HTML.Scalpel
-import Types
-import Rel8 (limit, offset)
+import           Text.Printf (printf)
+import           Types
 
 
 paginate size page q =
@@ -70,4 +72,10 @@ has r = True <$ r <|> pure False
 posKeywordsToInv :: [(Int, Text)] -> Set Text
 posKeywordsToInv = S.fromList . fmap snd
 
+
+timing :: String -> IO a -> IO a
+timing name ioa = do
+    (t, a) <- timeItT ioa
+    liftIO $ printf (name ++ ": %6.4fs\n") t
+    return a
 

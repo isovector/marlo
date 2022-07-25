@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveFoldable        #-}
 {-# LANGUAGE DeriveFunctor         #-}
@@ -15,6 +16,7 @@
 
 module Search where
 
+import qualified Data.Map as M
 import           Control.Applicative (liftA2)
 import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
@@ -26,7 +28,6 @@ import           Data.Foldable (for_, toList)
 import           Data.Functor.Contravariant ((>$<))
 import           Data.Maybe (fromMaybe, listToMaybe)
 import           Data.Proxy
-import qualified Data.Set as S
 import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -44,8 +45,9 @@ import           Servant.Server.Generic ()
 import           Spider (getWordIds)
 import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
-import           Utils (paginate)
+import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
+import Network.URI (escapeURIString, isUnescapedInURI)
 
 
 
@@ -110,26 +112,15 @@ getSnippet d ws@(w : _) = do
   pure (in_ (w_wordId w) $ fmap lit ws , w_word w)
 
 
-
-
-
-
 evaluateTerm :: Connection -> Search Keyword -> IO (Search WordId)
-evaluateTerm conn (Term kw) = do
-  Right [wids] <- flip run conn $ statement () $ select $ getWordIds [kw]
-  -- let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
-  -- print not_in_corpus
-  pure $ Term $ w_wordId wids
-evaluateTerm conn (Phrase kws) = do
+evaluateTerm conn q = do
+  let kws = toList q
   Right wids <- flip run conn $ statement () $ select $ getWordIds kws
-  let not_in_corpus = S.fromList kws S.\\ S.fromList (fmap (Keyword . w_word) wids)
-  print not_in_corpus
-  pure $ Phrase $ fmap w_wordId wids
-evaluateTerm conn (Negate q) = Negate <$> evaluateTerm conn q
-evaluateTerm conn (And q1 q2) = And <$> evaluateTerm conn q1 <*> evaluateTerm conn q2
-evaluateTerm conn (Or q1 q2) = Or <$> evaluateTerm conn q1 <*> evaluateTerm conn q2
-evaluateTerm conn (SiteLike t) = pure $ SiteLike t
-
+  let widmap =
+        M.fromList $ do
+          wid <- wids
+          pure (Keyword $ w_word wid, w_wordId wid)
+  pure $ fmap (widmap M.!) q
 
 
 -- API specification
@@ -151,11 +142,22 @@ home =
     L.head_ $ do
       L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
       L.title_ "marlo search"
-    L.body_ $ do
-      L.div_ [L.class_ "box"] $ do
-        L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
-          L.h1_ "mar"
-          L.input_ [ L.id_ "query", L.type_ "text", L.name_ "q", L.autofocus_ ]
+    L.body_ $ searchBar ""
+
+searchBar :: Text -> L.Html ()
+searchBar t =
+  L.div_ [L.class_ "logo-box"] $ do
+    L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
+      L.h1_ "mar"
+      L.input_ $
+        [ L.id_ "query"
+        , L.type_ "text"
+        , L.name_ "q"
+        , L.value_ t
+        ] <>
+        [ L.autofocus_
+        | t == ""
+        ]
 
 
 search :: Maybe (Search Keyword) -> Maybe Int -> Handler (L.Html ())
@@ -166,24 +168,22 @@ search (Just q) mpage = do
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
     Right conn <- acquire connectionSettings
-    swid <- evaluateTerm conn q
+    swid <- timing "lookup keywords" $ evaluateTerm conn q
     writeFile "/tmp/lastquery.sql" $ showQuery $ byDocId $ compileSearch swid
-    Right (cnt, docs) <- fmap (fmap unzip) $
+    Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
       flip run conn
         $ statement ()
         $ select
         $ paginate pagesize (fromIntegral pagenum)
         $ let x = orderBy (d_rank >$< desc) $ byDocId $ compileSearch swid
            in liftA2 (,) (countRows x) x
-    putStrLn "finished finding"
-    (_, snips) <- fmap partitionEithers $
+    (_, snips) <- timing "building snippets" $ fmap partitionEithers $
       for docs $ \doc -> do
         putStrLn $ "building snippet for " <> show (d_docId doc)
         flip run conn
           $ statement ()
           $ select
           $ getSnippet (d_docId doc) $ toList swid
-    putStrLn "done"
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
     L.html_ $ do
@@ -196,26 +196,37 @@ search (Just q) mpage = do
           ]
         L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
       L.body_ $ do
-        for_ (zip docs snips) $ uncurry searchResult
-        when (pagenum > 0) $ do
-          L.a_ [L.href_ $ "/search?q=" <> encodeQuery q <> "&p=" <> T.pack (show pagenum)  ] "Prev"
-        when ((pagenum + 1) * pagesize < fromIntegral cnt) $ do
-          L.a_ [L.href_ $ "/search?q=" <> encodeQuery q <> "&p=" <> T.pack (show (pagenum + 2))  ] "Next"
+        L.div_ [L.class_ "box"] $ do
+          searchBar $ encodeQuery q
+          for_ (zip docs snips) $ uncurry searchResult
+          let eq = escape $ encodeQuery q
+          when (pagenum > 0) $ do
+            L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show pagenum)  ] "Prev"
+          when ((pagenum + 1) * pagesize < fromIntegral cnt) $ do
+            L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show (pagenum + 2))  ] "Next"
+
+escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
 
 encodeQuery :: Search Keyword -> Text
 encodeQuery (Term kw) = coerce kw
-encodeQuery (Phrase keys) = "\"" <> (T.intercalate "+" $ coerce keys) <> "\""
+encodeQuery (Phrase keys) = "\"" <> (T.intercalate " " $ coerce keys) <> "\""
 encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
-encodeQuery (And q1 q2) = encodeQuery q1 <> "+" <> encodeQuery q2
+encodeQuery (And q1 q2) = encodeQuery q1 <> " " <> encodeQuery q2
 encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
 encodeQuery (SiteLike t) = "site:" <> t
 
 searchResult :: Discovery Rel8.Result -> [(Bool, Text)] -> L.Html ()
 searchResult d snip =
   L.div_ [L.class_ "result"] $ do
-    L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_uri d
-    L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ fromString $ T.unpack $ d_title d
+    L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml $ d_uri d
+    L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml title
     L.p_ [L.class_ "snippet"] $ foldMap (uncurry boldify) snip
+  where
+    title =
+      case T.strip $ d_title d of
+        "" -> "(no title)"
+        x -> x
+
 
 boldify :: Bool -> Text -> L.Html ()
 boldify False t = L.toHtml $ t <> " "

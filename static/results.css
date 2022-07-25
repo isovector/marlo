@@ -1,14 +1,32 @@
-* > * {
+:root {
+  --rosso-corsa: #d00000ff;
+  --plum: #8f3985ff;
+  --mango: #fabd02ff;
+  --prussian-blue: #032b43ff;
+  --baby-powder: #fbfef9ff;
+}
+
+* {
+  margin: 0;
+}
+
+* + * {
   margin-top: 1em;
 }
 
 body {
-  background: #fabd02;
+  background: var(--mango);
+  padding: 1em;
+  color: var(--prussian-blue);
+}
+
+.box {
+  margin: 0 auto;
+  width: 50em;
 }
 
 .result {
-  background: white;
-  width: 50em;
+  background: var(--baby-powder);
   padding: 1em;
   font-family: sans;
 }
@@ -23,6 +41,10 @@ body {
   font-size: 10pt;
 }
 
+.title a:visited {
+  color: var(--plum);
+}
+
 .title {
   display: block;
 }
@@ -31,3 +53,45 @@ body {
   text-decoration: none;
 }
 
+
+.logo-box {
+  margin-top: 3em;
+  position: relative;
+  margin-bottom: 4em;
+}
+
+h1 {
+  padding: 0;
+  font-size: 8em;
+  color: var(--rosso-corsa);
+  font-family: 'Morganite Black Italic';
+  font-weight: normal;
+  top: -0.39em;
+  margin: 0;
+  position: absolute;
+  bottom: 0;
+  right: 0.05em;
+  z-index: 10;
+
+}
+
+h1::after {
+  content: "lo";
+  color: var(--prussian-blue);
+}
+
+#query {
+  font-size: 12pt;
+  width: 100%;
+  padding: 0.5em;
+  background-color: var(--baby-powder);
+  color: var(--prussian-blue);
+  z-index: 0;
+}
+
+@font-face {
+  font-family: 'Morganite Black Italic';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
+}

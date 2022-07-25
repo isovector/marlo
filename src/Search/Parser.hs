@@ -31,10 +31,10 @@ sp = L.space space1 empty empty
 
 expr :: Parser (Search Keyword)
 expr = makeExprParser term
-  [ [ Prefix $ Negate <$ symbol sp "-" ]
-  , [ InfixL $ And <$ symbol sp "" ]
-  , [ InfixL $ And <$ symbol sp "AND" ]
-  , [ InfixL $ Or <$ symbol sp "OR" ]
+  [ [ Prefix $ Negate <$ symbol sp "-"   ]
+  , [ InfixL $ And    <$ symbol sp ""    ]
+  , [ InfixL $ And    <$ symbol sp "AND" ]
+  , [ InfixL $ Or     <$ symbol sp "OR"  ]
   ]
 
 searchParser :: Parser (Search Keyword)

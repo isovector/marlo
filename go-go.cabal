@@ -26,7 +26,6 @@ source-repository head
 library
   exposed-modules:
       Assets
-      Data.Graph.PageRank
       DB
       Index
       Keywords
@@ -50,7 +49,6 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
-    , fgl
     , hasql
     , hasql-streams-streaming
     , hasql-transaction-io
@@ -73,6 +71,7 @@ library
     , stylist
     , tagsoup
     , text
+    , timeit
     , wai
     , wai-app-static
     , warc
@@ -94,7 +93,6 @@ executable go-go-exe
     , base >=4.7 && <5
     , bytestring
     , containers
-    , fgl
     , go-go
     , hasql
     , hasql-streams-streaming
@@ -118,6 +116,7 @@ executable go-go-exe
     , stylist
     , tagsoup
     , text
+    , timeit
     , wai
     , wai-app-static
     , warc
@@ -138,7 +137,6 @@ executable spider
     , base >=4.7 && <5
     , bytestring
     , containers
-    , fgl
     , go-go
     , hasql
     , hasql-streams-streaming
@@ -162,6 +160,7 @@ executable spider
     , stylist
     , tagsoup
     , text
+    , timeit
     , wai
     , wai-app-static
     , warc
@@ -183,7 +182,6 @@ test-suite go-go-test
     , base >=4.7 && <5
     , bytestring
     , containers
-    , fgl
     , go-go
     , hasql
     , hasql-streams-streaming
@@ -207,6 +205,7 @@ test-suite go-go-test
     , stylist
     , tagsoup
     , text
+    , timeit
     , wai
     , wai-app-static
     , warc
