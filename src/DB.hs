@@ -24,6 +24,7 @@ import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
 import Rel8.TextSearch
+import Config
 
 
 newtype EdgeId = EdgeId
@@ -183,7 +184,8 @@ fixSearch d = d { d_search = unsafeDefault }
 
 
 connectionSettings :: Settings
-connectionSettings = settings "localhost" 5432 "postgres" "" "db"
+connectionSettings =
+  settings cfg_pg_host cfg_pg_port cfg_pg_user cfg_pg_pass "db"
 
 
 simpInsert
