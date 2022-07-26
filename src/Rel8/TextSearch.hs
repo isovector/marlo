@@ -13,6 +13,10 @@ import Data.Int (Int16)
 data Tsvector = Tsvector
   deriving (Eq, Ord, Show)
 
+instance DBEq Tsvector
+
+instance DBOrd Tsvector
+
 instance DBType Tsvector where
   typeInformation = TypeInformation
     { encode = const $ Prim.CastExpr "tsvector" $ Prim.ConstExpr $ Prim.StringLit ""

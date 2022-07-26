@@ -18,7 +18,6 @@
 
 module Search where
 
-import qualified Data.Map as M
 import           Control.Applicative (liftA2)
 import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
@@ -28,6 +27,7 @@ import           Data.Coerce (coerce)
 import           Data.Either (partitionEithers)
 import           Data.Foldable (for_, toList)
 import           Data.Functor.Contravariant ((>$<))
+import qualified Data.Map as M
 import           Data.Maybe (fromMaybe, listToMaybe)
 import           Data.Proxy
 import           Data.String (fromString)
@@ -37,9 +37,11 @@ import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
 import qualified Lucid as L
+import           Network.URI (escapeURIString, isUnescapedInURI)
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
 import           Rel8 hiding (index)
+import           Rel8.TextSearch
 import           Search.Parser (searchParser)
 import           Servant
 import           Servant.HTML.Lucid (HTML)
@@ -48,33 +50,68 @@ import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
-import Network.URI (escapeURIString, isUnescapedInURI)
-import Rel8.TextSearch
+
 
 compileSearch :: Search Text -> Query (Discovery Expr)
-compileSearch q = do
+compileSearch q =
+  case compile' q of
+    Match ts -> matching ts
+    Full qu -> qu
+
+
+data IL
+  = Match Tsquery
+  | Full (Query (Discovery Expr))
+
+compile' :: Search Text -> IL
+compile' (Term txt) = Match $ TsqTerm txt
+compile' (Phrase []) = Match $ TsqTerm ""
+compile' (Phrase txts) = Match $ foldr1 TsqPhrase $ fmap TsqTerm txts
+compile' (Negate se) =
+  case compile' se of
+    Match ts -> Match $ TsqNot ts
+    Full qu -> Full $ except (each discoverySchema) qu
+compile' (And lhs rhs) = merge TsqAnd intersect (compile' lhs) (compile' rhs)
+compile' (Or lhs rhs) = merge TsqOr union (compile' lhs) (compile' rhs)
+compile' (SiteLike t) = Full $ do
   d <- each discoverySchema
-  where_ $ match (d_search d) $ lit $ compileQuery q
+  where_ $ like (lit $ "%" <> t <> "%") $ d_uri d
+  pure d
+
+merge
+    :: (Tsquery -> Tsquery -> Tsquery)
+    -> (Query (Discovery Expr) -> Query (Discovery Expr) -> Query (Discovery Expr))
+    -> IL
+    -> IL
+    -> IL
+merge t _ (Match t1) (Match t2) = Match $ t t1 t2
+merge _ q (Match t1) (Full q2) = Full $ q (matching t1) q2
+merge _ q (Full q1) (Match t2) = Full $ q q1 (matching t2)
+merge _ q (Full q1) (Full q2) = Full $ q q1 q2
+
+matching :: Tsquery -> Query (Discovery Expr)
+matching q = do
+  d <- each discoverySchema
+  where_ $ match (d_search d) $ lit q
   pure d
 
 
 compileQuery :: Search Text -> Tsquery
-compileQuery (Phrase []) = error "nope"
+compileQuery (Phrase []) = TsqTerm ""
 compileQuery (Phrase wids) =
   foldr1 TsqPhrase $ fmap TsqTerm wids
 compileQuery (Term wid) = TsqTerm wid
 compileQuery (And lhs rhs) = TsqAnd (compileQuery lhs) (compileQuery rhs)
 compileQuery (Or lhs rhs) = TsqOr (compileQuery lhs) (compileQuery rhs)
 compileQuery (Negate lhs) = TsqNot (compileQuery lhs)
-compileQuery (SiteLike _) = error "cant do sitelike yet"
-
+compileQuery (SiteLike _) = TsqTerm ""
 
 
 getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
   d <- each discoverySchema
   where_ $ d_docId d ==. lit did
-  pure $ headline (d_content d) $ lit q
+  pure $ headline (d_content d <>. d_headings d <>. d_comments d) $ lit q
 
 
 type TestApi =
@@ -161,6 +198,7 @@ search (Just q) mpage = do
   where
     escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
 
+
 encodeQuery :: Search Text -> Text
 encodeQuery (Term kw) = coerce kw
 encodeQuery (Phrase keys) = "\"" <> (T.intercalate " " $ coerce keys) <> "\""
@@ -168,6 +206,7 @@ encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
 encodeQuery (And q1 q2) = encodeQuery q1 <> " " <> encodeQuery q2
 encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
 encodeQuery (SiteLike t) = "site:" <> t
+
 
 searchResult :: Discovery Rel8.Result -> Text -> L.Html ()
 searchResult d snip =
