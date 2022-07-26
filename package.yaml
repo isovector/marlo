@@ -28,23 +28,15 @@ dependencies:
 - tagsoup
 - stylist
 - containers
-- monoidal-containers
 - rel8
 - hasql
 - http-client
 - http-client-tls
 - http-types
 - bytestring
-- streaming
-- streaming-bytestring
-- streaming-utils
-- warc
 - HTTP
-- hasql-streams-streaming
-- hasql-transaction-io
 - servant-server
 - wai
-- aeson
 - warp
 - servant-lucid
 - lucid
@@ -54,7 +46,6 @@ dependencies:
 - megaparsec
 - parser-combinators
 - time
-- deepseq
 - opaleye
 
 library:

@@ -9,7 +9,7 @@ module Utils where
 
 import           Control.Applicative ((<|>))
 import           Control.Monad.Reader
-import qualified Data.Map.Monoidal as M
+import           Data.Functor.Contravariant ((>$))
 import           Data.Maybe (fromJust, fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -23,7 +23,6 @@ import           System.CPUTime (getCPUTime)
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
-import Data.Functor.Contravariant ((>$))
 
 
 paginate size page q =

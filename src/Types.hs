@@ -10,17 +10,15 @@
 module Types where
 
 import           Control.Monad.Reader
-import           Data.Map.Monoidal (MonoidalMap)
-import qualified Data.Map.Monoidal as M
 import           Data.Maybe (fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
+import           Data.String (IsString)
 import           Data.Text (Text)
+import           Hasql.Connection (Connection)
+import           Network.HTTP.Client (Manager)
 import           Network.URI
 import           Text.HTML.Scalpel
-import Data.String (IsString)
-import Network.HTTP.Client (Manager)
-import Hasql.Connection (Connection)
 
 
 data Env = Env

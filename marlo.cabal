@@ -40,28 +40,22 @@ library
       Spider
       Types
       Utils
-      WebGraph
   other-modules:
       Paths_marlo
   hs-source-dirs:
       src
   build-depends:
       HTTP
-    , aeson
     , async
     , base >=4.7 && <5
     , bytestring
     , containers
-    , deepseq
     , hasql
-    , hasql-streams-streaming
-    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
     , lucid
     , megaparsec
-    , monoidal-containers
     , mtl
     , network-uri
     , opaleye
@@ -70,16 +64,12 @@ library
     , scalpel
     , servant-lucid
     , servant-server
-    , streaming
-    , streaming-bytestring
-    , streaming-utils
     , stylist
     , tagsoup
     , text
     , time
     , wai
     , wai-app-static
-    , warc
     , warp
   default-language: Haskell2010
 
@@ -92,22 +82,17 @@ executable index
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
-    , aeson
     , async
     , base >=4.7 && <5
     , bytestring
     , containers
-    , deepseq
     , hasql
-    , hasql-streams-streaming
-    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
     , lucid
     , marlo
     , megaparsec
-    , monoidal-containers
     , mtl
     , network-uri
     , opaleye
@@ -116,16 +101,12 @@ executable index
     , scalpel
     , servant-lucid
     , servant-server
-    , streaming
-    , streaming-bytestring
-    , streaming-utils
     , stylist
     , tagsoup
     , text
     , time
     , wai
     , wai-app-static
-    , warc
     , warp
   default-language: Haskell2010
 
@@ -138,22 +119,17 @@ executable search
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
-    , aeson
     , async
     , base >=4.7 && <5
     , bytestring
     , containers
-    , deepseq
     , hasql
-    , hasql-streams-streaming
-    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
     , lucid
     , marlo
     , megaparsec
-    , monoidal-containers
     , mtl
     , network-uri
     , opaleye
@@ -162,16 +138,12 @@ executable search
     , scalpel
     , servant-lucid
     , servant-server
-    , streaming
-    , streaming-bytestring
-    , streaming-utils
     , stylist
     , tagsoup
     , text
     , time
     , wai
     , wai-app-static
-    , warc
     , warp
   default-language: Haskell2010
 
@@ -184,22 +156,17 @@ executable spider
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
-    , aeson
     , async
     , base >=4.7 && <5
     , bytestring
     , containers
-    , deepseq
     , hasql
-    , hasql-streams-streaming
-    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
     , lucid
     , marlo
     , megaparsec
-    , monoidal-containers
     , mtl
     , network-uri
     , opaleye
@@ -208,16 +175,12 @@ executable spider
     , scalpel
     , servant-lucid
     , servant-server
-    , streaming
-    , streaming-bytestring
-    , streaming-utils
     , stylist
     , tagsoup
     , text
     , time
     , wai
     , wai-app-static
-    , warc
     , warp
   default-language: Haskell2010
 
@@ -231,22 +194,17 @@ test-suite go-go-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
-    , aeson
     , async
     , base >=4.7 && <5
     , bytestring
     , containers
-    , deepseq
     , go-go
     , hasql
-    , hasql-streams-streaming
-    , hasql-transaction-io
     , http-client
     , http-client-tls
     , http-types
     , lucid
     , megaparsec
-    , monoidal-containers
     , mtl
     , network-uri
     , opaleye
@@ -255,15 +213,11 @@ test-suite go-go-test
     , scalpel
     , servant-lucid
     , servant-server
-    , streaming
-    , streaming-bytestring
-    , streaming-utils
     , stylist
     , tagsoup
     , text
     , time
     , wai
     , wai-app-static
-    , warc
     , warp
   default-language: Haskell2010
