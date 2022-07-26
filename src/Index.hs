@@ -1,86 +1,43 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE ViewPatterns          #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GADTs #-}
+
+{-# OPTIONS_GHC -Wall #-}
 
 module Index where
 
-import           Control.Exception (SomeException(SomeException), catch)
-import           Control.Monad (void)
-import           Control.Monad.IO.Class
-import           DB
-import           DB (connectionSettings)
-import           Data.Bifunctor (bimap, first, second)
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Char8 as BS8
-import           Data.ByteString.Streaming.HTTP (runResourceT, ResourceT)
-import           Data.Char (isSpace)
-import           Data.Foldable (for_)
-import           Data.Function ((&))
-import           Data.Functor.Contravariant ((>$<))
-import           Data.Functor.Identity (Identity)
-import           Data.Maybe (fromJust)
-import           Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
-import           Data.Tuple (swap)
-import           Data.Warc
-import           Hasql.Connection (acquire, Connection)
-import           Hasql.CursorTransactionIO.TransactionIO (cursorTransactionIO)
-import           Hasql.Session
-import           Hasql.Streaming (streamingQuery)
-import           Hasql.TransactionIO.Sessions
-import           Network.HTTP (rspHeaders, parseRequestHead, parseResponseHead, RequestData)
-import           Network.HTTP.Client (parseRequest)
-import           Network.HTTP.Headers
-import           Network.URI (parseURI)
-import           Rel8
-import           Signals (title)
-import           Spider (index, indexFromDB)
-import qualified Streaming.ByteString as BSS
-import           Streaming.Pipes (fromStreamingByteString, toStream)
-import qualified Streaming.Prelude as S
-import           Utils (unsafeURI, runRanker, paginate)
-import qualified Network.HTTP.Client.TLS as HTTP
-import Types
-import Control.Concurrent.Async (forConcurrently_)
-
+import Control.Exception
+import Control.Monad (void, forever)
+import DB
+import Hasql.Connection (acquire)
+import Hasql.Session
+import Rel8
+import Spider (indexFromDB)
+import Utils (random)
 
 
 main :: IO ()
 main = do
   Right conn <- acquire connectionSettings
-  for_ [0 .. 174080] $ \page -> do
-    Right docs <-
-      flip run conn $ statement () $ select $ paginate 10 page $ orderBy (d_docId >$< asc) $ do
+  forever $ do
+    Right [doc] <-
+      flip run conn $ statement () $ select $ limit 1 $ orderBy random $ do
             d <- each discoverySchema
-            where_ $ d_state d ==. lit Explored
+            where_ $ d_state d ==. lit Explored &&. d_content d ==. lit ""
             pure d
-    for_ (fmap d_uri docs) print
-    forConcurrently_ docs $ \doc -> do
-      catch (indexFromDB conn doc) $ \(SomeException _) -> do
-        putStrLn "errored ^"
-
-
-updateTitle :: Connection -> Discovery Identity -> IO ()
-updateTitle conn disc = do
-  let uri = unsafeURI $ T.unpack $ d_uri disc
-  mgr <- HTTP.getGlobalManager
-  Just t <- runRanker (Env uri mgr conn) (T.decodeUtf8 $ d_data disc) title
-  print $ (uri, t)
-  void $ flip run conn $ statement () $ update $
-    Update
-      { target = discoverySchema
-      , from = pure ()
-      , set = \_ d -> d { d_title = lit t }
-      , updateWhere = \_ d -> d_docId d ==. lit (d_docId disc)
-      , returning = pure ()
-      }
-
-
+    print $ d_uri doc
+    catch (indexFromDB conn doc) $ \(SomeException _) -> do
+      putStrLn "errored ^"
+      void $ flip run conn $ statement () $ update $ Update
+        { target = discoverySchema
+        , from = pure ()
+        , set = \_ d -> d { d_state = lit NoContent }
+        , updateWhere = \_ d -> d_docId d ==. lit (d_docId doc)
+        , returning = pure ()
+        }
 
 
 -- warcIndexMain :: IO ()

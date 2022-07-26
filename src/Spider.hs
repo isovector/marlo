@@ -8,41 +8,36 @@
 
 module Spider where
 
-import           Control.Applicative (liftA3)
+import Data.Bool (bool)
 import           Control.Exception.Base
 import           Control.Monad (forever, when, void)
 import           DB
-import           Data.Bifunctor (first, second)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
-import           Data.Containers.ListUtils (nubOrd)
-import           Data.Functor ((<&>))
-import           Data.Functor.Contravariant ((>$<), (>$))
+import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
-import           Data.Int (Int16, Int32)
-import qualified Data.Map as M
+import           Data.Int (Int32)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
-import           Keywords (posWords)
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
-import           Rel8 hiding (index)
+import           Rel8 hiding (bool, index)
 import           Signals
 import           Types
-import           Utils (runRanker, unsafeURI)
-import qualified Rel8 as R8
+import           Utils (runRanker, unsafeURI, random)
+import qualified Rel8 as R8 hiding (bool)
 import qualified Data.ByteString.Lazy as BSL
 
 --
 
 nextDiscovered :: Query (Discovery Expr)
-nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> (nullaryFunction @Double "RANDOM" >$ asc)) $ do
+nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
   d <- each discoverySchema
   where_ $ d_state d ==. lit Discovered
   pure d
@@ -64,54 +59,6 @@ docIdFor uri = do
   where_ $ d_uri dis ==. lit (T.pack $ show uri)
   pure dis
 
-
-getWordIds :: [Keyword] -> Query (Words Expr)
-getWordIds kws = do
-  w <- each wordsSchema
-  where_ $ in_ (w_word w) $ fmap (lit . getKeyword) kws
-  pure w
-
-createWordIds :: [Keyword] -> Insert [Words Identity]
-createWordIds kws = Insert
-  { into = wordsSchema
-  , rows = do
-      wid <- nextWordId
-      kw <- values $ fmap (lit . getKeyword) kws
-      pure $ Words
-        { w_wordId = wid
-        , w_word = kw
-        }
-  , onConflict = DoNothing
-  , returning = Projection id
-  }
-
-
-insertKeywords :: DocId -> [(Int, WordId)] -> Insert ()
-insertKeywords did kws = Insert
-  { into = indexSchema
-  , rows = do
-      iid <- nextIndexId
-      (pos, wid) <- values $ fmap (lit . first (fromIntegral @_ @Int16)) kws
-      pure $ Index
-        { i_id = iid
-        , i_docId  = lit did
-        , i_wordId = wid
-        , i_position = pos
-        }
-  , onConflict = DoNothing
-  , returning = pure ()
-  }
-
-
-indexWords :: Connection -> DocId -> [(Int, Keyword)] -> IO ()
-indexWords conn did pos = do
-  let kws = nubOrd $ fmap snd pos
-  void $ flip run conn $ statement () $ insert $ createWordIds kws
-  Right ws <- flip run conn $ statement () $ select $ getWordIds kws
-  let word_map = M.fromList $ ws <&> \(Words a b) -> (Keyword b, a)
-      pos' = fmap (second (word_map M.!)) $ take (fromIntegral $ maxBound @Int16) pos
-  Right res <- flip run conn $ statement () $ insert $ insertKeywords did pos'
-  pure res
 
 
 getDocId :: Connection -> Int32 -> URI -> IO (Discovery Identity)
@@ -139,6 +86,9 @@ discover depth uri = Insert
           (lit $ depth + 1)
           (lit "")
           (lit 0)
+          (lit "")
+          (lit "")
+          (lit "")
           (lit "")
   , onConflict = DoUpdate $ Upsert
                   { index = d_docId
@@ -228,12 +178,11 @@ index :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
 index conn depth uri mime raw_body body = do
   disc <- getDocId conn depth uri
   mgr <- HTTP.getGlobalManager
-  let did = d_docId disc
   case (mime == "text/html" && isAcceptableLink uri) of
     True -> do
-      Just (ls, ws, t) <- runRanker (Env uri mgr conn) body $ liftA3 (,,) links posWords title
+      let env = Env uri mgr conn
+      Just (ls, t) <- runRanker env  body $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
-      indexWords conn did ws
       void $ flip run conn $ statement () $ update $ Update
         { target = discoverySchema
         , from = pure ()
@@ -244,21 +193,33 @@ index conn depth uri mime raw_body body = do
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
         }
+      indexCore conn env disc
     False -> do
-      void $ flip run conn $ statement () $ update $ markExplored Explored disc
+      void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
 indexFromDB :: Connection -> Discovery Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
-  let did = d_docId disc
   mgr <- HTTP.getGlobalManager
   when (isAcceptableLink uri) $ do
-    Just ws <- runRanker (Env uri mgr conn) (decodeUtf8 $ d_data disc) $ posWords
-    -- void $ buildEdges conn disc ls
-    indexWords conn did ws
-    -- when (rank stuff > 0) $
-    --    putStrLn $ show uri <> "   : " <> show (rank stuff)
-  -- putStrLn $ "explored " <> show did
+    indexCore conn (Env uri mgr conn) disc
+
+indexCore :: Connection -> Env -> Discovery Identity -> IO ()
+indexCore conn env disc = do
+  Just (m, h, c, has_ads) <-
+    runRanker env (decodeUtf8 $ d_data disc) $
+      (,,,) <$> mainContent <*> headingsContent <*> commentsContent <*> hasGoogleAds
+  void $ flip run conn $ statement () $ update $ Update
+    { target = discoverySchema
+    , from = pure ()
+    , set = \ _ dis -> dis { d_content  = lit m
+                           , d_headings = lit h
+                           , d_comments = lit c
+                           , d_state    = lit $ bool Explored Unacceptable has_ads
+                           }
+    , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
+    , returning = pure ()
+    }
 
 
 mimeToContentType :: ByteString -> ByteString

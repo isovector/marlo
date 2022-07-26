@@ -55,6 +55,7 @@ dependencies:
 - parser-combinators
 - time
 - deepseq
+- opaleye
 
 library:
   source-dirs: src
@@ -74,6 +75,17 @@ executables:
   spider:
     main:                Main.hs
     source-dirs:         app/Spider
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O2
+    dependencies:
+    - marlo
+
+  index:
+    main:                Main.hs
+    source-dirs:         app/Index
     ghc-options:
     - -threaded
     - -rtsopts

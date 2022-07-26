@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Signals where
 
-import           Control.Applicative (optional, empty)
+import           Control.Applicative (optional, empty, liftA2)
 import           Control.Monad.Reader
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
 import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
@@ -22,6 +23,7 @@ import Data.Char (toLower, isAlpha, isDigit)
 import Debug.Trace (traceM)
 import Data.Int (Int64)
 import Assets (getAssetSizes)
+import Data.Foldable (asum)
 
 
 gif :: Ranker Text
@@ -65,8 +67,8 @@ title :: Ranker Text
 title = text "title"
 
 
-titleKeywords :: Ranker [Keyword]
-titleKeywords = fmap (mapMaybe keywordify . T.words) title
+-- titleKeywords :: Ranker [Keyword]
+-- titleKeywords = fmap (mapMaybe keywordify . T.words) title
 
 
 link :: Ranker (Link URI)
@@ -193,6 +195,7 @@ isAcceptableLink uri
           , "tiktok.com"
           , "snapchat.com"
           , "spoilertv.com"
+          , "bloomberg.com"
           , "linkedin.com"
           , "tumblr.com"
           , "scribd.com"
@@ -348,4 +351,42 @@ hasSticky = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "s
 
 hasModal :: Ranker Bool
 hasModal = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "modal"
+
+
+mainContent :: Ranker Text
+mainContent = fmap (T.intercalate " ") $ asum
+  [ failIfEmpty $ texts $ tagClass "div" "entry-content"
+  , failIfEmpty $ texts $ tagClass "div" "content"
+  , failIfEmpty $ texts $ tagClass "div" "pjgm-postcontent"
+  , failIfEmpty $ texts $ tagClass "div" "PostsPage-postContent"
+  , failIfEmpty $ texts $ tagClass "div" "ArticleBody-articleBody"
+  , failIfEmpty $ texts $ tagId "div" "mw-content-text"
+  , failIfEmpty $ texts "article"
+  , failIfEmpty $ texts "main"
+  , failIfEmpty $ texts $ tagId "div" "content"
+  , failIfEmpty $ texts $ tagClass "td" "mainsection"
+  , failIfEmpty $ texts "body"
+  ]
+
+failIfEmpty :: Monad m => ScraperT z m [a] -> ScraperT z m [a]
+failIfEmpty m = do
+  m >>= \case
+    [] -> empty
+    x -> pure x
+
+
+headingsContent :: Ranker Text
+headingsContent = fmap (T.intercalate " ") $
+  liftA2 (<>) <$> texts "h1" <*> texts "h2"
+
+
+commentsContent :: Ranker Text
+commentsContent = fmap (T.intercalate " ") $ asum
+  [ failIfEmpty $ texts $ tagClass "div" "comments-area"
+  , failIfEmpty $ texts $ tagClass "div" "comments-page"
+  , failIfEmpty $ texts $ tagClass "div" "comments"
+  , failIfEmpty $ texts $ tagClass "div" "PostsPage-commentsSection"
+  , failIfEmpty $ texts $ tagId "div" "comments"
+  , pure []
+  ]
 

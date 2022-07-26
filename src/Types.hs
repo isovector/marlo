@@ -56,15 +56,6 @@ data Stuff = Stuff
   } deriving (Eq, Ord, Show)
 
 
-newtype Keyword = Keyword
-  { getKeyword :: Text
-  } deriving (Eq, Ord, Show, IsString)
-
-
-newtype InverseIndex_ = InverseIndex_
-  { getInverseIndex :: MonoidalMap Text [URI]
-  } deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
-
 data Search a
   = Term a
   | Phrase [a]

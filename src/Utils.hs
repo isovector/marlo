@@ -18,11 +18,12 @@ import qualified Data.Text as T
 import           Data.Time (getCurrentTime)
 import           Data.Time.Clock (diffUTCTime)
 import           Network.URI
-import           Rel8 (limit, offset)
+import           Rel8 (limit, offset, Order, nullaryFunction, asc)
 import           System.CPUTime (getCPUTime)
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
+import Data.Functor.Contravariant ((>$))
 
 
 paginate size page q =
@@ -34,20 +35,15 @@ runRanker :: Env -> Text -> Ranker a -> IO (Maybe a)
 runRanker e t = flip runReaderT e . scrapeStringLikeT t
 
 
-invertMap :: URI -> Set Text -> InverseIndex_
-invertMap u t = InverseIndex_ $ M.fromList $ fmap (, [u]) $ S.toList t
-
-
-findDocs :: InverseIndex_ -> Text -> [URI]
-findDocs (InverseIndex_ c) kw = fromMaybe [] $ M.lookup kw c
-
-
 countOf :: Selector -> Ranker Int
 countOf sel = fmap length $ chroots sel $ pure ()
 
 
 tagClass :: String -> String -> Selector
 tagClass a b = TagString a @: [hasClass b]
+
+tagId :: String -> String -> Selector
+tagId a b = TagString a @: ["id" @= b]
 
 
 classOf :: String -> Selector
@@ -87,4 +83,7 @@ timing name ioa = do
     (t, a) <- timeItT ioa
     liftIO $ printf (name ++ ": %6.4fs\n") t
     pure a
+
+random :: Order a
+random = nullaryFunction @Double "RANDOM" >$ asc
 

@@ -18,7 +18,7 @@ import Network.URI (isAllowedInURI)
 
 type Parser = Parsec Void Text
 
-term :: Parser (Search Keyword)
+term :: Parser (Search Text)
 term = asum
   [ between (lexeme sp $ char '(') (lexeme sp $ char ')') expr
   , siteParser
@@ -29,7 +29,7 @@ term = asum
 sp :: Parser ()
 sp = L.space space1 empty empty
 
-expr :: Parser (Search Keyword)
+expr :: Parser (Search Text)
 expr = makeExprParser term
   [ [ Prefix $ Negate <$ symbol sp "-"   ]
   , [ InfixL $ And    <$ symbol sp ""    ]
@@ -37,24 +37,24 @@ expr = makeExprParser term
   , [ InfixL $ Or     <$ symbol sp "OR"  ]
   ]
 
-searchParser :: Parser (Search Keyword)
+searchParser :: Parser (Search Text)
 searchParser = expr <* eof
 
-phraseParser :: Parser (Search Keyword)
+phraseParser :: Parser (Search Text)
 phraseParser = do
   symbol sp "\""
   x <- many keywordParser
   symbol sp "\""
   pure $ Phrase x
 
-keywordParser :: Parser Keyword
+keywordParser :: Parser Text
 keywordParser = try $ do
   k <- lexeme sp $ some $ satisfy isAlphaNum
   case k of
     "AND" -> empty
     "OR" -> empty
     _ -> pure ()
-  pure $ Keyword $ T.pack k
+  pure $ T.pack k
 
 siteParser :: Parser (Search a)
 siteParser = lexeme sp $ do

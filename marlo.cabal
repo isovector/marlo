@@ -61,6 +61,53 @@ library
     , monoidal-containers
     , mtl
     , network-uri
+    , opaleye
+    , parser-combinators
+    , rel8
+    , scalpel
+    , servant-lucid
+    , servant-server
+    , streaming
+    , streaming-bytestring
+    , streaming-utils
+    , stylist
+    , tagsoup
+    , text
+    , time
+    , wai
+    , wai-app-static
+    , warc
+    , warp
+  default-language: Haskell2010
+
+executable index
+  main-is: Main.hs
+  other-modules:
+      Paths_marlo
+  hs-source-dirs:
+      app/Index
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  build-depends:
+      HTTP
+    , aeson
+    , async
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , deepseq
+    , hasql
+    , hasql-streams-streaming
+    , hasql-transaction-io
+    , http-client
+    , http-client-tls
+    , http-types
+    , lucid
+    , marlo
+    , megaparsec
+    , monoidal-containers
+    , mtl
+    , network-uri
+    , opaleye
     , parser-combinators
     , rel8
     , scalpel
@@ -106,6 +153,7 @@ executable search
     , monoidal-containers
     , mtl
     , network-uri
+    , opaleye
     , parser-combinators
     , rel8
     , scalpel
@@ -151,6 +199,7 @@ executable spider
     , monoidal-containers
     , mtl
     , network-uri
+    , opaleye
     , parser-combinators
     , rel8
     , scalpel
@@ -197,6 +246,7 @@ test-suite go-go-test
     , monoidal-containers
     , mtl
     , network-uri
+    , opaleye
     , parser-combinators
     , rel8
     , scalpel

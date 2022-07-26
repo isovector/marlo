@@ -13,6 +13,8 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Search where
 
@@ -42,99 +44,51 @@ import           Search.Parser (searchParser)
 import           Servant
 import           Servant.HTML.Lucid (HTML)
 import           Servant.Server.Generic ()
-import           Spider (getWordIds)
 import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 import Network.URI (escapeURIString, isUnescapedInURI)
+import Rel8.TextSearch
 
-
-
-blah = do
-  where_ $ true ==. false
-  pure $ lit $ DocId 0
-
-byDocId m = do
-  d <- m
-  doc <- each discoverySchema
-  where_ $ d_docId doc ==. d
-  pure doc { d_data = "" }
-
-compileSearch :: Search WordId -> Query (Expr DocId)
-compileSearch (Phrase []) = blah
-compileSearch (Phrase wids@(w1 : wr)) = do
-  distinct $ do
-    i1 <- each indexSchema
-    where_ $ i_wordId i1 ==. lit w1
-    let p1 = i_position i1
-    distinct $ foldr1 intersect $ do
-      (ix, wid) <- zip [1..] wr
-      pure $ do
-        w <- each indexSchema
-        where_ $ i_wordId w ==. lit wid &&. i_position w ==. p1 + lit ix &&. i_docId w ==. i_docId i1
-        pure $ i_docId w
-compileSearch (Term wid) =
-  distinct $ do
-    w <- each indexSchema
-    where_ $ i_wordId w ==. lit wid
-    pure $ i_docId w
-compileSearch (Negate q) = do
-  except (fmap d_docId $ each discoverySchema) $ compileSearch q
-compileSearch (And q1 q2) = do
-  intersect (compileSearch q1) $ compileSearch q2
-compileSearch (Or q1 q2) = do
-  union (compileSearch q1) $ compileSearch q2
-compileSearch (SiteLike t) = do
+compileSearch :: Search Text -> Query (Discovery Expr)
+compileSearch q = do
   d <- each discoverySchema
-  where_ $ like (lit $ "%" <> t <> "%") (d_uri d)
-  pure $ d_docId d
+  where_ $ match (d_search d) $ lit $ compileQuery q
+  pure d
 
 
-getSnippet :: DocId -> [WordId] -> Query (Expr Bool, Expr Text)
-getSnippet d [] = do
-  where_ $ lit True ==. lit False
-  pure $ lit (False, "")
-getSnippet d ws@(w : _) = do
-  i <- limit 1 $ do
-      i <- each indexSchema
-      where_ $ i_docId i ==. lit d &&. i_wordId i ==. lit w
-      pure i
-  let p = i_position i
-  wid <-
-    limit 10 $ fmap snd $ orderBy (fst >$< asc) $ do
-      j <- each indexSchema
-      where_ $ i_docId j ==. lit d &&. ( (-5 <=. i_position j - p &&. i_position j - p <=. 5)
-                                       )
-      pure (i_position j, i_wordId j)
-  w <- each wordsSchema
-  where_ $ w_wordId w ==. wid
-  pure (in_ (w_wordId w) $ fmap lit ws , w_word w)
+compileQuery :: Search Text -> Tsquery
+compileQuery (Phrase []) = error "nope"
+compileQuery (Phrase wids) =
+  foldr1 TsqPhrase $ fmap TsqTerm wids
+compileQuery (Term wid) = TsqTerm wid
+compileQuery (And lhs rhs) = TsqAnd (compileQuery lhs) (compileQuery rhs)
+compileQuery (Or lhs rhs) = TsqOr (compileQuery lhs) (compileQuery rhs)
+compileQuery (Negate lhs) = TsqNot (compileQuery lhs)
+compileQuery (SiteLike _) = error "cant do sitelike yet"
 
 
-evaluateTerm :: Connection -> Search Keyword -> IO (Search WordId)
-evaluateTerm conn q = do
-  let kws = toList q
-  Right wids <- flip run conn $ statement () $ select $ getWordIds kws
-  let widmap =
-        M.fromList $ do
-          wid <- wids
-          pure (Keyword $ w_word wid, w_wordId wid)
-  pure $ fmap (widmap M.!) q
+
+getSnippet :: DocId -> Tsquery -> Query (Expr Text)
+getSnippet did q = do
+  d <- each discoverySchema
+  where_ $ d_docId d ==. lit did
+  pure $ headline (d_content d) $ lit q
 
 
--- API specification
 type TestApi =
        Get '[HTML] (L.Html ())
   :<|> "search"
-        :> QueryParam "q" (Search Keyword)
+        :> QueryParam "q" (Search Text)
         :> QueryParam "p" Int
         :> Get '[HTML] (L.Html ())
   :<|> Raw
 
 
-instance FromHttpApiData [Keyword] where
-  parseQueryParam = Right . fmap Keyword . T.split (== ' ')
+instance FromHttpApiData [Text] where
+  parseQueryParam = Right . T.split (== ' ')
+
 
 home :: L.Html ()
 home =
@@ -143,6 +97,7 @@ home =
       L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
       L.title_ "marlo search"
     L.body_ $ searchBar ""
+
 
 searchBar :: Text -> L.Html ()
 searchBar t =
@@ -160,7 +115,7 @@ searchBar t =
         ]
 
 
-search :: Maybe (Search Keyword) -> Maybe Int -> Handler (L.Html ())
+search :: Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
 search Nothing _ = pure $ "Give me some keywords, punk!"
 search (Just q) mpage = do
   let pagenum = Prelude.max 0 $ maybe 0 (subtract 1) mpage
@@ -168,22 +123,21 @@ search (Just q) mpage = do
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
     Right conn <- acquire connectionSettings
-    swid <- timing "lookup keywords" $ evaluateTerm conn q
-    writeFile "/tmp/lastquery.sql" $ showQuery $ byDocId $ compileSearch swid
+    writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
       flip run conn
         $ statement ()
         $ select
         $ paginate pagesize (fromIntegral pagenum)
-        $ let x = orderBy (d_rank >$< desc) $ byDocId $ compileSearch swid
+        $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
-    (_, snips) <- timing "building snippets" $ fmap partitionEithers $
+    snips <- timing "building snippets" $
       for docs $ \doc -> do
-        putStrLn $ "building snippet for " <> show (d_docId doc)
-        flip run conn
+        Right [snip] <- flip run conn
           $ statement ()
           $ select
-          $ getSnippet (d_docId doc) $ toList swid
+          $ getSnippet (d_docId doc) $ compileQuery q
+        pure snip
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
     L.html_ $ do
@@ -204,10 +158,10 @@ search (Just q) mpage = do
             L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show pagenum)  ] "Prev"
           when ((pagenum + 1) * pagesize < fromIntegral cnt) $ do
             L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show (pagenum + 2))  ] "Next"
+  where
+    escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
 
-escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
-
-encodeQuery :: Search Keyword -> Text
+encodeQuery :: Search Text -> Text
 encodeQuery (Term kw) = coerce kw
 encodeQuery (Phrase keys) = "\"" <> (T.intercalate " " $ coerce keys) <> "\""
 encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
@@ -215,12 +169,12 @@ encodeQuery (And q1 q2) = encodeQuery q1 <> " " <> encodeQuery q2
 encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
 encodeQuery (SiteLike t) = "site:" <> t
 
-searchResult :: Discovery Rel8.Result -> [(Bool, Text)] -> L.Html ()
+searchResult :: Discovery Rel8.Result -> Text -> L.Html ()
 searchResult d snip =
   L.div_ [L.class_ "result"] $ do
     L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml $ d_uri d
     L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml title
-    L.p_ [L.class_ "snippet"] $ foldMap (uncurry boldify) snip
+    L.p_ [L.class_ "snippet"] $ L.toHtmlRaw snip
   where
     title =
       case T.strip $ d_title d of
@@ -228,16 +182,10 @@ searchResult d snip =
         x -> x
 
 
-boldify :: Bool -> Text -> L.Html ()
-boldify False t = L.toHtml $ t <> " "
-boldify True t = L.strong_ $ L.toHtml $ t <> " "
-
-
-
 server :: Server TestApi
 server = pure home :<|> search :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
 
-instance FromHttpApiData (Search Keyword) where
+instance FromHttpApiData (Search Text) where
   parseQueryParam = first (T.pack . errorBundlePretty) . parse searchParser ""
 
 runTestServer :: W.Port -> IO ()

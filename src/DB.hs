@@ -18,11 +18,12 @@ module DB where
 import Data.ByteString (ByteString)
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int64, Int16, Int32)
+import Data.Int (Int64, Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
+import Rel8.TextSearch
 
 
 newtype EdgeId = EdgeId
@@ -35,22 +36,13 @@ newtype DocId = DocId
   }
   deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
-newtype WordId = WordId
-  { unWordId :: Int64
-  }
-  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
-
-newtype IndexId = IndexId
-  { unIndexId :: Int64
-  }
-  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
-
 data DiscoveryState
   = Discovered
   | Explored
   | Pruned
   | Errored
   | Unacceptable
+  | NoContent
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DiscoveryState
 
@@ -69,42 +61,21 @@ data Discovery f = Discovery
   , d_data :: Column f ByteString
   , d_rank :: Column f Double
   , d_title :: Column f Text
+  , d_headings :: Column f Text
+  , d_content :: Column f Text
+  , d_comments :: Column f Text
+  , d_search :: Column f Tsvector
   }
   deriving stock Generic
   deriving anyclass Rel8able
 
 deriving instance Show (Discovery Identity)
 
-data Words f = Words
-  { w_wordId :: Column f WordId
-  , w_word :: Column f Text
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-deriving instance Show (Words Identity)
-
-data Index f = Index
-  { i_id :: Column f IndexId
-  , i_docId :: Column f DocId
-  , i_wordId :: Column f WordId
-  , i_position :: Column f Int16
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
 data Edges f = Edges
   { e_edgeId :: Column f EdgeId
   , e_src :: Column f DocId
   , e_dst :: Column f DocId
   , e_anchor :: Column f Text
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-data InverseIndex f = InverseIndex
-  { ii_wordId :: Column f WordId
-  , ii_docs :: Column f [DocId]
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -141,8 +112,22 @@ CREATE TABLE IF NOT EXISTS discovery (
   depth int4 NOT NULL,
   rank float8 NOT NULL,
   data bytea NOT NULL,
-  title TEXT UNIQUE NOT NULL
+  title TEXT NOT NULL,
+  headings TEXT NOT NULL,
+  content TEXT NOT NULL,
+  comments TEXT NOT NULL
 );
+
+ALTER TABLE discovery
+    ADD COLUMN search tsvector
+    GENERATED ALWAYS AS (setweight(to_tsvector('english', title), 'A')
+               || ' ' || setweight(to_tsvector('english', headings), 'B')
+               || ' ' || setweight(to_tsvector('english', content), 'C')
+               || ' ' || setweight(to_tsvector('english', comments), 'D')
+                ) STORED;
+
+CREATE INDEX search_idx ON discovery USING GIN (search);
+
 
 -}
 
@@ -158,32 +143,13 @@ discoverySchema = TableSchema
       , d_data  = "data"
       , d_rank = "rank"
       , d_title = "title"
+      , d_headings = "headings"
+      , d_content = "content"
+      , d_comments = "comments"
+      , d_search = "search"
       }
   }
 
-nextWordId :: Query (Expr WordId)
-nextWordId = fmap coerce $ pure $ nextval "word_id_seq"
-
-{-
-
-CREATE SEQUENCE word_id_seq;
-CREATE TABLE IF NOT EXISTS words (
-  id int8 PRIMARY KEY,
-  word TEXT UNIQUE NOT NULL
-);
-
--}
-
-
-wordsSchema :: TableSchema (Words Name)
-wordsSchema = TableSchema
-  { name    = "words"
-  , schema  = Just "public"
-  , columns = Words
-      { w_wordId = "id"
-      , w_word = "word"
-      }
-  }
 
 nextEdgeId :: Query (Expr EdgeId)
 nextEdgeId = fmap coerce $ pure $ nextval "edge_id_seq"
@@ -212,60 +178,9 @@ edgesSchema = TableSchema
       }
   }
 
-nextIndexId :: Query (Expr IndexId)
-nextIndexId = fmap coerce $ pure $ nextval "index_id_seq"
-
-{-
-
-CREATE SEQUENCE index_id_seq;
-CREATE TABLE IF NOT EXISTS index (
-  id int8 PRIMARY KEY,
-  doc_id int8 NOT NULL,
-  word_id int8 NOT NULL,
-  position int4 NOT NULL
-);
-
--}
-
-indexSchema :: TableSchema (Index Name)
-indexSchema = TableSchema
-  { name    = "index"
-  , schema  = Just "public"
-  , columns = Index
-      { i_id = "id"
-      , i_docId = "doc_id"
-      , i_wordId = "word_id"
-      , i_position = "position"
-      }
-  }
-
--- (<@.) :: DBEq a => Expr [a] -> Expr [a] -> Expr Bool
--- a <@. b = unsafeLiftOpNull _ a b
-
-{-
-
-CREATE TABLE IF NOT EXISTS inverse_index (
-  word_id int8 PRIMARY KEY,
-  documents int8[] NOT NULL
-);
-
--}
-
-inverseIndexSchema :: TableSchema (InverseIndex Name)
-inverseIndexSchema = TableSchema
-  { name    = "inverse_index"
-  , schema  = Just "public"
-  , columns = InverseIndex
-      { ii_wordId = "word_id"
-      , ii_docs = "documents"
-      }
-  }
-
-
 
 connectionSettings :: Settings
 connectionSettings = settings "localhost" 5432 "postgres" "" "db"
-
 
 
 simpInsert
@@ -284,6 +199,7 @@ simpInsert s e =
     , onConflict = DoNothing
     , returning = pure ()
     }
+
 
 litInsert
   :: ( Table Name (Transpose Name (Query a))
@@ -324,6 +240,10 @@ rootNodes = Insert
         , d_data = ""
         , d_rank = 0
         , d_title = ""
+        , d_headings = ""
+        , d_content = ""
+        , d_comments = ""
+        , d_search = lit Tsvector
         }
   , onConflict = DoNothing
   , returning = pure ()
