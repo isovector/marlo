@@ -34,7 +34,7 @@ main = do
       void $ flip run conn $ statement () $ update $ Update
         { target = discoverySchema
         , from = pure ()
-        , set = \_ d -> d { d_state = lit NoContent }
+        , set = \_ d -> fixSearch $ d { d_state = lit NoContent }
         , updateWhere = \_ d -> d_docId d ==. lit (d_docId doc)
         , returning = pure ()
         }

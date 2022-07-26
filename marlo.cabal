@@ -26,11 +26,14 @@ source-repository head
 library
   exposed-modules:
       Assets
+      Config
+      Config.Type
       DB
       Index
       Keywords
       Lib
       Ranking
+      Rel8.TextSearch
       Search
       Search.Parser
       Signals

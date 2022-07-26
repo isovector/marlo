@@ -159,8 +159,8 @@ nextEdgeId = fmap coerce $ pure $ nextval "edge_id_seq"
 CREATE SEQUENCE edge_id_seq;
 CREATE TABLE IF NOT EXISTS edges (
   id int8 PRIMARY KEY,
-  src TEXT NOT NULL,
-  dst TEXT NOT NULL,
+  src int8 NOT NULL,
+  dst int8 NOT NULL,
   anchor TEXT NOT NULL
 );
 
@@ -177,6 +177,9 @@ edgesSchema = TableSchema
       , e_anchor = "anchor"
       }
   }
+
+fixSearch :: Discovery Expr -> Discovery Expr
+fixSearch d = d { d_search = unsafeDefault }
 
 
 connectionSettings :: Settings

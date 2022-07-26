@@ -50,13 +50,16 @@ import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
+import Config
 
 
 compileSearch :: Search Text -> Query (Discovery Expr)
-compileSearch q =
+compileSearch q = orderBy ((\x -> rank (d_search x) (lit q') rDISTANCE) >$< desc) $
   case compile' q of
     Match ts -> matching ts
     Full qu -> qu
+  where
+    q' = compileQuery q
 
 
 data IL
@@ -111,7 +114,7 @@ getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
   d <- each discoverySchema
   where_ $ d_docId d ==. lit did
-  pure $ headline (d_content d <>. d_headings d <>. d_comments d) $ lit q
+  pure $ headline (d_content d <>. " " <>. d_headings d <>. " " <>. d_comments d) $ lit q
 
 
 type TestApi =
@@ -231,5 +234,5 @@ runTestServer :: W.Port -> IO ()
 runTestServer port = W.run port $ serve (Proxy @TestApi) server
 
 main :: IO ()
-main = runTestServer 8001
+main = runTestServer cfg_port
 
