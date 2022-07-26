@@ -132,7 +132,8 @@ buildEdges conn disc ls = do
 spiderMain :: IO ()
 spiderMain = do
   Right conn <- acquire connectionSettings
-  void $ flip run conn $ statement () $ insert rootNodes
+  z <- flip run conn $ statement () $ insert rootNodes
+  print z
   forever $ do
     Right [disc] <- flip run conn $ statement () $ select nextDiscovered
     let url = d_uri disc

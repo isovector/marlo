@@ -237,7 +237,7 @@ rootNodes = Insert
             , "https://jeremykun.com/"
             , "https://sandymaguire.me/"
             ]
-      pure Discovery
+      pure $ fixSearch $ Discovery
         { d_docId = d
         , d_uri = z
         , d_state = lit Discovered
