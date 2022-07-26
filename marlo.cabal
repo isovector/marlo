@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           go-go
+name:           marlo
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/isovector/go-go#readme>
 homepage:       https://github.com/isovector/go-go#readme
@@ -39,7 +39,7 @@ library
       Utils
       WebGraph
   other-modules:
-      Paths_go_go
+      Paths_marlo
   hs-source-dirs:
       src
   build-depends:
@@ -49,6 +49,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , deepseq
     , hasql
     , hasql-streams-streaming
     , hasql-transaction-io
@@ -71,21 +72,20 @@ library
     , stylist
     , tagsoup
     , text
-    , timeit
+    , time
     , wai
     , wai-app-static
     , warc
     , warp
   default-language: Haskell2010
 
-executable go-go-exe
+executable search
   main-is: Main.hs
   other-modules:
-      Spider.Main
-      Paths_go_go
+      Paths_marlo
   hs-source-dirs:
-      app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+      app/Search
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
     , aeson
@@ -93,7 +93,7 @@ executable go-go-exe
     , base >=4.7 && <5
     , bytestring
     , containers
-    , go-go
+    , deepseq
     , hasql
     , hasql-streams-streaming
     , hasql-transaction-io
@@ -101,6 +101,7 @@ executable go-go-exe
     , http-client-tls
     , http-types
     , lucid
+    , marlo
     , megaparsec
     , monoidal-containers
     , mtl
@@ -116,7 +117,7 @@ executable go-go-exe
     , stylist
     , tagsoup
     , text
-    , timeit
+    , time
     , wai
     , wai-app-static
     , warc
@@ -126,10 +127,10 @@ executable go-go-exe
 executable spider
   main-is: Main.hs
   other-modules:
-      Paths_go_go
+      Paths_marlo
   hs-source-dirs:
       app/Spider
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
     , aeson
@@ -137,7 +138,7 @@ executable spider
     , base >=4.7 && <5
     , bytestring
     , containers
-    , go-go
+    , deepseq
     , hasql
     , hasql-streams-streaming
     , hasql-transaction-io
@@ -145,6 +146,7 @@ executable spider
     , http-client-tls
     , http-types
     , lucid
+    , marlo
     , megaparsec
     , monoidal-containers
     , mtl
@@ -160,7 +162,7 @@ executable spider
     , stylist
     , tagsoup
     , text
-    , timeit
+    , time
     , wai
     , wai-app-static
     , warc
@@ -171,7 +173,7 @@ test-suite go-go-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_go_go
+      Paths_marlo
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -182,6 +184,7 @@ test-suite go-go-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , deepseq
     , go-go
     , hasql
     , hasql-streams-streaming
@@ -205,7 +208,7 @@ test-suite go-go-test
     , stylist
     , tagsoup
     , text
-    , timeit
+    , time
     , wai
     , wai-app-static
     , warc

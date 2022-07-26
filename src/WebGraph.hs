@@ -13,7 +13,6 @@ import Data.Int (Int64)
 import Hasql.Statement
 import Hasql.Connection (Connection, acquire)
 import Hasql.Session
-import Data.Graph.PageRank (pageRanks)
 import Data.Map (toDescList)
 import Streaming (Stream, Of)
 import qualified Streaming as S

@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Utils where
 
@@ -14,9 +15,11 @@ import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
+import           Data.Time (getCurrentTime)
+import           Data.Time.Clock (diffUTCTime)
 import           Network.URI
 import           Rel8 (limit, offset)
-import           System.TimeIt (timeItT)
+import           System.CPUTime (getCPUTime)
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
@@ -72,10 +75,16 @@ has r = True <$ r <|> pure False
 posKeywordsToInv :: [(Int, Text)] -> Set Text
 posKeywordsToInv = S.fromList . fmap snd
 
+timeItT :: IO a -> IO (Double, a)
+timeItT ioa = do
+    t1 <- getCurrentTime
+    a <- ioa
+    t2 <- getCurrentTime
+    return (realToFrac $ diffUTCTime t2 t1, a)
 
 timing :: String -> IO a -> IO a
 timing name ioa = do
     (t, a) <- timeItT ioa
     liftIO $ printf (name ++ ": %6.4fs\n") t
-    return a
+    pure a
 

@@ -1,4 +1,4 @@
-name:                go-go
+name:                marlo
 version:             0.1.0.0
 github:              "isovector/go-go"
 license:             BSD3
@@ -53,21 +53,23 @@ dependencies:
 - async
 - megaparsec
 - parser-combinators
-- timeit
+- time
+- deepseq
 
 library:
   source-dirs: src
 
 executables:
-  go-go-exe:
+  search:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         app/Search
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -O2
     dependencies:
-    - go-go
+    - marlo
 
   spider:
     main:                Main.hs
@@ -76,8 +78,9 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -O2
     dependencies:
-    - go-go
+    - marlo
 
 tests:
   go-go-test:
