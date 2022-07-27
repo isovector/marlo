@@ -32,6 +32,7 @@ library
       Index
       Keywords
       Lib
+      Purge
       Ranking
       Rel8.TextSearch
       Search
@@ -79,6 +80,43 @@ executable index
       Paths_marlo
   hs-source-dirs:
       app/Index
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  build-depends:
+      HTTP
+    , async
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , hasql
+    , http-client
+    , http-client-tls
+    , http-types
+    , lucid
+    , marlo
+    , megaparsec
+    , mtl
+    , network-uri
+    , opaleye
+    , parser-combinators
+    , rel8
+    , scalpel
+    , servant-lucid
+    , servant-server
+    , stylist
+    , tagsoup
+    , text
+    , time
+    , wai
+    , wai-app-static
+    , warp
+  default-language: Haskell2010
+
+executable purge
+  main-is: Main.hs
+  other-modules:
+      Paths_marlo
+  hs-source-dirs:
+      app/Purge
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
