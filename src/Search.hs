@@ -78,7 +78,8 @@ compile' (And lhs rhs) = merge TsqAnd intersect (compile' lhs) (compile' rhs)
 compile' (Or lhs rhs) = merge TsqOr union (compile' lhs) (compile' rhs)
 compile' (SiteLike t) = Full $ do
   d <- each discoverySchema'
-  where_ $ like (lit $ "%" <> t <> "%") $ d_uri $ d_table d
+  where_ $ like (lit $ "%" <> t <> "%") (d_uri $ d_table d)
+       &&. d_state (d_table d) ==. lit Explored
   pure d
 
 merge
@@ -95,7 +96,8 @@ merge _ q (Full q1) (Full q2) = Full $ q q1 q2
 matching :: Tsquery -> Query (Discovery' Expr)
 matching q = do
   d <- each discoverySchema'
-  where_ $ match (d_search d) (lit q) &&. d_state (d_table d) ==. lit Explored
+  where_ $ match (d_search d) (lit q)
+       &&. d_state (d_table d) ==. lit Explored
   pure d
 
 
