@@ -52,3 +52,7 @@ h1::after {
   font-weight: normal;
   src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
 }
+
+.metrics {
+  text-align: center;
+}

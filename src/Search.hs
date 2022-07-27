@@ -132,13 +132,39 @@ instance FromHttpApiData [Text] where
   parseQueryParam = Right . T.split (== ' ')
 
 
-home :: L.Html ()
-home =
-  L.html_ $ do
-    L.head_ $ do
-      L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
-      L.title_ "marlo search"
-    L.body_ $ searchBar ""
+home :: Connection -> Handler (L.Html ())
+home conn = do
+  sizes <- liftIO $ do
+    Right sizes <- fmap (fmap M.fromList) $
+      flip run conn $ statement () $ select $ do
+        aggregate $ do
+          d <- each discoverySchema
+          pure (groupBy $ d_state d, countStar)
+    pure sizes
+  pure $
+    L.html_ $ do
+      L.head_ $ do
+        L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
+        L.title_ "marlo: search, for humans"
+      L.body_ $ L.div_ $ do
+        searchBar ""
+        L.div_ [L.class_ "metrics"] $ do
+          L.span_ $ mconcat
+            [ "Indexed: "
+            , L.toHtml (commafy $ show $ fromMaybe 0 (M.lookup Explored sizes))
+            , " / Discovered: "
+            , L.toHtml (commafy $ show $ fromMaybe 0 (M.lookup Discovered sizes))
+            ]
+
+
+commafy :: String -> String
+commafy
+  = T.unpack
+  . T.intercalate ","
+  . reverse
+  . T.chunksOf 3
+  . T.reverse
+  . T.pack
 
 
 searchBar :: Text -> L.Html ()
@@ -157,14 +183,13 @@ searchBar t =
         ]
 
 
-search :: Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
-search Nothing _ = pure $ "Give me some keywords, punk!"
-search (Just q) mpage = do
+search :: Connection -> Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
+search _ Nothing _ = pure $ "Give me some keywords, punk!"
+search conn (Just q) mpage = do
   let pagenum = Prelude.max 0 $ maybe 0 (subtract 1) mpage
       pagesize :: Num a => a
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
-    Right conn <- acquire connectionSettings
     putStrLn $ mappend "search: " $ T.unpack $ encodeQuery q
     writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
@@ -227,15 +252,19 @@ searchResult d snip =
         x -> x
 
 
-server :: Server TestApi
-server = pure home :<|> search :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
+server :: Connection -> Server TestApi
+server conn = home conn
+         :<|> search conn
+         :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
 
 instance FromHttpApiData (Search Text) where
   parseQueryParam = first (T.pack . errorBundlePretty) . parse searchParser ""
 
-runTestServer :: W.Port -> IO ()
-runTestServer port = W.run port $ serve (Proxy @TestApi) server
+runTestServer :: Connection -> W.Port -> IO ()
+runTestServer conn port = W.run port $ serve (Proxy @TestApi) $ server conn
 
 main :: IO ()
-main = runTestServer cfg_port
+main = do
+  Right conn <- acquire connectionSettings
+  runTestServer conn cfg_port
 
