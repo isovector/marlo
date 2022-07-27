@@ -19,7 +19,7 @@ instance DBOrd Tsvector
 
 instance DBType Tsvector where
   typeInformation = TypeInformation
-    { encode = const $ Prim.ConstExpr $ Prim.DefaultLit
+    { encode = const $ Prim.ConstExpr $ Prim.StringLit ""
     , decode = Decode.custom $ \_ _ -> pure Tsvector
     , typeName = "tsvector"
     }

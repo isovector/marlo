@@ -65,12 +65,19 @@ data Discovery f = Discovery
   , d_headings :: Column f Text
   , d_content :: Column f Text
   , d_comments :: Column f Text
-  , d_search :: Column f Tsvector
   }
   deriving stock Generic
   deriving anyclass Rel8able
 
 deriving instance Show (Discovery Identity)
+
+data Discovery' f = Discovery'
+  { d_table :: Discovery f
+  , d_search :: Column f Tsvector
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
 
 data Edges f = Edges
   { e_edgeId :: Column f EdgeId
@@ -147,6 +154,13 @@ discoverySchema = TableSchema
       , d_headings = "headings"
       , d_content = "content"
       , d_comments = "comments"
+      }
+  }
+
+discoverySchema' :: TableSchema (Discovery' Name)
+discoverySchema' = discoverySchema
+  { columns = Discovery'
+      { d_table = columns discoverySchema
       , d_search = "search"
       }
   }
@@ -178,9 +192,6 @@ edgesSchema = TableSchema
       , e_anchor = "anchor"
       }
   }
-
-fixSearch :: Discovery Expr -> Discovery Expr
-fixSearch d = d { d_search = unsafeDefault }
 
 
 connectionSettings :: Settings
@@ -237,7 +248,7 @@ rootNodes = Insert
             , "https://jeremykun.com/"
             , "https://sandymaguire.me/"
             ]
-      pure $ fixSearch $ Discovery
+      pure $ Discovery
         { d_docId = d
         , d_uri = z
         , d_state = lit Discovered
@@ -248,7 +259,6 @@ rootNodes = Insert
         , d_headings = ""
         , d_content = ""
         , d_comments = ""
-        , d_search = lit Tsvector
         }
   , onConflict = DoNothing
   , returning = pure ()

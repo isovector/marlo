@@ -10,7 +10,7 @@ module Spider where
 
 import Data.Bool (bool)
 import           Control.Exception.Base
-import           Control.Monad (forever, when, void, unless)
+import           Control.Monad (forever, when, void)
 import           DB
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
@@ -33,7 +33,6 @@ import           Types
 import           Utils (runRanker, unsafeURI, random)
 import qualified Rel8 as R8 hiding (bool)
 import qualified Data.ByteString.Lazy as BSL
-import Rel8.TextSearch
 
 --
 
@@ -48,7 +47,7 @@ markExplored :: DiscoveryState -> Discovery Identity -> Update ()
 markExplored ds d = Update
   { target = discoverySchema
   , from = pure ()
-  , set = \ _ dis -> fixSearch $ dis { d_state = lit ds }
+  , set = \ _ dis -> dis { d_state = lit ds }
   , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId d)
   , returning = pure ()
   }
@@ -91,10 +90,9 @@ discover depth uri = Insert
           (lit "")
           (lit "")
           (lit "")
-          (lit Tsvector)
   , onConflict = DoUpdate $ Upsert
                   { index = d_docId
-                  , set = \new old -> fixSearch $ old { d_depth = leastExpr (d_depth old) (d_depth new) }
+                  , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
                   , updateWhere = \new old -> d_docId new ==. d_docId old
                   }
   , returning = Projection id
@@ -168,8 +166,7 @@ continue conn depth uri mime raw_body body = do
   void $ flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()
-    , set = \ _ dis -> fixSearch $
-                       dis { d_state = lit Explored
+    , set = \ _ dis -> dis { d_state = lit Explored
                            , d_data  = lit raw_body
                            }
     , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
@@ -187,18 +184,21 @@ index conn depth uri mime raw_body body = do
       let env = Env uri mgr conn
       Just (ls, t) <- runRanker env  body $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
-      void $ flip run conn $ statement () $ update $ Update
+      Right _ <- flip run conn $ statement () $ update $ Update
         { target = discoverySchema
         , from = pure ()
-        , set = \ _ dis -> fixSearch
-                         $ dis { d_state = lit Explored
+        , set = \ _ dis -> dis { d_state = lit Explored
                                , d_title = lit t
                                , d_data  = lit raw_body
                               }
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
         }
-      indexCore conn env disc
+      indexCore conn env $ disc
+        { d_state = Explored
+        , d_title = t
+        , d_data = raw_body
+        }
     False -> do
       void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
@@ -206,10 +206,10 @@ indexFromDB :: Connection -> Discovery Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   mgr <- HTTP.getGlobalManager
-  when (isAcceptableLink uri) $ do
-    indexCore conn (Env uri mgr conn) disc
-  unless (isAcceptableLink uri) $ do
-    putStrLn "UNACCEPTABLE"
+  case (isAcceptableLink uri) of
+    True -> indexCore conn (Env uri mgr conn) disc
+    False -> do
+      void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
 indexCore :: Connection -> Env -> Discovery Identity -> IO ()
 indexCore conn env disc = do
@@ -219,8 +219,7 @@ indexCore conn env disc = do
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()
-    , set = \ _ dis -> fixSearch $
-                       dis { d_content  = lit m
+    , set = \ _ dis -> dis { d_content  = lit m
                            , d_headings = lit h
                            , d_comments = lit c
                            , d_state    = lit $ bool Explored Unacceptable has_ads

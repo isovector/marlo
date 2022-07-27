@@ -53,7 +53,7 @@ import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 import Config
 
 
-compileSearch :: Search Text -> Query (Discovery Expr)
+compileSearch :: Search Text -> Query (Discovery' Expr)
 compileSearch q = orderBy ((\x -> rank (d_search x) (lit q') rDISTANCE) >$< desc) $
   case compile' q of
     Match ts -> matching ts
@@ -64,7 +64,7 @@ compileSearch q = orderBy ((\x -> rank (d_search x) (lit q') rDISTANCE) >$< desc
 
 data IL
   = Match Tsquery
-  | Full (Query (Discovery Expr))
+  | Full (Query (Discovery' Expr))
 
 compile' :: Search Text -> IL
 compile' (Term txt) = Match $ TsqTerm txt
@@ -73,17 +73,17 @@ compile' (Phrase txts) = Match $ foldr1 TsqPhrase $ fmap TsqTerm txts
 compile' (Negate se) =
   case compile' se of
     Match ts -> Match $ TsqNot ts
-    Full qu -> Full $ except (each discoverySchema) qu
+    Full qu -> Full $ except (each discoverySchema') qu
 compile' (And lhs rhs) = merge TsqAnd intersect (compile' lhs) (compile' rhs)
 compile' (Or lhs rhs) = merge TsqOr union (compile' lhs) (compile' rhs)
 compile' (SiteLike t) = Full $ do
-  d <- each discoverySchema
-  where_ $ like (lit $ "%" <> t <> "%") $ d_uri d
+  d <- each discoverySchema'
+  where_ $ like (lit $ "%" <> t <> "%") $ d_uri $ d_table d
   pure d
 
 merge
     :: (Tsquery -> Tsquery -> Tsquery)
-    -> (Query (Discovery Expr) -> Query (Discovery Expr) -> Query (Discovery Expr))
+    -> (Query (Discovery' Expr) -> Query (Discovery' Expr) -> Query (Discovery' Expr))
     -> IL
     -> IL
     -> IL
@@ -92,9 +92,9 @@ merge _ q (Match t1) (Full q2) = Full $ q (matching t1) q2
 merge _ q (Full q1) (Match t2) = Full $ q q1 (matching t2)
 merge _ q (Full q1) (Full q2) = Full $ q q1 q2
 
-matching :: Tsquery -> Query (Discovery Expr)
+matching :: Tsquery -> Query (Discovery' Expr)
 matching q = do
-  d <- each discoverySchema
+  d <- each discoverySchema'
   where_ $ match (d_search d) $ lit q
   pure d
 
@@ -112,7 +112,7 @@ compileQuery (SiteLike _) = TsqTerm ""
 
 getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
-  d <- each discoverySchema
+  d <- d_table <$> each discoverySchema'
   where_ $ d_docId d ==. lit did
   pure $ headline (d_content d <>. " " <>. d_headings d <>. " " <>. d_comments d) $ lit q
 
@@ -176,7 +176,7 @@ search (Just q) mpage = do
         Right [snip] <- flip run conn
           $ statement ()
           $ select
-          $ getSnippet (d_docId doc) $ compileQuery q
+          $ getSnippet (d_docId $ d_table doc) $ compileQuery q
         pure snip
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
@@ -192,7 +192,7 @@ search (Just q) mpage = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar $ encodeQuery q
-          for_ (zip docs snips) $ uncurry searchResult
+          for_ (zip (fmap d_table docs) snips) $ uncurry searchResult
           let eq = escape $ encodeQuery q
           when (pagenum > 0) $ do
             L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show pagenum)  ] "Prev"
