@@ -18,6 +18,7 @@
 
 module Search where
 
+import           Config
 import           Control.Applicative (liftA2)
 import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
@@ -50,7 +51,6 @@ import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
-import Config
 
 
 compileSearch :: Search Text -> Query (Discovery' Expr)

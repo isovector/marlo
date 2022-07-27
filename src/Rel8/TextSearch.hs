@@ -37,7 +37,8 @@ instance DBType Tsquery where
   typeInformation = TypeInformation
     { encode = \case
         TsqTerm txt ->
-          Prim.CastExpr "tsquery" $ Prim.ConstExpr $ Prim.StringLit $ T.unpack txt
+          Prim.FunExpr "to_tsquery"
+            [ Prim.ConstExpr $ Prim.StringLit $ T.unpack txt ]
         TsqAnd lhs rhs ->
           Prim.BinExpr (Prim.OpOther "&&") (encode typeInformation lhs) (encode typeInformation rhs)
         TsqOr lhs rhs ->
