@@ -162,6 +162,7 @@ commafy
   = T.unpack
   . T.intercalate ","
   . reverse
+  . fmap T.reverse
   . T.chunksOf 3
   . T.reverse
   . T.pack
