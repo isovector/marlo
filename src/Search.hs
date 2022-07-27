@@ -165,6 +165,7 @@ search (Just q) mpage = do
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
     Right conn <- acquire connectionSettings
+    putStrLn $ mappend "search: " $ T.unpack $ encodeQuery q
     writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
       flip run conn
