@@ -95,7 +95,7 @@ merge _ q (Full q1) (Full q2) = Full $ q q1 q2
 matching :: Tsquery -> Query (Discovery' Expr)
 matching q = do
   d <- each discoverySchema'
-  where_ $ match (d_search d) $ lit q
+  where_ $ match (d_search d) (lit q) &&. d_state (d_table d) ==. lit Explored
   pure d
 
 
