@@ -207,6 +207,8 @@ isAcceptableLink uri
           , "mediafire.com"
           , "gofile.io"
           , "archive.today"
+          , "forbes.com"
+          , "gist.github.com"
           ]
       , not (isOnDomain (uriRegName auth) "wikipedia.org")
           || (isOnDomain (uriRegName auth) "wikipedia.org"
