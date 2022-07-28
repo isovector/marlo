@@ -173,43 +173,7 @@ isAcceptableLink uri
           , ".ipyn"
           , ".ipynb"
           ]
-      , not $ any (isOnDomain $ uriRegName auth)
-          [ "twitter.com"
-          , "facebook.com"
-          , "youtube.com"
-          , "youtu.be"
-          , "pintrest.com"
-          , "imgur.com"
-          , "instagram.com"
-          , "google.com"
-          , "archive.today"
-          , "amazon.com"
-          , "flickr.com"
-          , "spotify.com"
-          , "last.fm"
-          , "goo.gl"
-          , "goodreads.com"
-          , "ghostarchive.org"
-          , "wp.me"
-          , "reddit.com"
-          , "tiktok.com"
-          , "snapchat.com"
-          , "spoilertv.com"
-          , "bloomberg.com"
-          , "linkedin.com"
-          , "tumblr.com"
-          , "scribd.com"
-          , "archive.org"
-          , "vimeo.com"
-          , "tinyurl.com"
-          , "mega.nz"
-          , "anonfiles.com"
-          , "mediafire.com"
-          , "gofile.io"
-          , "archive.today"
-          , "forbes.com"
-          , "gist.github.com"
-          ]
+      , not $ any (isOnDomain $ uriRegName auth) forbidSites
       , not (isOnDomain (uriRegName auth) "wikipedia.org")
           || (isOnDomain (uriRegName auth) "wikipedia.org"
               && isOnDomain (uriRegName auth) "en.wikipedia.org")
@@ -222,6 +186,45 @@ isAcceptableLink uri
 
 (==>) :: Bool -> Bool -> Bool
 (==>) x y = not x || y
+
+forbidSites :: [String]
+forbidSites =
+  [ "twitter.com"
+  , "facebook.com"
+  , "youtube.com"
+  , "youtu.be"
+  , "pintrest.com"
+  , "imgur.com"
+  , "instagram.com"
+  , "google.com"
+  , "archive.today"
+  , "amazon.com"
+  , "flickr.com"
+  , "spotify.com"
+  , "last.fm"
+  , "goo.gl"
+  , "goodreads.com"
+  , "ghostarchive.org"
+  , "wp.me"
+  , "reddit.com"
+  , "tiktok.com"
+  , "snapchat.com"
+  , "spoilertv.com"
+  , "bloomberg.com"
+  , "linkedin.com"
+  , "tumblr.com"
+  , "scribd.com"
+  , "archive.org"
+  , "vimeo.com"
+  , "tinyurl.com"
+  , "mega.nz"
+  , "anonfiles.com"
+  , "mediafire.com"
+  , "gofile.io"
+  , "archive.today"
+  , "forbes.com"
+  , "gist.github.com"
+  ]
 
 
 forbidPaths :: [String]
