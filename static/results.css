@@ -22,7 +22,8 @@ body {
 
 .box {
   margin: 0 auto;
-  width: 50em;
+  max-width: 50em;
+  width: 90vw;
 }
 
 .result {
