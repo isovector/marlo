@@ -30,6 +30,7 @@ body {
   background: var(--baby-powder);
   padding: 1em;
   font-family: sans;
+  overflow: hidden;
 }
 
 .url {
