@@ -39,7 +39,8 @@ h1::after {
 
 #query {
   font-size: 16pt;
-  width: 40em;
+  max-width: 40em;
+  width: 90vw;
   padding: 0.5em;
   background-color: var(--baby-powder);
   color: var(--prussian-blue);
