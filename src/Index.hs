@@ -10,26 +10,30 @@
 module Index where
 
 import Control.Exception
-import Control.Monad (void, forever)
+import Control.Monad (void)
 import DB
 import Hasql.Connection (acquire)
 import Hasql.Session
 import Rel8
 import Spider (indexFromDB)
-import Utils (random)
 import System.Environment (getArgs)
 import qualified Data.Text as T
+import Data.Foldable (for_)
 
 
 main :: IO ()
 main = do
   [uri] <- getArgs
   Right conn <- acquire connectionSettings
-  forever $ do
+  Right docs <- flip run conn $ statement () $ select $ do
+    d <- each discoverySchema
+    where_ $ d_state d ==. lit Explored &&. like (lit $ "%" <> T.pack uri <> "%") (d_uri d)
+    pure $ d_docId d
+  for_ docs $ \did -> do
     Right [doc] <-
-      flip run conn $ statement () $ select $ limit 1 $ orderBy random $ do
+      flip run conn $ statement () $ select $ do
         d <- each discoverySchema
-        where_ $ d_state d ==. lit Explored &&. like (lit $ "%" <> T.pack uri <> "%") (d_uri d)
+        where_ $ d_docId d ==. lit did
         pure d
     print $ d_uri doc
     catch (indexFromDB conn doc) $ \(SomeException _) -> do
