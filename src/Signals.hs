@@ -5,8 +5,12 @@
 
 module Signals where
 
+import           Assets (getAssetSizes)
 import           Control.Applicative (optional, empty, liftA2, many, (<|>))
 import           Control.Monad.Reader
+import           Data.Char (toLower, isAlpha, isDigit)
+import           Data.Foldable (asum)
+import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
 import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
 import           Data.Set (Set)
@@ -19,11 +23,6 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
-import Data.Char (toLower, isAlpha, isDigit)
-import Debug.Trace (traceM)
-import Data.Int (Int64)
-import Assets (getAssetSizes)
-import Data.Foldable (asum)
 
 
 gif :: Ranker Text
@@ -403,9 +402,7 @@ textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScrap
 
     unknown   = recurseOn anySelector
 
-    recurseOn tag = do
-      traceM "recursing"
-      chroot (tag `atDepth` 0) $ textWithoutScripts
+    recurseOn tag = chroot (tag `atDepth` 0) $ textWithoutScripts
 
 
 mainContent :: Ranker Text
