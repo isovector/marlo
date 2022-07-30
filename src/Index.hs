@@ -17,17 +17,20 @@ import Hasql.Session
 import Rel8
 import Spider (indexFromDB)
 import Utils (random)
+import System.Environment (getArgs)
+import qualified Data.Text as T
 
 
 main :: IO ()
 main = do
+  [uri] <- getArgs
   Right conn <- acquire connectionSettings
   forever $ do
     Right [doc] <-
       flip run conn $ statement () $ select $ limit 1 $ orderBy random $ do
-            d <- each discoverySchema
-            where_ $ d_state d ==. lit Explored &&. d_content d ==. lit ""
-            pure d
+        d <- each discoverySchema
+        where_ $ d_state d ==. lit Explored &&. like (lit $ "%" <> T.pack uri <> "%") (d_uri d)
+        pure d
     print $ d_uri doc
     catch (indexFromDB conn doc) $ \(SomeException _) -> do
       putStrLn "errored ^"

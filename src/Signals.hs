@@ -438,11 +438,11 @@ headingsContent = fmap (T.intercalate " ") $
 
 commentsContent :: Ranker Text
 commentsContent = fmap (T.intercalate " ") $ asum
-  [ failIfEmpty $ texts $ tagClass "div" "comments-area"
-  , failIfEmpty $ texts $ tagClass "div" "comments-page"
-  , failIfEmpty $ texts $ tagClass "div" "comments"
-  , failIfEmpty $ texts $ tagClass "div" "PostsPage-commentsSection"
-  , failIfEmpty $ texts $ tagId "div" "comments"
+  [ failIfEmpty $ textsWithoutScripts $ tagClass "div" "comments-area"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "comments-page"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "comments"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "PostsPage-commentsSection"
+  , failIfEmpty $ textsWithoutScripts $ tagId "div" "comments"
   , pure []
   ]
 
