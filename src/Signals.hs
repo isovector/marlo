@@ -5,7 +5,7 @@
 
 module Signals where
 
-import           Control.Applicative (optional, empty, liftA2)
+import           Control.Applicative (optional, empty, liftA2, many, (<|>))
 import           Control.Monad.Reader
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
 import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
@@ -367,19 +367,61 @@ hasModal :: Ranker Bool
 hasModal = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "modal"
 
 
+textsWithoutScripts :: Selector -> Ranker [Text]
+textsWithoutScripts sel = chroot sel $ textWithoutScripts
+
+textWithoutScripts :: Ranker [Text]
+textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScraper
+  where
+    innerScraper :: Ranker Text
+    innerScraper = plainText
+               <|> skip
+               <|> fmap (T.intercalate " ") unknown
+               <|> pure "YO"
+
+    plainText :: Ranker Text
+    plainText  = text (textSelector `atDepth` 0)
+
+    skipMe :: Selector -> Ranker Text
+    skipMe what = "" <$ recurseOn what
+
+    skip :: Ranker Text
+    skip     = asum
+      [ skipMe "style"
+      , skipMe "script"
+      , skipMe "noscript"
+      , skipMe "nav"
+      , skipMe "h1"
+      , skipMe "h2"
+      , skipMe "h3"
+      , skipMe "h4"
+      , skipMe "h5"
+      , skipMe "h6"
+      , skipMe "sup"
+      , skipMe "sub"
+      ]
+
+    unknown   = recurseOn anySelector
+
+    recurseOn tag = do
+      traceM "recursing"
+      chroot (tag `atDepth` 0) $ textWithoutScripts
+
+
 mainContent :: Ranker Text
-mainContent = fmap (T.intercalate " ") $ asum
-  [ failIfEmpty $ texts $ tagClass "div" "entry-content"
-  , failIfEmpty $ texts $ tagClass "div" "content"
-  , failIfEmpty $ texts $ tagClass "div" "pjgm-postcontent"
-  , failIfEmpty $ texts $ tagClass "div" "PostsPage-postContent"
-  , failIfEmpty $ texts $ tagClass "div" "ArticleBody-articleBody"
-  , failIfEmpty $ texts $ tagId "div" "mw-content-text"
-  , failIfEmpty $ texts "article"
-  , failIfEmpty $ texts "main"
-  , failIfEmpty $ texts $ tagId "div" "content"
-  , failIfEmpty $ texts $ tagClass "td" "mainsection"
-  , failIfEmpty $ texts "body"
+mainContent = fmap (T.intercalate " ") $
+  asum
+  [ failIfEmpty $ textsWithoutScripts $ tagClass "div" "entry-content"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "content"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "pjgm-postcontent"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "PostsPage-postContent"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "div" "ArticleBody-articleBody"
+  , failIfEmpty $ textsWithoutScripts $ tagId "div" "mw-content-text"
+  , failIfEmpty $ textsWithoutScripts "article"
+  , failIfEmpty $ textsWithoutScripts "main"
+  , failIfEmpty $ textsWithoutScripts $ tagId "div" "content"
+  , failIfEmpty $ textsWithoutScripts $ tagClass "td" "mainsection"
+  , failIfEmpty $ textsWithoutScripts "body"
   ]
 
 failIfEmpty :: Monad m => ScraperT z m [a] -> ScraperT z m [a]

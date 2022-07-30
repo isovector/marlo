@@ -243,15 +243,15 @@ downloadBody url = do
   pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
 
 
-debugRankerInDb :: DocId -> Ranker a -> IO (Maybe a)
-debugRankerInDb did r = do
+debugRankerInDb :: Text -> Ranker a -> IO (Text, Maybe a)
+debugRankerInDb uri r = do
   Right conn <- acquire connectionSettings
   mgr <- HTTP.getGlobalManager
   Right [d] <-
-    flip run conn $ statement () $ select $ do
+    flip run conn $ statement () $ select $ limit 1 $ do
       d <- each discoverySchema
-      where_ $ d_docId d ==. lit did
+      where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
-  runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ d_data d) r
+  fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ d_data d) r
 
 
