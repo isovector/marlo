@@ -176,6 +176,9 @@ isAcceptableLink uri
       , not (isOnDomain (uriRegName auth) "wikipedia.org")
           || (isOnDomain (uriRegName auth) "wikipedia.org"
               && isOnDomain (uriRegName auth) "en.wikipedia.org")
+      , not (isOnDomain (uriRegName auth) "wiktionary.org")
+          || (isOnDomain (uriRegName auth) "wiktionary.org"
+              && isOnDomain (uriRegName auth) "en.wiktionary.org")
       , specificAllowRules uri
       ]
     | otherwise = False
@@ -262,6 +265,10 @@ specificAllowRules uri
   , on_domain "wikipedia.org" && isInfixOf "Talk:" path
   , on_domain "wikipedia.org" && isInfixOf "Category:" path
   , on_domain "wikipedia.org" && isInfixOf "Special:" path
+  , on_domain "wiktionary.org" && isInfixOf "Template:" path
+  , on_domain "wiktionary.org" && isInfixOf "Talk:" path
+  , on_domain "wiktionary.org" && isInfixOf "Category:" path
+  , on_domain "wiktionary.org" && isInfixOf "Special:" path
   , isYearMonthPage path
   ]
   | otherwise = error "yo"
