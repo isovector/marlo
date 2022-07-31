@@ -9,6 +9,7 @@ import           Assets (getAssetSizes)
 import           Control.Applicative (optional, empty, liftA2, many, (<|>))
 import           Control.Monad.Reader
 import           Data.Char (toLower, isAlpha, isDigit)
+import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
@@ -173,17 +174,20 @@ isAcceptableLink uri
           , ".ipynb"
           ]
       , not $ any (isOnDomain $ uriRegName auth) forbidSites
-      , not (isOnDomain (uriRegName auth) "wikipedia.org")
-          || (isOnDomain (uriRegName auth) "wikipedia.org"
-              && isOnDomain (uriRegName auth) "en.wikipedia.org")
-      , not (isOnDomain (uriRegName auth) "wiktionary.org")
-          || (isOnDomain (uriRegName auth) "wiktionary.org"
-              && isOnDomain (uriRegName auth) "en.wiktionary.org")
+      , isWiki auth "wikipedia.org"
+      , isWiki auth "wiktionary.org"
+      , isWiki auth "wikimedia.org"
       , specificAllowRules uri
       ]
     | otherwise = False
   where
     path = fmap toLower $ uriPath uri
+
+isWiki :: URIAuth -> String -> Bool
+isWiki auth site =
+  not (isOnDomain (uriRegName auth) site)
+    || (isOnDomain (uriRegName auth) site
+    && isOnDomain (uriRegName auth) ("en." <> site))
 
 
 (==>) :: Bool -> Bool -> Bool
@@ -269,6 +273,10 @@ specificAllowRules uri
   , on_domain "wiktionary.org" && isInfixOf "Talk:" path
   , on_domain "wiktionary.org" && isInfixOf "Category:" path
   , on_domain "wiktionary.org" && isInfixOf "Special:" path
+  , on_domain "wikimedia.org" && isInfixOf "Template:" path
+  , on_domain "wikimedia.org" && isInfixOf "Talk:" path
+  , on_domain "wikimedia.org" && isInfixOf "Category:" path
+  , on_domain "wikimedia.org" && isInfixOf "Special:" path
   , isYearMonthPage path
   ]
   | otherwise = error "yo"
@@ -328,7 +336,7 @@ isOnDomain x dom = dom == x || isSuffixOf ('.' : dom) x
 
 
 links :: Ranker [Link URI]
-links = chroots "a" link
+links = fmap (nubOrdOn l_uri) $ chroots "a" link
 
 
 paraHeadingRatio :: Ranker (Int, Int)

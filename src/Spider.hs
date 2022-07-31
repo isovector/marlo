@@ -27,11 +27,11 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
-import           Rel8 hiding (bool, index)
+import           Rel8 hiding (filter, bool, index)
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random)
-import qualified Rel8 as R8 hiding (bool)
+import qualified Rel8 as R8 hiding (filter, bool)
 import qualified Data.ByteString.Lazy as BSL
 
 --
@@ -112,10 +112,12 @@ addEdge src (Link anchor dst) = Insert
 
 buildEdges :: Connection -> Discovery Identity -> [Link URI] -> IO [EdgeId]
 buildEdges conn disc ls = do
-  ldocs <- (traverse . traverse) (getDocId conn $ d_depth disc) ls
+  ldocs' <- (traverse . traverse) (getDocId conn $ d_depth disc) ls
+  let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
+
   for ldocs $ \l -> do
     -- putStrLn $ "edge ->" <> show (did, l_uri l)
-    Right [eid] <- flip run conn $ statement () $ insert $ addEdge (d_docId disc) $ fmap d_docId l
+    Right [eid] <- flip run conn $ statement () $ insert $ addEdge (d_docId disc) l
     pure eid
 
 

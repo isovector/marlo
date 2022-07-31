@@ -174,10 +174,44 @@ nextEdgeId = fmap coerce $ pure $ nextval "edge_id_seq"
 CREATE SEQUENCE edge_id_seq;
 CREATE TABLE IF NOT EXISTS edges (
   id int8 PRIMARY KEY,
-  src int8 NOT NULL,
-  dst int8 NOT NULL,
+  dst int8 NOT NULL FOREIGN KEY REFERENCES discovery(doc_id) ON DELETE CASCADE,
+  src int8 NOT NULL FOREIGN KEY REFERENCES discovery(doc_id) ON DELETE CASCADE,
   anchor TEXT NOT NULL
 );
+
+CREATE INDEX depth_idx ON discovery (depth);
+
+CREATE INDEX src_idx ON edges (src);
+CREATE INDEX dst_idx ON edges (dst);
+
+delete from edges where not exists (select * from discovery as d where d.doc_id = edges.src);
+ALTER TABLE edges ADD CONSTRAINT fk_src FOREIGN KEY (src) REFERENCES discovery(doc_id) ON DELETE CASCADE;
+
+delete from edges where not exists (select * from discovery as d where d.doc_id = edges.dst);
+ALTER TABLE edges ADD CONSTRAINT fk_dst FOREIGN KEY (dst) REFERENCES discovery(doc_id) ON DELETE CASCADE;
+
+
+-- CASCADE PRUNE AFTER EDGES ARE DELETED
+select from discovery where not exists (select * from edges as e where e.dst = discovery.doc_id) and depth > 0;
+
+-- find path
+with recursive graph_cte (src, dst, id)
+as
+(
+  select src, dst, id
+  from edges
+  where dst = 572908
+  union all
+  select prev.src, prev.dst, prev.id
+  from edges prev
+    join graph_cte next on prev.dst = next.src
+)
+select id, src, dst
+from graph_cte
+order by id;
+
+
+
 
 -}
 
