@@ -258,6 +258,10 @@ specificAllowRules uri
   , on_domain "github.com" && isInfixOf "/commits/" path
   , on_domain "github.com" && isInfixOf "/blob/" path
   , on_domain "github.com" && isInfixOf "/edit/" path
+  , on_domain "wikipedia.org" && isInfixOf "Template:" path
+  , on_domain "wikipedia.org" && isInfixOf "Talk:" path
+  , on_domain "wikipedia.org" && isInfixOf "Category:" path
+  , on_domain "wikipedia.org" && isInfixOf "Special:" path
   , isYearMonthPage path
   ]
   | otherwise = error "yo"
