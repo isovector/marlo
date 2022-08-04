@@ -32,8 +32,10 @@ library
       Index
       Keywords
       Lib
+      Metric
       Purge
       Ranking
+      Rel8.Arrays
       Rel8.TextSearch
       Search
       Search.Parser

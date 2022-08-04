@@ -15,16 +15,18 @@
 
 module DB where
 
+import Config
 import Data.ByteString (ByteString)
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int64, Int32)
+import Data.Int (Int64, Int32, Int16)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Rel8 hiding (Enum)
+import Rel8.Arrays (insertAt', arrayFill)
 import Rel8.TextSearch
-import Config
+import Prelude hiding (null)
 
 
 newtype EdgeId = EdgeId
@@ -58,6 +60,7 @@ data Discovery f = Discovery
   { d_docId :: Column f DocId
   , d_uri   :: Column f Text
   , d_state :: Column f DiscoveryState
+  , d_distance :: Column f [Maybe Int16]
   , d_depth :: Column f Int32
   , d_data :: Column f ByteString
   , d_rank :: Column f Double
@@ -118,6 +121,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   uri TEXT UNIQUE NOT NULL,
   state VARCHAR(10) NOT NULL,
   depth int4 NOT NULL,
+  distance int2[] NOT NULL,
   rank float8 NOT NULL,
   data bytea NOT NULL,
   title TEXT NOT NULL,
@@ -125,6 +129,11 @@ CREATE TABLE IF NOT EXISTS discovery (
   content TEXT NOT NULL,
   comments TEXT NOT NULL
 );
+
+ALTER TABLE discovery
+    ADD COLUMN distance int2[]
+    NOT NULL
+    DEFAULT CAST(ARRAY[null,null,null,null,null,null,null,null,null,null] AS int2[]);
 
 ALTER TABLE discovery
     ADD COLUMN search tsvector
@@ -148,6 +157,7 @@ discoverySchema = TableSchema
       , d_uri   = "uri"
       , d_state = "state"
       , d_depth = "depth"
+      , d_distance = "distance"
       , d_data  = "data"
       , d_rank = "rank"
       , d_title = "title"
@@ -211,6 +221,30 @@ from graph_cte
 order by id;
 
 
+CREATE FUNCTION array_zip_with_least( arr_q anyarray, arr_e anyarray )
+RETURNS anyarray
+AS $$
+  SELECT ARRAY(
+    SELECT least(a, b)
+    FROM unnest(
+      arr_q, -- ex1
+      arr_e  -- ex2
+    ) AS t(a,b)
+  );
+$$ LANGUAGE sql
+IMMUTABLE;
+
+CREATE FUNCTION array_inc( arr_q anyarray )
+RETURNS anyarray
+AS $$
+  SELECT ARRAY(
+    SELECT a + 1
+    FROM unnest(
+      arr_q -- ex1
+    ) AS t(a)
+  );
+$$ LANGUAGE sql
+IMMUTABLE;
 
 
 -}
@@ -265,36 +299,51 @@ litInsert
 litInsert s = simpInsert s . pure . values
 
 
+rootSites :: [Expr Text]
+rootSites =
+  [ "https://astralcodexten.substack.com"
+  , "https://blog.plover.com/"
+  , "https://overcomingbias.com/"
+  , "https://marginalrevolution.com/"
+  , "https://lesswrong.com/"
+  , "http://www.paulgraham.com/articles.html"
+  , "https://apxhard.substack.com/"
+  , "https://what-if.xkcd.com/"
+  , "https://jeremykun.com/"
+  , "https://sandymaguire.me/"
+  ]
+
+numRootSites :: Int
+numRootSites = length rootSites
+
+nullDist :: Expr [Maybe Int16]
+nullDist = arrayFill (lit $ fromIntegral numRootSites) null
+
+
 rootNodes :: Insert ()
 rootNodes = Insert
   { into = discoverySchema
   , rows = do
       d <- nextDocId
-      z <- values
-            [ "https://astralcodexten.substack.com"
-            , "https://blog.plover.com/"
-            , "https://overcomingbias.com/"
-            , "https://marginalrevolution.com/"
-            , "https://lesswrong.com/"
-            , "http://www.paulgraham.com/articles.html"
-            , "https://apxhard.substack.com/"
-            , "https://what-if.xkcd.com/"
-            , "https://jeremykun.com/"
-            , "https://sandymaguire.me/"
-            ]
+      (idx, z) <- values $ zip (fmap lit [0..]) rootSites
       pure $ Discovery
         { d_docId = d
         , d_uri = z
         , d_state = lit Discovered
         , d_depth = 0
         , d_data = ""
+        , d_distance = insertAt' (lit $ fromIntegral numRootSites) idx $ nullify 0
         , d_rank = 0
         , d_title = ""
         , d_headings = ""
         , d_content = ""
         , d_comments = ""
         }
-  , onConflict = DoNothing
+  , onConflict = DoUpdate Upsert
+      { index = d_uri
+      , set = \new old -> old { d_distance = d_distance new }
+      , updateWhere = \new old -> d_uri new ==. d_uri old
+      }
   , returning = pure ()
   }
 

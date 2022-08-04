@@ -230,6 +230,7 @@ forbidSites =
   , "archive.today"
   , "forbes.com"
   , "gist.github.com"
+  , "wikidata.org"
   ]
 
 
@@ -245,6 +246,8 @@ forbidPaths =
   , "/topic/"
   , "/product/"
   , "/products/"
+  , "/opinion/"
+  , "/opinions/"
   , "/feed/"
   , "/feeds/"
   , "/author/"

@@ -8,15 +8,16 @@
 
 module Spider where
 
-import Data.Bool (bool)
 import           Control.Exception.Base
-import           Control.Monad (forever, when, void)
+import           Control.Monad (forever, void)
 import           DB
+import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
-import           Data.Int (Int32)
+import           Data.Int (Int32, Int16)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -27,12 +28,12 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
+import qualified Rel8 as R8 hiding (filter, bool)
 import           Rel8 hiding (filter, bool, index)
+import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random)
-import qualified Rel8 as R8 hiding (filter, bool)
-import qualified Data.ByteString.Lazy as BSL
 
 --
 
@@ -61,20 +62,20 @@ docIdFor uri = do
 
 
 
-getDocId :: Connection -> Int32 -> URI -> IO (Discovery Identity)
-getDocId conn depth uri = do
+getDocId :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Discovery Identity)
+getDocId conn depth dist uri = do
     Right dids <- flip run conn $ statement () $ select $ docIdFor uri
     case dids of
       [did] -> pure did
       [] -> do
         -- putStrLn $ "discovering " <> show uri
-        Right dids' <- flip run conn $ statement () $ insert $ discover depth uri
+        Right dids' <- flip run conn $ statement () $ insert $ discover depth dist uri
         pure $ head dids'
       _ -> error $ "invalid database state: " <> show dids
 
 
-discover :: Int32 -> URI -> Insert [Discovery Identity]
-discover depth uri = Insert
+discover :: Int32 -> [Maybe Int16] -> URI -> Insert [Discovery Identity]
+discover depth dist uri = Insert
   { into = discoverySchema
   , rows = do
       docid <- nextDocId
@@ -83,6 +84,7 @@ discover depth uri = Insert
           docid
           (lit $ T.pack $ show uri)
           (lit Discovered)
+          (arrayInc $ lit dist)
           (lit $ depth + 1)
           (lit "")
           (lit 0)
@@ -90,11 +92,14 @@ discover depth uri = Insert
           (lit "")
           (lit "")
           (lit "")
-  , onConflict = DoUpdate $ Upsert
-                  { index = d_docId
-                  , set = \new old -> old { d_depth = leastExpr (d_depth old) (d_depth new) }
-                  , updateWhere = \new old -> d_docId new ==. d_docId old
-                  }
+  , onConflict = DoUpdate Upsert
+      { index = d_uri
+      , set = \new old -> old
+          { d_depth = leastExpr (d_depth old) (d_depth new)
+          , d_distance = arrayZipWithLeast (d_distance old) (d_distance new)
+          }
+      , updateWhere = \new old -> d_uri new ==. d_uri old
+      }
   , returning = Projection id
   }
 
@@ -112,7 +117,7 @@ addEdge src (Link anchor dst) = Insert
 
 buildEdges :: Connection -> Discovery Identity -> [Link URI] -> IO [EdgeId]
 buildEdges conn disc ls = do
-  ldocs' <- (traverse . traverse) (getDocId conn $ d_depth disc) ls
+  ldocs' <- (traverse . traverse) (getDocId conn (d_depth disc) (d_distance disc)) ls
   let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
 
   for ldocs $ \l -> do
@@ -147,7 +152,7 @@ spiderMain = do
               (do
                 (Just mime, raw_body) <- downloadBody $ T.unpack url
                 let body = decodeUtf8 raw_body
-                index conn (d_depth disc) uri mime raw_body body
+                index conn (d_depth disc) (d_distance disc) uri mime raw_body body
               )
               (\SomeException{} -> do
                 putStrLn $ "errored on " <> show (d_docId disc)
@@ -157,29 +162,10 @@ spiderMain = do
             putStrLn $ "ignoring " <> T.unpack url
             void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
-continue :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
-continue conn depth uri mime raw_body body = do
-  disc <- getDocId conn depth uri
-  mgr <- HTTP.getGlobalManager
-  when (mime == "text/html" && isAcceptableLink uri) $ do
-    Just ls <-  runRanker (Env uri mgr conn) body links
-    void $ buildEdges conn disc ls
-  -- putStrLn $ "explored " <> show did
-  void $ flip run conn $ statement () $ update $ Update
-    { target = discoverySchema
-    , from = pure ()
-    , set = \ _ dis -> dis { d_state = lit Explored
-                           , d_data  = lit raw_body
-                           }
-    , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
-    , returning = pure ()
-    }
 
-
-
-index :: Connection -> Int32 -> URI -> ByteString -> ByteString -> Text -> IO ()
-index conn depth uri mime raw_body body = do
-  disc <- getDocId conn depth uri
+index :: Connection -> Int32 -> [Maybe Int16] -> URI -> ByteString -> ByteString -> Text -> IO ()
+index conn depth dist uri mime raw_body body = do
+  disc <- getDocId conn depth dist uri
   mgr <- HTTP.getGlobalManager
   case (mime == "text/html" && isAcceptableLink uri) of
     True -> do

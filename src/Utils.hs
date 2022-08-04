@@ -4,6 +4,7 @@
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Utils where
 
@@ -85,4 +86,8 @@ timing name ioa = do
 
 random :: Order a
 random = nullaryFunction @Double "RANDOM" >$ asc
+
+insertAt :: Int -> Int -> a -> [Maybe a]
+insertAt (subtract 1 -> sz) ix a = replicate ix Nothing <> (Just a : replicate (sz - ix) Nothing)
+
 
