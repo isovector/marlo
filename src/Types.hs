@@ -6,10 +6,13 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Types where
 
 import           Control.Monad.Reader
+import           Data.ByteString (ByteString)
+import           Data.Functor.Identity
 import           Data.Maybe (fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -17,6 +20,7 @@ import           Data.String (IsString)
 import           Data.Text (Text)
 import           Hasql.Connection (Connection)
 import           Network.HTTP.Client (Manager)
+import           Network.HTTP.Types.Header (ResponseHeaders)
 import           Network.URI
 import           Text.HTML.Scalpel
 
@@ -36,6 +40,19 @@ data Link a = Link
   }
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
+data Download f a = Download
+  { d_mime :: f ByteString
+  , d_headers :: ResponseHeaders
+  , d_body :: a
+  }
+  deriving (Functor)
+
+sequenceDownload :: Applicative f => Download f a -> f (Download Identity a)
+sequenceDownload (Download m h a) =
+  Download
+    <$> fmap Identity m
+    <*> pure h
+    <*> pure a
 
 data Search a
   = Term a

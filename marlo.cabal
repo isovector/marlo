@@ -35,6 +35,7 @@ library
       Metric
       Purge
       Rel8.Arrays
+      Rel8.Headers
       Rel8.TextSearch
       Search
       Search.Parser

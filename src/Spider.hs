@@ -18,6 +18,7 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor.Contravariant ((>$<))
 import           Data.Functor.Identity (Identity)
 import           Data.Int (Int32, Int16)
+import           Data.Maybe (isJust)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -31,9 +32,12 @@ import           Network.URI (parseURI, URI)
 import qualified Rel8 as R8 hiding (filter, bool)
 import           Rel8 hiding (filter, bool, index)
 import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
+import           Rel8.Headers (headersToHeaders)
 import           Signals
-import           Types
+import           Types hiding (d_headers)
+import qualified Types
 import           Utils (runRanker, unsafeURI, random)
+import Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
 
 --
 
@@ -87,6 +91,7 @@ discover depth dist uri = Insert
           (arrayInc $ lit dist)
           (lit $ depth + 1)
           (lit "")
+          (lit [])
           (lit 0)
           (lit "")
           (lit "")
@@ -151,9 +156,8 @@ spiderMain = do
             putStrLn $ "fetching " <> T.unpack url
             catch
               (do
-                (Just mime, raw_body) <- downloadBody $ T.unpack url
-                let body = decodeUtf8 raw_body
-                index conn (d_depth disc) (d_distance disc) uri mime raw_body body
+                Just down <- fmap sequenceDownload $ downloadBody $ T.unpack url
+                index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do
                 putStrLn $ "errored on " <> show (d_docId disc)
@@ -163,22 +167,22 @@ spiderMain = do
             putStrLn $ "ignoring " <> T.unpack url
             void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
-
-index :: Connection -> Int32 -> [Maybe Int16] -> URI -> ByteString -> ByteString -> Text -> IO ()
-index conn depth dist uri mime raw_body body = do
+index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
+index conn depth dist uri down = do
   disc <- getDocId conn depth dist uri
   mgr <- HTTP.getGlobalManager
-  case (mime == "text/html" && isAcceptableLink uri) of
+  case (d_mime down == "text/html" && isAcceptableLink uri) of
     True -> do
       let env = Env uri mgr conn
-      Just (ls, t) <- runRanker env body $ (,) <$> links <*> title
+      Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
       Right _ <- flip run conn $ statement () $ update $ Update
         { target = discoverySchema
         , from = pure ()
         , set = \ _ dis -> dis { d_state = lit Explored
                                , d_title = lit t
-                               , d_data  = lit raw_body
+                               , d_data  = lit $ d_body down
+                               , d_headers = lit $ fmap headersToHeaders $ Types.d_headers down
                               }
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
@@ -186,7 +190,8 @@ index conn depth dist uri mime raw_body body = do
       indexCore conn env $ disc
         { d_state = Explored
         , d_title = t
-        , d_data = raw_body
+        , d_data = d_body down
+        , d_headers = fmap headersToHeaders $ Types.d_headers down
         }
     False -> do
       void $ flip run conn $ statement () $ update $ markExplored Pruned disc
@@ -202,7 +207,7 @@ indexFromDB conn disc = do
 
 indexCore :: Connection -> Env -> Discovery Identity -> IO ()
 indexCore conn env disc = do
-  Just (m, h, c, has_ads, stats) <-
+  Just (m, h, c, has_ads, stats') <-
     runRanker env (decodeUtf8 $ d_data disc) $
       (,,,,)
         <$> mainContent
@@ -210,6 +215,7 @@ indexCore conn env disc = do
         <*> commentsContent
         <*> hasGoogleAds
         <*> rankStats
+  let stats = stats' { ds_cookies = isJust $ lookupHeader HdrSetCookie $ d_headers disc }
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()
@@ -228,14 +234,17 @@ indexCore conn env disc = do
 mimeToContentType :: ByteString -> ByteString
 mimeToContentType = BS.takeWhile (/= ';')
 
-downloadBody :: String -> IO (Maybe ByteString, ByteString)
+
+downloadBody :: String -> IO (Download Maybe ByteString)
 downloadBody url = do
   manager <- HTTP.getGlobalManager
   resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
   let mime = fmap mimeToContentType
             $ lookup hContentType
             $ HTTP.responseHeaders resp
-  pure $ (mime, ) $ BSL.toStrict $ HTTP.responseBody resp
+  pure
+    $ Download mime (HTTP.responseHeaders resp)
+    $ BSL.toStrict $ HTTP.responseBody resp
 
 
 debugRankerInDb :: Text -> Ranker a -> IO (Text, Maybe a)

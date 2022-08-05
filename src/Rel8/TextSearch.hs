@@ -2,13 +2,13 @@
 
 module Rel8.TextSearch where
 
+import           Data.Int (Int16)
 import           Data.Text (Text)
 import qualified Data.Text as T
+import qualified Hasql.Decoders as Decode
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as Prim
 import           Rel8 hiding (index)
 import           Servant.Server.Generic ()
-import qualified Opaleye.Internal.HaskellDB.PrimQuery as Prim
-import qualified Hasql.Decoders as Decode
-import Data.Int (Int16)
 
 data Tsvector = Tsvector
   deriving (Eq, Ord, Show)

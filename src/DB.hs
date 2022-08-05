@@ -27,6 +27,7 @@ import Rel8 hiding (Enum)
 import Rel8.Arrays (insertAt', arrayFill)
 import Rel8.TextSearch
 import Prelude hiding (null)
+import Rel8.Headers
 
 
 newtype EdgeId = EdgeId
@@ -63,6 +64,7 @@ data Discovery f = Discovery
   , d_distance :: Column f [Maybe Int16]
   , d_depth :: Column f Int32
   , d_data :: Column f ByteString
+  , d_headers :: Column f [Header]
   , d_rank :: Column f Double
   , d_title :: Column f Text
   , d_headings :: Column f Text
@@ -138,6 +140,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   distance int2[] NOT NULL,
   rank float8 NOT NULL,
   data bytea NOT NULL,
+  headers text[] NOT NULL,
   title TEXT NOT NULL,
   headings TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -160,6 +163,7 @@ ALTER TABLE discovery ADD COLUMN css int4 NULL DEFAULT 0;
 ALTER TABLE discovery ADD COLUMN tweets int2 NULL DEFAULT 0;
 ALTER TABLE discovery ADD COLUMN gifs int2 NULL DEFAULT 0;
 ALTER TABLE discovery ADD COLUMN cookies bool NULL DEFAULT false;
+ALTER TABLE discovery ADD COLUMN headers text[] NULL DEFAULT CAST(ARRAY[] AS text[]);
 
 ALTER TABLE discovery
     ADD COLUMN search tsvector
@@ -185,6 +189,7 @@ discoverySchema = TableSchema
       , d_depth = "depth"
       , d_distance = "distance"
       , d_data  = "data"
+      , d_headers  = "headers"
       , d_rank = "rank"
       , d_title = "title"
       , d_headings = "headings"
@@ -371,6 +376,7 @@ rootNodes = Insert
         , d_state = lit Discovered
         , d_depth = 0
         , d_data = ""
+        , d_headers = lit []
         , d_distance = insertAt' (lit $ fromIntegral numRootSites) idx $ nullify 0
         , d_rank = 0
         , d_title = ""
