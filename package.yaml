@@ -47,6 +47,7 @@ dependencies:
 - parser-combinators
 - time
 - opaleye
+- optparse-applicative
 
 library:
   source-dirs: src

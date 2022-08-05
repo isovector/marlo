@@ -31,7 +31,6 @@ library
       DB
       Index
       Keywords
-      Lib
       Metric
       Purge
       Ranking
@@ -62,6 +61,7 @@ library
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
@@ -99,6 +99,7 @@ executable index
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
@@ -136,6 +137,7 @@ executable purge
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
@@ -173,6 +175,7 @@ executable search
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
@@ -210,6 +213,7 @@ executable spider
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
@@ -248,6 +252,7 @@ test-suite go-go-test
     , mtl
     , network-uri
     , opaleye
+    , optparse-applicative
     , parser-combinators
     , rel8
     , scalpel
