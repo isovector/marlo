@@ -305,12 +305,15 @@ rootSites =
   , "https://blog.plover.com/"
   , "https://overcomingbias.com/"
   , "https://marginalrevolution.com/"
-  , "https://lesswrong.com/"
+  , "https://lesswrong.com/"  -- rationality / econ
   , "http://www.paulgraham.com/articles.html"
   , "https://apxhard.substack.com/"
   , "https://what-if.xkcd.com/"
-  , "https://jeremykun.com/"
+  , "https://jeremykun.com/"  -- math
   , "https://sandymaguire.me/"
+  -- , "https://neocities.org/" -- amateur
+  -- , "https://mitxela.com/" -- diy
+  -- , "https://seirdy.one/"  -- search engines
   ]
 
 numRootSites :: Int
