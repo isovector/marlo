@@ -12,7 +12,7 @@ import           Data.Char (toLower, isAlpha, isDigit)
 import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
-import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf)
+import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf, genericLength)
 import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -24,6 +24,8 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
+import DB
+import Data.Functor.Identity
 
 
 gif :: Ranker Text
@@ -363,23 +365,6 @@ hasGoogleAds = fmap or $ chroots "script" $ do
   src <- attr "src" "script"
   pure $ T.isInfixOf "adsbygoogle" src
 
-rankStuff :: Ranker Stuff
-rankStuff =
-  Stuff
-    <$> fmap length links
-    <*> fmap length (chroots "img" gif)
-    <*> fmap length uniqueImgs
-    <*> numScripts
-    <*> author
-    <*> paraHeadingRatio
-    <*> hasSticky
-    <*> tweets
-    <*> hasBootstrap
-    <*> hasGoogleAnalytics
-    <*> hasGoogleAds
-    <*> numForms
-    <*> romanPage
-
 
 hasSticky :: Ranker Bool
 hasSticky = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "sticky"
@@ -464,4 +449,12 @@ commentsContent = fmap (T.intercalate " ") $ asum
   , failIfEmpty $ textsWithoutScripts $ tagId "div" "comments"
   , pure []
   ]
+
+rankStats :: Ranker (DiscoveryStats Identity)
+rankStats = DiscoveryStats
+  <$> fmap fromIntegral jsBundleSize
+  <*> fmap fromIntegral cssBundleSize
+  <*> fmap fromIntegral tweets
+  <*> fmap genericLength (chroots "img" gif)
+  <*> pure False
 

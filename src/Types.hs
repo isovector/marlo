@@ -37,23 +37,6 @@ data Link a = Link
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 
-data Stuff = Stuff
-  { s_num_links :: Int
-  , s_num_gifs :: Int
-  , s_num_images :: Int
-  , s_num_scripts :: Int
-  , s_author :: Maybe Text
-  , s_ratio :: (Int, Int)
-  , s_sticky :: Bool
-  , s_numTweets :: Int
-  , s_bootstrap :: Bool
-  , s_googleAnalytics :: Bool
-  , s_googleAds :: Bool
-  , s_num_forms :: Int
-  , s_perc_roman :: Double
-  } deriving (Eq, Ord, Show)
-
-
 data Search a
   = Term a
   | Phrase [a]

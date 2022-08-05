@@ -68,11 +68,25 @@ data Discovery f = Discovery
   , d_headings :: Column f Text
   , d_content :: Column f Text
   , d_comments :: Column f Text
+  , d_stats :: DiscoveryStats f
   }
   deriving stock Generic
   deriving anyclass Rel8able
 
 deriving instance Show (Discovery Identity)
+
+data DiscoveryStats f = DiscoveryStats
+  { ds_js :: Column f Int32
+  , ds_css :: Column f Int32
+  , ds_tweets :: Column f Int16
+  , ds_gifs :: Column f Int16
+  , ds_cookies :: Column f Bool
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
+deriving instance Show (DiscoveryStats Identity)
+
 
 data Discovery' f = Discovery'
   { d_table :: Discovery f
@@ -127,13 +141,25 @@ CREATE TABLE IF NOT EXISTS discovery (
   title TEXT NOT NULL,
   headings TEXT NOT NULL,
   content TEXT NOT NULL,
-  comments TEXT NOT NULL
+  comments TEXT NOT NULL,
+
+  js int4 NOT NULL,
+  css int4 NOT NULL,
+  tweets int2 NOT NULL,
+  gifs int2 NOT NULL,
+  cookies bool NOT NULL
 );
 
 ALTER TABLE discovery
     ADD COLUMN distance int2[]
     NOT NULL
     DEFAULT CAST(ARRAY[null,null,null,null,null,null,null,null,null,null] AS int2[]);
+
+ALTER TABLE discovery ADD COLUMN js int4 NULL DEFAULT 0;
+ALTER TABLE discovery ADD COLUMN css int4 NULL DEFAULT 0;
+ALTER TABLE discovery ADD COLUMN tweets int2 NULL DEFAULT 0;
+ALTER TABLE discovery ADD COLUMN gifs int2 NULL DEFAULT 0;
+ALTER TABLE discovery ADD COLUMN cookies bool NULL DEFAULT false;
 
 ALTER TABLE discovery
     ADD COLUMN search tsvector
@@ -164,7 +190,17 @@ discoverySchema = TableSchema
       , d_headings = "headings"
       , d_content = "content"
       , d_comments = "comments"
+      , d_stats = discoveryStatsSchema
       }
+  }
+
+discoveryStatsSchema :: DiscoveryStats Name
+discoveryStatsSchema = DiscoveryStats
+  { ds_js = "js"
+  , ds_css = "css"
+  , ds_tweets = "tweets"
+  , ds_gifs = "gifs"
+  , ds_cookies = "cookies"
   }
 
 discoverySchema' :: TableSchema (Discovery' Name)
@@ -341,6 +377,7 @@ rootNodes = Insert
         , d_headings = ""
         , d_content = ""
         , d_comments = ""
+        , d_stats = DiscoveryStats 0 0 0 0 (lit False)
         }
   , onConflict = DoUpdate Upsert
       { index = d_uri

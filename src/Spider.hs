@@ -92,6 +92,7 @@ discover depth dist uri = Insert
           (lit "")
           (lit "")
           (lit "")
+          (DiscoveryStats (lit 0) (lit 0) (lit 0) (lit 0) (lit False))
   , onConflict = DoUpdate Upsert
       { index = d_uri
       , set = \new old -> old
@@ -170,7 +171,7 @@ index conn depth dist uri mime raw_body body = do
   case (mime == "text/html" && isAcceptableLink uri) of
     True -> do
       let env = Env uri mgr conn
-      Just (ls, t) <- runRanker env  body $ (,) <$> links <*> title
+      Just (ls, t) <- runRanker env body $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
       Right _ <- flip run conn $ statement () $ update $ Update
         { target = discoverySchema
@@ -201,9 +202,14 @@ indexFromDB conn disc = do
 
 indexCore :: Connection -> Env -> Discovery Identity -> IO ()
 indexCore conn env disc = do
-  Just (m, h, c, has_ads) <-
+  Just (m, h, c, has_ads, stats) <-
     runRanker env (decodeUtf8 $ d_data disc) $
-      (,,,) <$> mainContent <*> headingsContent <*> commentsContent <*> hasGoogleAds
+      (,,,,)
+        <$> mainContent
+        <*> headingsContent
+        <*> commentsContent
+        <*> hasGoogleAds
+        <*> rankStats
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()
@@ -211,6 +217,7 @@ indexCore conn env disc = do
                            , d_headings = lit h
                            , d_comments = lit c
                            , d_state    = lit $ bool Explored Unacceptable has_ads
+                           , d_stats    = lit stats
                            }
     , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
     , returning = pure ()
