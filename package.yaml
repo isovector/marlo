@@ -53,42 +53,9 @@ library:
   source-dirs: src
 
 executables:
-  search:
+  marlo:
     main:                Main.hs
-    source-dirs:         app/Search
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
-    dependencies:
-    - marlo
-
-  spider:
-    main:                Main.hs
-    source-dirs:         app/Spider
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
-    dependencies:
-    - marlo
-
-  index:
-    main:                Main.hs
-    source-dirs:         app/Index
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
-    dependencies:
-    - marlo
-
-  purge:
-    main:                Main.hs
-    source-dirs:         app/Purge
+    source-dirs:         app
     ghc-options:
     - -threaded
     - -rtsopts
@@ -107,3 +74,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - go-go
+
