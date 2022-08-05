@@ -24,7 +24,7 @@ import qualified Lucid as L
 import           Network.URI (escapeURIString, isUnescapedInURI)
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
-import           Rel8 hiding (index)
+import           Rel8 hiding (max, index)
 import           Rel8.TextSearch
 import           Search.Parser (searchParser)
 import           Servant
@@ -34,13 +34,31 @@ import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
+import GHC.Generics (Generic)
 
+data SearchResult f = SearchResult
+  { sr_ranking :: !(Column f Float)
+  , sr_id      :: !(Column f DocId)
+  , sr_uri     :: !(Column f Text)
+  , sr_title   :: !(Column f Text)
+  , sr_stats   :: !(DiscoveryStats f)
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
 
-compileSearch :: Search Text -> Query (Discovery' Expr)
-compileSearch q = orderBy ((\x -> rank (d_search x) (lit q') rDISTANCE) >$< desc) $
-  case compile' q of
-    Match ts -> matching ts
-    Full qu -> qu
+compileSearch :: Search Text -> Query (SearchResult Expr)
+compileSearch q = orderBy (sr_ranking >$< desc) $ do
+  d <-
+    case compile' q of
+      Match ts -> matching ts
+      Full qu -> qu
+  pure $ SearchResult
+    { sr_ranking = rank (d_search d) (lit q') rDISTANCE
+    , sr_id      = d_docId $ d_table d
+    , sr_uri     = d_uri   $ d_table d
+    , sr_title   = d_title $ d_table d
+    , sr_stats   = d_stats $ d_table d
+    }
   where
     q' = compileQuery q
 
@@ -102,18 +120,6 @@ getSnippet did q = do
   pure $ headline (d_content d <>. " " <>. d_headings d <>. " " <>. d_comments d) $ lit q
 
 
-type TestApi =
-       Get '[HTML] (L.Html ())
-  :<|> "search"
-        :> QueryParam "q" (Search Text)
-        :> QueryParam "p" Int
-        :> Get '[HTML] (L.Html ())
-  :<|> Raw
-
-
-instance FromHttpApiData [Text] where
-  parseQueryParam = Right . T.split (== ' ')
-
 
 home :: Connection -> Handler (L.Html ())
 home conn = do
@@ -130,7 +136,7 @@ home conn = do
         L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
         L.title_ "marlo: search, for humans"
       L.body_ $ L.div_ $ do
-        searchBar ""
+        searchBar Traditional ""
         L.div_ [L.class_ "metrics"] $ do
           L.span_ $ mconcat
             [ "Indexed: "
@@ -151,8 +157,8 @@ commafy
   . T.pack
 
 
-searchBar :: Text -> L.Html ()
-searchBar t =
+searchBar :: SearchVariety -> Text -> L.Html ()
+searchBar v t =
   L.div_ [L.class_ "logo-box"] $ do
     L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
       L.h1_ "mar"
@@ -165,16 +171,21 @@ searchBar t =
         [ L.autofocus_
         | t == ""
         ]
+      L.select_ [ L.name_ "v" ] $ do
+        L.option_ (selected Traditional [ L.value_ "traditional" ]) "traditional"
+        L.option_ (selected Spatial     [ L.value_ "spatial" ])     "spatial"
+  where
+    selected v' z
+      | v == v' = L.selected_ "selected" : z
+      | otherwise = z
 
-
-search :: Connection -> Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
-search _ Nothing _ = pure $ "Give me some keywords, punk!"
-search conn (Just q) mpage = do
+traditionalSearch :: Connection -> Search Text -> Maybe Int -> Handler (L.Html ())
+traditionalSearch conn q mpage = do
   let pagenum = Prelude.max 0 $ maybe 0 (subtract 1) mpage
       pagesize :: Num a => a
       pagesize = 20
   (cnt, docs, snips) <- liftIO $ do
-    putStrLn $ mappend "search: " $ T.unpack $ encodeQuery q
+    putStrLn $ mappend "trad search: " $ T.unpack $ encodeQuery q
     writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
       flip run conn
@@ -188,7 +199,7 @@ search conn (Just q) mpage = do
         Right [snip] <- flip run conn
           $ statement ()
           $ select
-          $ getSnippet (d_docId $ d_table doc) $ compileQuery q
+          $ getSnippet (sr_id doc) $ compileQuery q
         pure snip
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $
@@ -203,8 +214,8 @@ search conn (Just q) mpage = do
         L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
-          searchBar $ encodeQuery q
-          for_ (zip (fmap d_table docs) snips) $ uncurry searchResult
+          searchBar Traditional $ encodeQuery q
+          for_ (zip docs snips) $ uncurry tradResult
           let eq = escape $ encodeQuery q
           when (pagenum > 0) $ do
             L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show pagenum)  ] "Prev"
@@ -212,6 +223,40 @@ search conn (Just q) mpage = do
             L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show (pagenum + 2))  ] "Next"
   where
     escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
+
+spatialSearch :: Connection -> Search Text -> Handler (L.Html ())
+spatialSearch conn q = do
+  (cnt, docs) <- liftIO $ do
+    putStrLn $ mappend "spatial search: " $ T.unpack $ encodeQuery q
+    writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
+    Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
+      flip run conn
+        $ statement ()
+        $ select
+        $ limit 1000
+        $ let x = compileSearch q
+           in liftA2 (,) (countRows x) x
+    pure (fromMaybe 0 (listToMaybe cnt), docs)
+  pure $
+    L.html_ $ do
+      L.head_ $ do
+        L.title_ $ mconcat
+          [ "marlo search - results for "
+          , L.toHtml (encodeQuery q)
+          , " (" <> fromString (show cnt)
+          , ")"
+          ]
+        L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
+      L.body_ $ do
+        L.div_ [L.class_ "box"] $ do
+          searchBar Spatial $ encodeQuery q
+          for_ docs spaceResult
+
+
+search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
+search _ _ Nothing _ = pure $ "Give me some keywords, punk!"
+search conn (fromMaybe Traditional -> Traditional) (Just q) mpage = traditionalSearch conn q mpage
+search conn (fromMaybe Traditional -> Spatial) (Just q) _ = spatialSearch conn q
 
 
 encodeQuery :: Search Text -> Text
@@ -223,18 +268,56 @@ encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> 
 encodeQuery (SiteLike t) = "site:" <> t
 
 
-searchResult :: Discovery Rel8.Result -> Text -> L.Html ()
-searchResult d snip =
+tradResult :: SearchResult Rel8.Result -> Text -> L.Html ()
+tradResult d snip =
   L.div_ [L.class_ "result"] $ do
-    L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml $ d_uri d
-    L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ d_uri d] $ L.toHtml title
+    L.span_ [L.class_ "url"] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml $ sr_uri d
+    L.span_ [L.class_ "title"] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
     L.p_ [L.class_ "snippet"] $ L.toHtmlRaw snip
   where
     title =
-      case T.strip $ d_title d of
+      case T.strip $ sr_title d of
         "" -> "(no title)"
         x -> x
 
+spaceResult :: SearchResult Rel8.Result -> L.Html ()
+spaceResult d =
+    L.span_
+      [ L.class_ "title"
+      , L.style_ $ mconcat
+          [ "position: absolute;"
+          , "top: "
+          , T.pack $ show $ (+ 200) $ (* 3000) $ sr_ranking d
+          , "; "
+          , "left: "
+          , T.pack $ show $ (* 100) $ log @Double $ max 1 $ fromIntegral $ ds_js $ sr_stats d
+          ]
+      ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
+  where
+    title =
+      case T.strip $ sr_title d of
+        "" -> "(no title)"
+        x -> x
+
+--------------------------------------------------------------------------------
+
+data SearchVariety
+  = Traditional
+  | Spatial
+  deriving (Eq, Ord, Show, Prelude.Enum, Bounded)
+
+type TestApi =
+       Get '[HTML] (L.Html ())
+  :<|> "search"
+        :> QueryParam "v" SearchVariety
+        :> QueryParam "q" (Search Text)
+        :> QueryParam "p" Int
+        :> Get '[HTML] (L.Html ())
+  :<|> Raw
+
+
+instance FromHttpApiData [Text] where
+  parseQueryParam = Right . T.split (== ' ')
 
 server :: Connection -> Server TestApi
 server conn = home conn
@@ -243,6 +326,11 @@ server conn = home conn
 
 instance FromHttpApiData (Search Text) where
   parseQueryParam = first (T.pack . errorBundlePretty) . parse searchParser ""
+
+instance FromHttpApiData SearchVariety where
+  parseQueryParam "traditional" = Right Traditional
+  parseQueryParam "spatial"     = Right Spatial
+  parseQueryParam _             = Left "SearchVariety must be one of 'traditional' or 'spatial'"
 
 runTestServer :: Connection -> W.Port -> IO ()
 runTestServer conn port = W.run port $ serve (Proxy @TestApi) $ server conn
