@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Signals where
 
@@ -12,8 +10,8 @@ import           Data.Char (toLower, isAlpha, isDigit)
 import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
-import           Data.List (isSuffixOf, partition, dropWhileEnd, isPrefixOf, isInfixOf, genericLength)
-import           Data.Maybe (mapMaybe, fromMaybe, catMaybes)
+import           Data.List (isSuffixOf, partition, dropWhileEnd, isInfixOf, genericLength)
+import           Data.Maybe (mapMaybe, fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -75,7 +73,6 @@ title = text "title"
 
 link :: Ranker (Link URI)
 link = do
-  here <- asks e_uri
   t    <- T.strip <$> text "a"
   guard $ not $ T.null t
   href <- attr "href" "a"
@@ -87,14 +84,14 @@ normalizeLink href = do
   case parseURIReference (T.unpack href) of
     Just (flip relativeTo here -> uri) | isAcceptableLink uri ->
       pure $ normalizeURI uri
-    x -> empty
+    _ -> empty
 
 normalizeAsset :: Text -> Ranker URI
 normalizeAsset href = do
   here <- asks e_uri
   case parseURIReference (escapeURIString isUnescapedInURI $ T.unpack href) of
     Just (flip relativeTo here -> uri) -> pure uri
-    x -> empty
+    _ -> empty
 
 
 normalizeURI :: URI -> URI
@@ -346,7 +343,7 @@ links = fmap (nubOrdOn l_uri) $ chroots "a" link
 
 paraHeadingRatio :: Ranker (Int, Int)
 paraHeadingRatio = do
-  headings <- fmap join $ for [1..5] $ \i -> chroots (tagSelector $ "h" <> show i) $ pure ()
+  headings <- fmap join $ for [id @Int 1..5] $ \i -> chroots (tagSelector $ "h" <> show i) $ pure ()
   paras <- chroots "p" $ pure ()
   pure $ (length paras, length headings)
 

@@ -49,6 +49,65 @@ dependencies:
 - opaleye
 - optparse-applicative
 
+ghc-options:
+- -Wall
+
+default-extensions:
+- BangPatterns
+- BinaryLiterals
+- ConstrainedClassMethods
+- ConstraintKinds
+- DataKinds
+- DeriveAnyClass
+- DeriveDataTypeable
+- DeriveFoldable
+- DeriveFunctor
+- DeriveGeneric
+- DeriveLift
+- DeriveTraversable
+- DerivingStrategies
+- DerivingVia
+- DoAndIfThenElse
+- DuplicateRecordFields
+- EmptyCase
+- EmptyDataDecls
+- EmptyDataDeriving
+- ExistentialQuantification
+- ExplicitForAll
+- FlexibleContexts
+- FlexibleInstances
+- ForeignFunctionInterface
+- GADTSyntax
+- GADTs
+- GeneralizedNewtypeDeriving
+- HexFloatLiterals
+- ImplicitPrelude
+- ImportQualifiedPost
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- MonomorphismRestriction
+- MultiParamTypeClasses
+- NamedFieldPuns
+- NamedWildCards
+- NumericUnderscores
+- OverloadedStrings
+- PatternGuards
+- PolyKinds
+- PostfixOperators
+- RankNTypes
+- RelaxedPolyRec
+- ScopedTypeVariables
+- StandaloneDeriving
+- StandaloneKindSignatures
+- StarIsType
+- TraditionalRecordSyntax
+- TupleSections
+- TypeApplications
+- TypeOperators
+- TypeSynonymInstances
+- ViewPatterns
+
 library:
   source-dirs: src
 

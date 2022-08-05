@@ -1,11 +1,3 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TupleSections         #-}
-{-# LANGUAGE TypeApplications      #-}
-
-{-# OPTIONS_GHC -Wall              #-}
-
 module Spider where
 
 import           Control.Exception.Base
@@ -25,6 +17,7 @@ import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
+import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
@@ -34,10 +27,9 @@ import           Rel8 hiding (filter, bool, index)
 import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
 import           Rel8.Headers (headersToHeaders)
 import           Signals
-import           Types hiding (d_headers)
 import qualified Types
+import           Types hiding (d_headers)
 import           Utils (runRanker, unsafeURI, random)
-import Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
 
 --
 

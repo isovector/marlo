@@ -9,12 +9,11 @@ import qualified Data.Text as T
 import Keywords (isKeywordLetter)
 import Data.Void (Void)
 import Data.Text (Text)
-import Text.Megaparsec.Char (string, char, space1, eol)
+import Text.Megaparsec.Char (string, char, space1)
 import Data.Foldable (asum)
 import Text.Megaparsec.Char.Lexer (symbol, lexeme)
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Char (isAlphaNum)
-import Network.URI (isAllowedInURI)
 
 type Parser = Parsec Void Text
 
@@ -42,9 +41,9 @@ searchParser = expr <* eof
 
 phraseParser :: Parser (Search Text)
 phraseParser = do
-  symbol sp "\""
+  _ <- symbol sp "\""
   x <- many keywordParser
-  symbol sp "\""
+  _ <- symbol sp "\""
   pure $ Phrase x
 
 keywordParser :: Parser Text
@@ -58,7 +57,7 @@ keywordParser = try $ do
 
 siteParser :: Parser (Search a)
 siteParser = lexeme sp $ do
-  string "site:"
+  _ <- string "site:"
   fmap (SiteLike . T.pack) $ many $ satisfy $ \c -> or
     [ isKeywordLetter c
     , c == '/'

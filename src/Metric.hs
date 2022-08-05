@@ -1,5 +1,3 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-
 module Metric where
 
 import Rel8
@@ -7,12 +5,10 @@ import DB
 import Rel8.Arrays
 import Prelude hiding (null)
 import Data.Int (Int16, Int64, Int32)
-import Data.Functor.Contravariant ((>$<))
 import Hasql.Connection (acquire)
 import Hasql.Session (run, statement)
 import Utils (random)
 import Data.Text (Text)
-import Data.Foldable (for_)
 import Data.Function (fix)
 
 

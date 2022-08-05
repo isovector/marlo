@@ -47,6 +47,62 @@ library
       Paths_marlo
   hs-source-dirs:
       src
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstrainedClassMethods
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DoAndIfThenElse
+      DuplicateRecordFields
+      EmptyCase
+      EmptyDataDecls
+      EmptyDataDeriving
+      ExistentialQuantification
+      ExplicitForAll
+      FlexibleContexts
+      FlexibleInstances
+      ForeignFunctionInterface
+      GADTSyntax
+      GADTs
+      GeneralizedNewtypeDeriving
+      HexFloatLiterals
+      ImplicitPrelude
+      ImportQualifiedPost
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MonomorphismRestriction
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NamedWildCards
+      NumericUnderscores
+      OverloadedStrings
+      PatternGuards
+      PolyKinds
+      PostfixOperators
+      RankNTypes
+      RelaxedPolyRec
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      StarIsType
+      TraditionalRecordSyntax
+      TupleSections
+      TypeApplications
+      TypeOperators
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall
   build-depends:
       HTTP
     , async
@@ -83,7 +139,62 @@ executable marlo
       Paths_marlo
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstrainedClassMethods
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DoAndIfThenElse
+      DuplicateRecordFields
+      EmptyCase
+      EmptyDataDecls
+      EmptyDataDeriving
+      ExistentialQuantification
+      ExplicitForAll
+      FlexibleContexts
+      FlexibleInstances
+      ForeignFunctionInterface
+      GADTSyntax
+      GADTs
+      GeneralizedNewtypeDeriving
+      HexFloatLiterals
+      ImplicitPrelude
+      ImportQualifiedPost
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MonomorphismRestriction
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NamedWildCards
+      NumericUnderscores
+      OverloadedStrings
+      PatternGuards
+      PolyKinds
+      PostfixOperators
+      RankNTypes
+      RelaxedPolyRec
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      StarIsType
+      TraditionalRecordSyntax
+      TupleSections
+      TypeApplications
+      TypeOperators
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
     , async
@@ -122,7 +233,62 @@ test-suite go-go-test
       Paths_marlo
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstrainedClassMethods
+      ConstraintKinds
+      DataKinds
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DoAndIfThenElse
+      DuplicateRecordFields
+      EmptyCase
+      EmptyDataDecls
+      EmptyDataDeriving
+      ExistentialQuantification
+      ExplicitForAll
+      FlexibleContexts
+      FlexibleInstances
+      ForeignFunctionInterface
+      GADTSyntax
+      GADTs
+      GeneralizedNewtypeDeriving
+      HexFloatLiterals
+      ImplicitPrelude
+      ImportQualifiedPost
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MonomorphismRestriction
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NamedWildCards
+      NumericUnderscores
+      OverloadedStrings
+      PatternGuards
+      PolyKinds
+      PostfixOperators
+      RankNTypes
+      RelaxedPolyRec
+      ScopedTypeVariables
+      StandaloneDeriving
+      StandaloneKindSignatures
+      StarIsType
+      TraditionalRecordSyntax
+      TupleSections
+      TypeApplications
+      TypeOperators
+      TypeSynonymInstances
+      ViewPatterns
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
     , async

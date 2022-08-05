@@ -1,22 +1,8 @@
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE RankNTypes #-}
-
 module Types where
 
 import           Control.Monad.Reader
 import           Data.ByteString (ByteString)
 import           Data.Functor.Identity
-import           Data.Maybe (fromMaybe)
-import           Data.Set (Set)
-import qualified Data.Set as S
-import           Data.String (IsString)
 import           Data.Text (Text)
 import           Hasql.Connection (Connection)
 import           Network.HTTP.Client (Manager)

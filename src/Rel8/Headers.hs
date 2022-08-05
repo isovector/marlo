@@ -1,18 +1,19 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Rel8.Headers
   ( Header
   , module Rel8.Headers
   ) where
 
-import           Data.Functor.Contravariant ((>$<))
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import qualified Hasql.Decoders as Decode
 import           Network.HTTP.Headers
+import qualified Network.HTTP.Types.Header
 import           Opaleye.Internal.HaskellDB.PrimQuery
 import           Rel8
-import qualified Network.HTTP.Types.Header
-import Data.String (fromString)
 
+instance DBEq Header
 
 instance DBType Header where
   typeInformation = TypeInformation

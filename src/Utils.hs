@@ -5,13 +5,14 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 
 module Utils where
 
 import           Control.Applicative ((<|>))
 import           Control.Monad.Reader
 import           Data.Functor.Contravariant ((>$))
-import           Data.Maybe (fromJust, fromMaybe)
+import           Data.Maybe (fromJust)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -20,7 +21,6 @@ import           Data.Time (getCurrentTime)
 import           Data.Time.Clock (diffUTCTime)
 import           Network.URI
 import           Rel8 (limit, offset, Order, nullaryFunction, asc)
-import           System.CPUTime (getCPUTime)
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types

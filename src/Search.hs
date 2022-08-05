@@ -1,20 +1,4 @@
-{-# LANGUAGE BangPatterns          #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveFoldable        #-}
-{-# LANGUAGE DeriveFunctor         #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE DeriveTraversable     #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Search where
 
@@ -25,8 +9,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           DB
 import           Data.Bifunctor (first)
 import           Data.Coerce (coerce)
-import           Data.Either (partitionEithers)
-import           Data.Foldable (for_, toList)
+import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$<))
 import qualified Data.Map as M
 import           Data.Maybe (fromMaybe, listToMaybe)

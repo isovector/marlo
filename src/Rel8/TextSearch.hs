@@ -47,7 +47,7 @@ instance DBType Tsquery where
           Prim.UnExpr (Prim.UnOpOther "!!") (encode typeInformation lhs)
         TsqPhrase lhs rhs ->
           Prim.BinExpr (Prim.OpOther "<->") (encode typeInformation lhs) (encode typeInformation rhs)
-    , decode = Decode.custom $ const $ \bs -> error "need to parse still"
+    , decode = Decode.custom $ const $ \_ -> error "need to parse still"
     , typeName = "tsquery"
     }
 
