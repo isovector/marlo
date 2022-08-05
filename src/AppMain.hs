@@ -7,11 +7,13 @@ import qualified Search
 import qualified Spider
 import qualified Purge
 import qualified Metric
+import qualified Index
 
 data Command
   = SearchCommand
   | SpiderCommand
   | PurgeCommand
+  | IndexCommand
   | MetricCommand
   deriving (Eq, Ord, Show, Enum, Bounded)
 
@@ -26,6 +28,9 @@ sub = subparser $ mconcat
       ]
   , command "purge" $ info (pure PurgeCommand) $ mconcat
       [ progDesc "Prune webpages that are now excluded by filter rules"
+      ]
+  , command "reindex" $ info (pure IndexCommand) $ mconcat
+      [ progDesc "Reindex every explored site"
       ]
   , command "root-distance" $ info (pure MetricCommand) $ mconcat
       [ progDesc "Rerun the root-distance algorithm"
@@ -51,5 +56,6 @@ main = do
      SearchCommand -> Search.main
      SpiderCommand -> Spider.spiderMain
      PurgeCommand -> Purge.main
+     IndexCommand -> Index.main
      MetricCommand -> Metric.metricMain
 
