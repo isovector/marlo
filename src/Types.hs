@@ -9,6 +9,7 @@ import           Network.HTTP.Client (Manager)
 import           Network.HTTP.Types.Header (ResponseHeaders)
 import           Network.URI
 import           Text.HTML.Scalpel
+import Data.Maybe (fromMaybe)
 
 
 data Env = Env
@@ -33,12 +34,9 @@ data Download f a = Download
   }
   deriving (Functor)
 
-sequenceDownload :: Applicative f => Download f a -> f (Download Identity a)
-sequenceDownload (Download m h a) =
-  Download
-    <$> fmap Identity m
-    <*> pure h
-    <*> pure a
+sequenceDownload :: ByteString -> Download Maybe a -> Download Identity a
+sequenceDownload bs d@(Download m _ _) =
+  d { d_mime = Identity $ fromMaybe bs m }
 
 data Search a
   = Term a

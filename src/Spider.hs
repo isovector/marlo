@@ -31,7 +31,6 @@ import qualified Types
 import           Types hiding (d_headers)
 import           Utils (runRanker, unsafeURI, random)
 
---
 
 nextDiscovered :: Query (Discovery Expr)
 nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
@@ -148,7 +147,7 @@ spiderMain = do
             putStrLn $ "fetching " <> T.unpack url
             catch
               (do
-                Just down <- fmap sequenceDownload $ downloadBody $ T.unpack url
+                down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
                 index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do
@@ -208,6 +207,7 @@ indexCore conn env disc = do
         <*> hasGoogleAds
         <*> rankStats
   let stats = stats' { ds_cookies = isJust $ lookupHeader HdrSetCookie $ d_headers disc }
+  -- TODO(sandy): bug??? headers aren't being set
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()

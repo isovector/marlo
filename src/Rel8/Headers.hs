@@ -5,6 +5,7 @@ module Rel8.Headers
   , module Rel8.Headers
   ) where
 
+import           Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import qualified Hasql.Decoders as Decode
@@ -12,6 +13,7 @@ import           Network.HTTP.Headers
 import qualified Network.HTTP.Types.Header
 import           Opaleye.Internal.HaskellDB.PrimQuery
 import           Rel8
+
 
 instance DBEq Header
 
@@ -26,5 +28,8 @@ instance DBType Header where
     }
 
 headersToHeaders :: Network.HTTP.Types.Header.Header -> Network.HTTP.Headers.Header
-headersToHeaders (ci, bs) = Header (HdrCustom $ show ci) $ T.unpack $ decodeUtf8 bs
+headersToHeaders (ci, bs) = Header (getHeaderName $ show ci) $ T.unpack $ decodeUtf8 bs
+
+getHeaderName :: String -> HeaderName
+getHeaderName s = fromMaybe (HdrCustom s) $ lookup s headerMap
 

@@ -1,10 +1,8 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Assets where
 
 import qualified Data.Set as S
-import Data.Set (Set)
 import Rel8
 import Data.Text (Text)
 import Hasql.Connection (Connection)
@@ -13,18 +11,12 @@ import Control.Monad (void)
 import Hasql.Session (run, statement)
 import DB
 import Data.Traversable (for)
-import Network.HTTP.Client (httpNoBody, Manager, defaultRequest, Request (method), parseRequest, responseHeaders)
-import Network.HTTP.Base (RequestMethod (HEAD))
+import Network.HTTP.Client (httpNoBody, Manager, parseRequest, responseHeaders)
 import qualified Data.Text as T
-import Network.URI (parseURI)
-import Network.HTTP (mkRequest, lookupHeader)
 import Network.HTTP.Types (hContentLength)
-import Data.List (find)
 import qualified Data.ByteString.Char8 as BS
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
-import qualified Network.HTTP.Client.TLS as HTTP
-import           Hasql.Connection (acquire, Connection)
 
 
 getAssetSizes :: Manager -> Connection -> [Text] -> IO [Int64]
