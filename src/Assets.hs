@@ -1,22 +1,18 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Assets where
 
-import qualified Data.Set as S
-import Rel8
-import Data.Text (Text)
-import Hasql.Connection (Connection)
-import Data.Int (Int64)
-import Control.Monad (void)
-import Hasql.Session (run, statement)
-import DB
-import Data.Traversable (for)
-import Network.HTTP.Client (httpNoBody, Manager, parseRequest, responseHeaders)
-import qualified Data.Text as T
-import Network.HTTP.Types (hContentLength)
+import           Control.Monad (void)
+import           DB
 import qualified Data.ByteString.Char8 as BS
-import Data.Maybe (fromMaybe)
-import Text.Read (readMaybe)
+import           Data.Int (Int64)
+import qualified Data.Set as S
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Data.Traversable (for)
+import           Hasql.Connection (Connection)
+import           Hasql.Session (run, statement)
+import           Network.HTTP.Client (httpNoBody, Manager, parseRequest, responseHeaders)
+import           Network.HTTP.Types (hContentLength)
+import           Rel8
 
 
 getAssetSizes :: Manager -> Connection -> [Text] -> IO [Int64]
@@ -31,7 +27,7 @@ getAssetSizes mgr conn uris = do
     for (S.toList missing) $ \turi -> do
       req <- parseRequest $ "HEAD " <> T.unpack turi
       resp <- flip httpNoBody mgr req
-      let size = maybe 0 (fromMaybe 0 . readMaybe . BS.unpack)
+      let size = maybe 0 (fromIntegral . BS.length)
                $ lookup hContentLength
                $ responseHeaders resp
       void $ flip run conn $ statement () $ insert $ Insert
@@ -45,16 +41,4 @@ getAssetSizes mgr conn uris = do
         }
       pure size
   pure $ fmap a_size szs <> rest
-
-
-
--- indexWords :: Connection -> DocId -> [(Int, Keyword)] -> IO ()
--- indexWords conn did pos = do
---   let kws = nubOrd $ fmap snd pos
---   void $ flip run conn $ statement () $ insert $ createWordIds kws
---   Right ws <- flip run conn $ statement () $ select $ getWordIds kws
---   let word_map = M.fromList $ ws <&> \(Words a b) -> (Keyword b, a)
---       pos' = fmap (second (word_map M.!)) pos
---   Right res <- flip run conn $ statement () $ insert $ insertKeywords did pos'
---   pure res
 
