@@ -171,6 +171,8 @@ isAcceptableLink uri
           , ".ppt"
           , ".ipyn"
           , ".ipynb"
+          , ".xml"
+          , ".rss"
           ]
       , not $ any (isOnDomain $ uriRegName auth) forbidSites
       , isWiki auth "wikipedia.org"
