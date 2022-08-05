@@ -29,6 +29,7 @@ library
       Assets
       Config
       Config.Type
+      Data.RectPacking
       DB
       Index
       Keywords
@@ -105,6 +106,7 @@ library
   ghc-options: -Wall
   build-depends:
       HTTP
+    , QuadTree
     , async
     , base >=4.7 && <5
     , bytestring
@@ -113,6 +115,8 @@ library
     , http-client
     , http-client-tls
     , http-types
+    , lens
+    , linear
     , lucid
     , megaparsec
     , mtl
@@ -197,6 +201,7 @@ executable marlo
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HTTP
+    , QuadTree
     , async
     , base >=4.7 && <5
     , bytestring
@@ -205,6 +210,8 @@ executable marlo
     , http-client
     , http-client-tls
     , http-types
+    , lens
+    , linear
     , lucid
     , marlo
     , megaparsec
@@ -291,6 +298,7 @@ test-suite go-go-test
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HTTP
+    , QuadTree
     , async
     , base >=4.7 && <5
     , bytestring
@@ -300,6 +308,8 @@ test-suite go-go-test
     , http-client
     , http-client-tls
     , http-types
+    , lens
+    , linear
     , lucid
     , megaparsec
     , mtl

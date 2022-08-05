@@ -6,18 +6,23 @@ import           Config
 import           Control.Applicative (liftA2)
 import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.State (evalState, gets, modify)
 import           DB
 import           Data.Bifunctor (first)
 import           Data.Coerce (coerce)
 import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$<))
+import           Data.Functor.Identity (Identity)
 import qualified Data.Map as M
-import           Data.Maybe (fromMaybe, listToMaybe)
+import           Data.Maybe (fromMaybe, listToMaybe, catMaybes, mapMaybe)
 import           Data.Proxy
+import           Data.RectPacking
+import qualified Data.Set as S
 import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
+import           GHC.Generics (Generic)
 import           Hasql.Connection (acquire, Connection)
 import           Hasql.Session (run, statement)
 import qualified Lucid as L
@@ -34,7 +39,7 @@ import           Text.Megaparsec (parse, errorBundlePretty)
 import           Types
 import           Utils (paginate, timing)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
-import GHC.Generics (Generic)
+
 
 data SearchResult f = SearchResult
   { sr_ranking :: !(Column f Float)
@@ -45,6 +50,8 @@ data SearchResult f = SearchResult
   }
   deriving stock Generic
   deriving anyclass Rel8able
+
+deriving instance Eq (SearchResult Identity)
 
 compileSearch :: Search Text -> Query (SearchResult Expr)
 compileSearch q = orderBy (sr_ranking >$< desc) $ do
@@ -224,6 +231,15 @@ traditionalSearch conn q mpage = do
   where
     escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
 
+
+makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
+makeRect sr = Rect
+  { r_pos = V2 (log $ max 1 $ fromIntegral $ ds_js $ sr_stats sr) (sr_ranking sr * 100)
+  , r_size = measureText $ sr_title sr
+  , r_data = sr
+  }
+
+
 spatialSearch :: Connection -> Search Text -> Handler (L.Html ())
 spatialSearch conn q = do
   (cnt, docs) <- liftIO $ do
@@ -237,6 +253,7 @@ spatialSearch conn q = do
         $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
     pure (fromMaybe 0 (listToMaybe cnt), docs)
+  let qd = foldr place (makeTree (200, 50) Nothing) $ fmap makeRect docs
   pure $
     L.html_ $ do
       L.head_ $ do
@@ -250,7 +267,18 @@ spatialSearch conn q = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar Spatial $ encodeQuery q
-          for_ docs spaceResult
+          for_ (uniqueTiles $ mapMaybe sequenceTile $ tile $ tmap (fmap r_data) qd) spaceResult
+
+
+uniqueTiles :: [Tile (SearchResult Identity)] -> [Tile (SearchResult Identity)]
+uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
+  for ts $ \t@(sr, _) -> do
+    gets (S.member $ sr_id sr) >>= \case
+       False -> do
+         modify $ S.insert $ sr_id sr
+         pure $ Just t
+       True -> pure Nothing
+
 
 
 search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
@@ -280,24 +308,24 @@ tradResult d snip =
         "" -> "(no title)"
         x -> x
 
-spaceResult :: SearchResult Rel8.Result -> L.Html ()
-spaceResult d =
+spaceResult :: (SearchResult Rel8.Result, (Int, Int, Int, Int)) -> L.Html ()
+spaceResult (d, (x, y, _, _)) =
     L.span_
       [ L.class_ "title"
       , L.style_ $ mconcat
           [ "position: absolute;"
           , "top: "
-          , T.pack $ show $ (+ 200) $ (* 3000) $ sr_ranking d
+          , T.pack $ show $ (* 15) y
           , "; "
           , "left: "
-          , T.pack $ show $ (* 100) $ log @Double $ max 1 $ fromIntegral $ ds_js $ sr_stats d
+          , T.pack $ show $ (* 5) x
           ]
       ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
   where
     title =
       case T.strip $ sr_title d of
         "" -> "(no title)"
-        x -> x
+        t -> t
 
 --------------------------------------------------------------------------------
 

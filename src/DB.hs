@@ -88,6 +88,7 @@ data DiscoveryStats f = DiscoveryStats
   deriving anyclass Rel8able
 
 deriving instance Show (DiscoveryStats Identity)
+deriving instance Eq (DiscoveryStats Identity)
 
 
 data Discovery' f = Discovery'

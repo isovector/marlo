@@ -39,6 +39,13 @@ packages:
       sha256: 7d529522482f4f83a62430a0fe245afc6272a5b9a63f2581388ac602654806c0
   original:
     hackage: servant-lucid-0.9.0.5@sha256:c46780eefc12544b862af1dd7c7f88715e5fb45d954da538b0641d42c7b5f5c6,1787
+- completed:
+    hackage: QuadTree-0.11.0@sha256:e2911b6ce3d3f1dd9eea0d7d4cea5545a6252fb32fb0c1040fd49678e4f5018e,2227
+    pantry-tree:
+      size: 339
+      sha256: 36ce3c789e950a038ddeeade3193b7d3e9f167bcdbca59b270df07090859a59f
+  original:
+    hackage: QuadTree-0.11.0@sha256:e2911b6ce3d3f1dd9eea0d7d4cea5545a6252fb32fb0c1040fd49678e4f5018e,2227
 snapshots:
 - completed:
     size: 586286

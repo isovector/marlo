@@ -48,6 +48,9 @@ dependencies:
 - time
 - opaleye
 - optparse-applicative
+- QuadTree
+- linear
+- lens
 
 ghc-options:
 - -Wall
