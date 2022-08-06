@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Data.RectPacking
@@ -5,23 +6,19 @@ module Data.RectPacking
   , V2 (..)
   , place
   , measureText
-  , sequenceTile
+  -- , sequenceTile
   , QuadTree
   , makeTree
   , tile
-  , tmap
-  , Tile
-  , Region
+  , type Region
+  , pattern Region
   ) where
 
-import Data.QuadTree
-import Data.Bifunctor (second)
-import Linear.V2
-import Control.Lens ((^.))
-import Linear hiding (trace)
-import Data.Text (Text)
+import           Control.Monad (join)
+import           Data.QuadAreaTree
+import           Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace (trace)
+import           Linear hiding (trace)
 
 
 data Rect a = Rect
@@ -32,8 +29,8 @@ data Rect a = Rect
   deriving (Eq, Ord, Show, Functor)
 
 
-rectCenterLoc :: Rect a -> Location
-rectCenterLoc = unpackV2 . fmap round . rectCenter
+rectCenterLoc :: Rect a -> V2 Int
+rectCenterLoc = fmap round . rectCenter
 
 rectCenter :: Rect a -> V2 Float
 rectCenter Rect{..} = r_pos + fmap fromIntegral r_size / 2
@@ -43,30 +40,17 @@ rectCenter Rect{..} = r_pos + fmap fromIntegral r_size / 2
 uncenter :: V2 Int -> V2 Float -> V2 Float
 uncenter sz center = center - fmap fromIntegral sz / 2
 
-unpackV2 :: V2 a -> (a, a)
-unpackV2 (V2 x y) = (x, y)
-
-rectToSegs :: Rect a -> [(Location, Rect a)]
-rectToSegs r@Rect{..} = do
-  dx <- [0 .. r_size ^. _x]
-  dy <- [0 .. r_size ^. _y]
-  pure (unpackV2 $ fmap round $ r_pos + fmap fromIntegral (V2 dx dy), r)
-
 
 place :: Eq a => Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
-place r qt = case safeGetLocation (rectCenterLoc r) qt of
-  Nothing -> foldr (uncurry safeSetLocation) qt $ fmap (second Just) $ rectToSegs r
+place r qt = case join $ getLocation qt $ rectCenterLoc r of
+  Nothing -> fillRect r qt
   Just re -> place (offsetBy r re) qt
 
-safeGetLocation :: Eq a => Location -> QuadTree (Maybe a) -> Maybe a
-safeGetLocation l q = case outOfBounds l q of
-  False -> getLocation l q
-  True -> trace ("uh oh: " <> show l) Nothing
 
-safeSetLocation :: Eq a => Location -> a -> QuadTree a -> QuadTree a
-safeSetLocation l a q = case outOfBounds l q of
-  False -> setLocation l a q
-  True -> trace ("uh oh: " <> show l) q
+fillRect :: Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
+fillRect r@Rect{r_pos = fmap round -> V2 x y, r_size = V2 w h }
+  = fill (Just r) $ Region x y w h
+
 
 ------------------------------------------------------------------------------
 -- | Get the length of a vector from the center point  to the end of the size
@@ -83,8 +67,8 @@ offsetBy want collide =
       new_center = rectCenter want + dir ^* (get_ext want + get_ext collide)
    in want { r_pos = uncenter (r_size want) new_center }
 
-sequenceTile :: Applicative f => Tile (f a) -> f (Tile a)
-sequenceTile (fa, b) = (,) <$> fa <*> pure b
+-- sequenceTile :: Applicative f => (f a) -> f (Tile a)
+-- sequenceTile (fa, b) = (,) <$> fa <*> pure b
 
 
 measureText :: Text -> V2 Int

@@ -44,11 +44,11 @@ spatialSearch conn q = do
       flip run conn
         $ statement ()
         $ select
-        $ limit 1000
+        $ limit 20
         $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
     pure (fromMaybe 0 (listToMaybe cnt), docs)
-  let qd = foldr place (makeTree (250, 80) Nothing) $ fmap makeRect docs
+  let qd = foldr place (makeTree (Region 0 0 250 80) Nothing) $ fmap makeRect docs
   pure $
     L.html_ $ do
       L.head_ $ do
@@ -62,20 +62,20 @@ spatialSearch conn q = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar Spatial $ encodeQuery q
-          for_ (uniqueTiles $ mapMaybe sequenceTile $ tile $ tmap (fmap r_data) qd) spaceResult
+          for_ (uniqueTiles $ mapMaybe sequence $ tile $ fmap (fmap r_data) qd) spaceResult
 
 
-uniqueTiles :: [Tile (SearchResult Identity)] -> [Tile (SearchResult Identity)]
+uniqueTiles :: [(Region, SearchResult Identity)] -> [(Region, SearchResult Identity)]
 uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
-  for ts $ \t@(sr, _) -> do
+  for ts $ \t@(_, sr) -> do
     gets (S.member $ sr_id sr) >>= \case
        False -> do
          modify $ S.insert $ sr_id sr
          pure $ Just t
        True -> pure Nothing
 
-spaceResult :: (SearchResult Rel8.Result, (Int, Int, Int, Int)) -> L.Html ()
-spaceResult (d, (x, y, _, _)) =
+spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
+spaceResult (Region x y _ _, d) =
     L.span_
       [ L.class_ "title"
       , L.style_ $ mconcat

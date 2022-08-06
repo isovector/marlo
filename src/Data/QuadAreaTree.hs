@@ -1,11 +1,17 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 module Data.QuadAreaTree
   ( QuadTree
+  , type Region
+  , pattern I.Region
+  , V2  (..)
   , makeTree
   , fill
   , insert
   , getLocation
   , showTree
   , asWeighted
+  , tile
   ) where
 
 import           Control.Arrow (first)
@@ -15,6 +21,7 @@ import           Data.QuadAreaTree.Internal (Region, Quadrant)
 import qualified Data.QuadAreaTree.Internal as I
 import           GHC.Generics (Generic)
 import           Linear.V2
+
 
 
 data QuadTree a = Wrapper
@@ -61,4 +68,8 @@ makeTree r a = Wrapper (pure a) r
 
 liftTree :: (Quadrant (Region, a) -> Quadrant a) -> QuadTree a -> QuadTree a
 liftTree f w = w { qt_quad = f $ regionify w }
+
+
+tile :: QuadTree a -> [(Region, a)]
+tile = toList . regionify
 
