@@ -348,7 +348,7 @@ rootSites =
   [ "https://slatestarcodex.com"  -- rationality / econ
   , "https://jeremykun.com"       -- math
   , "https://neocities.org"       -- amateur
-  , "https://mitxela.com"         -- diy
+  , "http://zentasrobots.com"     -- diy
   , "https://seirdy.one"          -- search engines
   ]
 

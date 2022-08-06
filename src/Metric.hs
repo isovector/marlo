@@ -22,6 +22,7 @@ wrongDistance = do
   where_ $ distCard (d_distance src) >. distCard (d_distance dst)
   pure (e_dst e, d_distance src)
 
+
 propagateDistances :: Update Int64
 propagateDistances = Update
   { target = discoverySchema
@@ -33,9 +34,11 @@ propagateDistances = Update
   , returning = NumberOfRowsAffected
   }
 
+
 distCard :: Expr [Maybe Int16] -> Expr Int32
 distCard dist
   = lit (fromIntegral $ numRootSites) - (arrayCardinality $ arrayPositions dist null)
+
 
 findJoins :: Query ((Expr Text, Expr [Maybe Int16]), (Expr Text, Expr [Maybe Int16]))
 findJoins = limit 1 $ orderBy random $ do
