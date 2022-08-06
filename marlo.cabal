@@ -30,6 +30,8 @@ library
       Config
       Config.Type
       Data.QuadAreaTree
+      Data.QuadAreaTree.Internal
+      Data.QuadAreaTree.Tests
       Data.RectPacking
       DB
       Index
