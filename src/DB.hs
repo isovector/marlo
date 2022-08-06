@@ -74,44 +74,9 @@ import Rel8.Arrays (insertAt')
 import Types
 
 
-
-
 connectionSettings :: Settings
 connectionSettings =
   settings cfg_pg_host cfg_pg_port cfg_pg_user cfg_pg_pass "db"
-
-
-simpInsert
-    :: ( Table Expr (Transpose Expr names)
-       , Table Name names
-       , Transpose Name (Transpose Expr names) ~ names
-       , Columns names ~ Columns (Transpose Expr names)
-       )
-    => TableSchema names
-    -> Query (Transpose Expr names)
-    -> Insert ()
-simpInsert s e =
-  Insert
-    { into = s
-    , rows = e
-    , onConflict = DoNothing
-    , returning = pure ()
-    }
-
-
-litInsert
-  :: ( Table Name (Transpose Name (Query a))
-     , Table Expr a
-     , Table Expr (Query a)
-     , Foldable f
-     , Transpose Expr (Transpose Name (Query a)) ~ Query a
-     , Columns (Transpose Name (Query a)) ~ Columns (Query a)
-     )
-  => TableSchema (Transpose Name (Query a))
-  -> f a
-  -> Insert ()
-litInsert s = simpInsert s . pure . values
-
 
 
 rootNodes :: Insert ()
