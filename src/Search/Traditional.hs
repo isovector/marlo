@@ -7,13 +7,12 @@ import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
 import           DB
 import           Data.Foldable (for_)
+import           Data.List (intersperse)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
-import           Hasql.Connection (Connection)
-import           Hasql.Session (run, statement)
 import qualified Lucid as L
 import           Network.URI (escapeURIString, isUnescapedInURI)
 import           Rel8 hiding (max, index)
@@ -24,7 +23,6 @@ import           Servant
 import           Servant.Server.Generic ()
 import           Types
 import           Utils (paginate, timing)
-import Data.List (intersperse)
 
 
 
@@ -53,18 +51,13 @@ traditionalSearch conn q mpage = do
     putStrLn $ mappend "trad search: " $ T.unpack $ encodeQuery q
     writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
-      flip run conn
-        $ statement ()
-        $ select
+      doSelect conn
         $ paginate pagesize (fromIntegral pagenum)
         $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
     snips <- timing "building snippets" $
       for docs $ \doc -> do
-        Right [snip] <- flip run conn
-          $ statement ()
-          $ select
-          $ getSnippet (sr_id doc) $ compileQuery q
+        Right [snip] <- doSelect conn $ getSnippet (sr_id doc) $ compileQuery q
         pure snip
     pure (fromMaybe 0 (listToMaybe cnt), docs, snips)
   pure $

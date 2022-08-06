@@ -15,8 +15,6 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
-import           Hasql.Connection (acquire, Connection)
-import           Hasql.Session (run, statement)
 import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
@@ -59,12 +57,12 @@ docIdFor uri = do
 
 getDocId :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Document Identity)
 getDocId conn depth dist uri = do
-    Right dids <- flip run conn $ statement () $ select $ docIdFor uri
+    Right dids <- doSelect conn $ docIdFor uri
     case dids of
       [did] -> pure did
       [] -> do
         -- putStrLn $ "discovering " <> show uri
-        Right dids' <- flip run conn $ statement () $ insert $ discover depth dist uri
+        Right dids' <- doInsert conn $ discover depth dist uri
         pure $ head dids'
       _ -> error $ "invalid database state: " <> show dids
 
@@ -111,9 +109,8 @@ buildEdges conn disc ls = do
 
   for ldocs $ \l -> do
     -- putStrLn $ "edge ->" <> show (did, l_uri l)
-    Right [eid] <- flip run conn $ statement () $ insert $ addEdge (d_docId disc) l
+    Right [eid] <- doInsert conn $ addEdge (d_docId disc) l
     pure eid
-
 
 
 -- things still to do:
@@ -125,11 +122,11 @@ buildEdges conn disc ls = do
 
 spiderMain :: IO ()
 spiderMain = do
-  Right conn <- acquire connectionSettings
-  z <- flip run conn $ statement () $ insert rootNodes
+  Right conn <- connect
+  z <- doInsert conn rootNodes
   print z
   forever $ do
-    Right [disc] <- flip run conn $ statement () $ select nextDiscovered
+    Right [disc] <- doSelect conn nextDiscovered
     let url = d_uri disc
     case parseURI $ T.unpack url of
       Nothing -> error $ "died on bad URI: " <> show url
@@ -144,11 +141,11 @@ spiderMain = do
               )
               (\SomeException{} -> do
                 putStrLn $ "errored on " <> show (d_docId disc)
-                void $ flip run conn $ statement () $ update $ markExplored Errored disc
+                void $ doUpdate conn $ markExplored Errored disc
               )
           False -> do
             putStrLn $ "ignoring " <> T.unpack url
-            void $ flip run conn $ statement () $ update $ markExplored Pruned disc
+            void $ doUpdate conn $ markExplored Pruned disc
 
 index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
 index conn depth dist uri down = do
@@ -165,7 +162,7 @@ index conn depth dist uri down = do
               { prd_data = d_body down
               , prd_headers = fmap headersToHeaders $ Types.d_headers down
               }
-      Right _ <- flip run conn $ statement () $ update $ Update
+      Right _ <- doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()
         , set = \ _ dis -> dis { d_state = lit Explored
@@ -181,7 +178,7 @@ index conn depth dist uri down = do
         , d_raw = raw
         }
     False -> do
-      void $ flip run conn $ statement () $ update $ markExplored Pruned disc
+      void $ doUpdate conn $ markExplored Pruned disc
 
 indexFromDB :: Connection -> Document Identity -> IO ()
 indexFromDB conn disc = do
@@ -190,7 +187,7 @@ indexFromDB conn disc = do
   case (isAcceptableLink uri) of
     True -> indexCore conn (Env uri mgr conn) disc
     False -> do
-      void $ flip run conn $ statement () $ update $ markExplored Pruned disc
+      void $ doUpdate conn $ markExplored Pruned disc
 
 indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
@@ -204,7 +201,7 @@ indexCore conn env disc = do
         <*> rankStats
   let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
   -- TODO(sandy): bug??? headers aren't being set
-  Right () <-  flip run conn $ statement () $ update $ Update
+  Right () <-  doUpdate conn $ Update
     { target = documentSchema
     , from = pure ()
     , set = \ _ dis -> dis { d_page = lit $ PageContent
@@ -239,13 +236,12 @@ downloadBody url = do
 
 debugRankerInDb :: Text -> Ranker a -> IO (Text, Maybe a)
 debugRankerInDb uri r = do
-  Right conn <- acquire connectionSettings
+  Right conn <- connect
   mgr <- HTTP.getGlobalManager
   Right [d] <-
-    flip run conn $ statement () $ select $ limit 1 $ do
+    doSelect conn $ limit 1 $ do
       d <- each documentSchema
       where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
   fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ prd_data $ d_raw d) r
-
 

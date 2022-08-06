@@ -8,8 +8,6 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
-import           Hasql.Connection (Connection)
-import           Hasql.Session (run, statement)
 import           Network.HTTP.Client (httpNoBody, Manager, parseRequest, responseHeaders)
 import           Network.HTTP.Types (hContentLength)
 import           Rel8
@@ -18,7 +16,7 @@ import           Rel8
 getAssetSizes :: Manager -> Connection -> [Text] -> IO [Int64]
 getAssetSizes mgr conn uris = do
   Right szs <-
-    flip run conn $ statement () $ select $ do
+    doSelect conn $ do
       a <- each assetSchema
       where_ $ in_ (a_uri a) $ fmap lit uris
       pure a
@@ -30,7 +28,7 @@ getAssetSizes mgr conn uris = do
       let size = maybe 0 (fromIntegral . BS.length)
                $ lookup hContentLength
                $ responseHeaders resp
-      void $ flip run conn $ statement () $ insert $ Insert
+      void $ doInsert conn $ Insert
         { into = assetSchema
         , rows = pure $ Asset
             { a_uri  = lit turi

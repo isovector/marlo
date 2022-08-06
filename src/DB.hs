@@ -54,8 +54,13 @@ module DB
   , module DB.PageRawData
   , module DB.PageStats
   , module DB.SearchResult
+
   , nullDist
   , numRootSites
+
+  , acquire
+  , Connection
+  , QueryError
   ) where
 
 import Config
@@ -67,16 +72,13 @@ import DB.PageRawData
 import DB.PageStats
 import DB.RootSites
 import DB.SearchResult
-import Hasql.Connection (Settings, settings)
+import Hasql.Connection (settings, Connection, acquire, ConnectionError)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.Arrays (insertAt')
 import Types
+import Hasql.Session (run, statement, QueryError)
 
-
-connectionSettings :: Settings
-connectionSettings =
-  settings cfg_pg_host cfg_pg_port cfg_pg_user cfg_pg_pass "db"
 
 
 rootNodes :: Insert ()
@@ -99,4 +101,27 @@ rootNodes = Insert
       }
   , returning = pure ()
   }
+
+
+doInsert :: Connection -> Insert a -> IO (Either QueryError a)
+doInsert conn = flip run conn . statement () . insert
+
+
+doSelect
+    :: Serializable exprs (FromExprs exprs)
+    => Connection
+    -> Query exprs
+    -> IO (Either QueryError [FromExprs exprs])
+doSelect conn = flip run conn . statement () . select
+
+
+doUpdate :: Connection -> Update a -> IO (Either QueryError a)
+doUpdate conn = flip run conn . statement () . update
+
+doDelete :: Connection -> Delete a -> IO (Either QueryError a)
+doDelete conn = flip run conn . statement () . delete
+
+
+connect :: IO (Either ConnectionError Connection)
+connect = acquire $ settings cfg_pg_host cfg_pg_port cfg_pg_user cfg_pg_pass "db"
 

@@ -9,16 +9,15 @@
 module Purge where
 
 import DB
-import Hasql.Connection (acquire)
-import Hasql.Session
 import Rel8
 import Signals (forbidPaths, forbidSites)
 import qualified Data.Text as T
 
+
 main :: IO ()
 main = do
-  Right conn <- acquire connectionSettings
-  Right n <- flip run conn $ statement () $ delete $ Delete
+  Right conn <- connect
+  Right n <- doDelete conn $ Delete
     { from = documentSchema
     , using = pure ()
     , deleteWhere = \_ d -> do

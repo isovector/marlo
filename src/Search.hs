@@ -11,8 +11,6 @@ import           Data.Maybe (fromMaybe)
 import           Data.Proxy
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Hasql.Connection (acquire, Connection)
-import           Hasql.Session (run, statement)
 import qualified Lucid as L
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
@@ -34,7 +32,7 @@ home :: Connection -> Handler (L.Html ())
 home conn = do
   sizes <- liftIO $ do
     Right sizes <- fmap (fmap M.fromList) $
-      flip run conn $ statement () $ select $ do
+      doSelect conn $ do
         aggregate $ do
           d <- each documentSchema
           pure (groupBy $ d_state d, countStar)
@@ -109,6 +107,6 @@ runTestServer conn port = W.run port $ serve (Proxy @TestApi) $ server conn
 
 main :: IO ()
 main = do
-  Right conn <- acquire connectionSettings
+  Right conn <- connect
   runTestServer conn cfg_port
 

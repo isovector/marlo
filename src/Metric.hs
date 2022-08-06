@@ -5,8 +5,6 @@ import DB
 import Rel8.Arrays
 import Prelude hiding (null)
 import Data.Int (Int16, Int64, Int32)
-import Hasql.Connection (acquire)
-import Hasql.Session (run, statement)
 import Utils (random)
 import Data.Text (Text)
 import Data.Function (fix)
@@ -54,17 +52,12 @@ findJoins = limit 1 $ orderBy random $ do
   pure ((d_uri src, d_distance src), (d_uri dst, d_distance dst))
 
 
-
-
-
-
-
 metricMain :: IO ()
 metricMain = do
-  Right conn <- acquire connectionSettings
-  (print =<<) $ flip run conn $ statement () $ insert rootNodes
+  Right conn <- connect
+  (print =<<) $ doInsert conn rootNodes
   fix $ \loop -> do
-    res <- flip run conn $ statement () $ update propagateDistances
+    res <- doUpdate conn propagateDistances
     case res of
       Right 0 -> putStrLn "converged!"
       Right n -> do

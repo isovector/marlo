@@ -13,8 +13,6 @@ import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
-import           Hasql.Connection (Connection)
-import           Hasql.Session (run, statement)
 import qualified Lucid as L
 import           Rel8 hiding (max, index)
 import           Search.Compiler
@@ -41,9 +39,7 @@ spatialSearch conn q = do
     putStrLn $ mappend "spatial search: " $ T.unpack $ encodeQuery q
     writeFile "/tmp/lastquery.sql" $ showQuery $ compileSearch q
     Right (cnt, docs) <- timing "find documents" $ fmap (fmap unzip) $
-      flip run conn
-        $ statement ()
-        $ select
+      doSelect conn
         $ limit 20
         $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
