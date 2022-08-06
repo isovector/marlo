@@ -2,37 +2,60 @@
 
 module Search.Spatial () where
 
+import           Control.Exception
 import           Control.Monad.State (evalState, gets, modify)
 import           DB
 import           Data.Foldable (for_)
 import           Data.Maybe (catMaybes, mapMaybe)
 import           Data.RectPacking
 import qualified Data.Set as S
+import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
 import qualified Lucid as L
-import           Rel8 hiding (max, index)
+import           Rel8 hiding (evaluate, max, index)
 import           Search.Machinery
 import           Servant.Server.Generic ()
 import           Types
 
+-- there is ANOTHER bug in the quadtree
+-- this time maybe when the starting xy are negative?
 
 instance SearchMethod 'Spatial where
-  type SearchMethodResult 'Spatial = SearchResult Identity
-  limitStrategy = Limit 20
-  accumResults _ _ = pure
-  showResults docs = do
-    let qd = foldr place (makeTree (Region 0 0 250 80) Nothing) $ fmap makeRect docs
+  type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
+  limitStrategy = Limit 300
+  accumResults _ _ docs = do
+    let rs = fmap makeRect docs
+    evaluate $ foldr place (makeTree (Region 0 0 250 80) Nothing) rs
+  showResults qd = do
     for_ (uniqueTiles $ mapMaybe sequence $ tile $ fmap (fmap r_data) qd) spaceResult
 
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
   { r_pos = V2 ((+ 30) $ log $ max 1 $ fromIntegral $ ps_js $ sr_stats sr)
-               (sr_ranking sr * 100)
-  , r_size = measureText $ sr_title sr
-  , r_data = sr
+               (sr_ranking sr * 10)
+  , r_size = measureText title'
+  , r_data = sr { sr_title = title' }
   }
+  where
+    title' = chopTitle $ sr_title sr
+
+
+
+chopTitle :: Text -> Text
+chopTitle
+  = T.intercalate ""
+  . init
+  . T.split
+      (flip elem
+        [ '|'
+        , '-'
+        , ':'
+        , '·'
+        , '\8211'
+        ]
+      )
 
 
 uniqueTiles :: [(Region, SearchResult Identity)] -> [(Region, SearchResult Identity)]
@@ -52,7 +75,7 @@ spaceResult (Region x y _ _, d) =
       , L.style_ $ mconcat
           [ "position: absolute;"
           , "top: "
-          , T.pack $ show $ 200 + y * 15
+          , T.pack $ show $ 250 + y * 15
           , "; "
           , "left: "
           , T.pack $ show $ 50 + x * 10

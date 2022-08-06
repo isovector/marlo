@@ -54,15 +54,12 @@ instance Demote 'Spatial where
 
 class Demote v => SearchMethod (v :: SearchVariety) where
   type SearchMethodResult v :: Type
-
   limitStrategy :: LimitStrategy
-
   accumResults
       :: Connection
       -> Search Text
       -> [SearchResult Identity]
-      -> IO [SearchMethodResult v]
-
+      -> IO (SearchMethodResult v)
   showResults
-      :: [SearchMethodResult v] -> Html ()
+      :: SearchMethodResult v -> Html ()
 

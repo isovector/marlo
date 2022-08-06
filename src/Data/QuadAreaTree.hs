@@ -7,6 +7,7 @@ module Data.QuadAreaTree
   , V2  (..)
   , makeTree
   , fill
+  , hitTest
   , insert
   , getLocation
   , showTree
@@ -21,7 +22,6 @@ import           Data.QuadAreaTree.Internal (Region, Quadrant)
 import qualified Data.QuadAreaTree.Internal as I
 import           GHC.Generics (Generic)
 import           Linear.V2
-
 
 
 data QuadTree a = Wrapper
@@ -72,4 +72,8 @@ liftTree f w = w { qt_quad = f $ regionify w }
 
 tile :: QuadTree a -> [(Region, a)]
 tile = toList . regionify
+
+
+hitTest :: Monoid m => (a -> m) -> Region -> QuadTree a -> m
+hitTest f r = I.hitTest f r . regionify
 

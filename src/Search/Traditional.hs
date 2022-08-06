@@ -35,7 +35,7 @@ getSnippet did q = do
 
 
 instance SearchMethod 'Traditional where
-  type SearchMethodResult 'Traditional = (SearchResult Identity, Text)
+  type SearchMethodResult 'Traditional = [(SearchResult Identity, Text)]
 
   limitStrategy = Paginate 20
 

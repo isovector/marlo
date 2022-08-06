@@ -120,6 +120,20 @@ isEmptyRegion :: Region -> Bool
 isEmptyRegion (Quad _ _ x y) = x <= 0 || y <= 0
 
 
+hitTest :: Monoid m => (a -> m) -> Region -> Quadrant (Region, a) -> m
+hitTest _ what _
+  | isEmptyRegion what = mempty
+hitTest _ _ (Leaf (r, _))
+  | isEmptyRegion r = mempty
+hitTest f what (Leaf (r, a))
+  | intersects what r
+  = f a
+  | otherwise
+  = mempty
+-- TODO(sandy): if something is sus, it's this
+hitTest f what (Node qu) = foldMap (hitTest f what) $ toList qu
+
+
 fill :: a -> Region -> Quadrant (Region, a) -> Quadrant a
 fill _ what q | isEmptyRegion what = fmap snd q
 fill _ _ q@(Leaf (r, _))
