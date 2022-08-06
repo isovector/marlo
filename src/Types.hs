@@ -47,3 +47,8 @@ data Search a
   | SiteLike Text
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
+data SearchVariety
+  = Traditional
+  | Spatial
+  deriving (Eq, Ord, Show, Prelude.Enum, Bounded)
+

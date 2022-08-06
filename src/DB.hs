@@ -388,3 +388,15 @@ rootNodes = Insert
   , returning = pure ()
   }
 
+data SearchResult f = SearchResult
+  { sr_ranking :: !(Column f Float)
+  , sr_id      :: !(Column f DocId)
+  , sr_uri     :: !(Column f Text)
+  , sr_title   :: !(Column f Text)
+  , sr_stats   :: !(DiscoveryStats f)
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
+deriving instance Eq (SearchResult Identity)
+

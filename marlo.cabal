@@ -39,7 +39,10 @@ library
       Rel8.Headers
       Rel8.TextSearch
       Search
+      Search.Compiler
       Search.Parser
+      Search.SearchBar
+      Search.Traditional
       Signals
       Spider
       Types
