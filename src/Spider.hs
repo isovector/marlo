@@ -108,17 +108,9 @@ buildEdges conn disc ls = do
   let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
 
   for ldocs $ \l -> do
-    -- putStrLn $ "edge ->" <> show (did, l_uri l)
     Right [eid] <- doInsert conn $ addEdge (d_docId disc) l
     pure eid
 
-
--- things still to do:
--- - only index in en
--- - cache/zip results
--- - ranking
--- - do we get a 404 if we hit a random url?
--- -
 
 spiderMain :: IO ()
 spiderMain = do
@@ -147,6 +139,7 @@ spiderMain = do
             putStrLn $ "ignoring " <> T.unpack url
             void $ doUpdate conn $ markExplored Pruned disc
 
+
 index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
 index conn depth dist uri down = do
   disc <- getDocId conn depth dist uri
@@ -165,10 +158,11 @@ index conn depth dist uri down = do
       Right _ <- doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()
-        , set = \ _ dis -> dis { d_state = lit Explored
-                               , d_title = lit t
-                               , d_raw = lit raw
-                              }
+        , set = \ _ dis -> dis
+            { d_state = lit Explored
+            , d_title = lit t
+            , d_raw = lit raw
+            }
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
         }
@@ -180,6 +174,7 @@ index conn depth dist uri down = do
     False -> do
       void $ doUpdate conn $ markExplored Pruned disc
 
+
 indexFromDB :: Connection -> Document Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
@@ -189,14 +184,13 @@ indexFromDB conn disc = do
     False -> do
       void $ doUpdate conn $ markExplored Pruned disc
 
+
 indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
-  Just (m, h, c, has_ads, stats') <-
+  Just (pc, has_ads, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
-      (,,,,)
-        <$> mainContent
-        <*> headingsContent
-        <*> commentsContent
+      (,,)
+        <$> rankContent
         <*> hasGoogleAds
         <*> rankStats
   let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
@@ -204,14 +198,11 @@ indexCore conn env disc = do
   Right () <-  doUpdate conn $ Update
     { target = documentSchema
     , from = pure ()
-    , set = \ _ dis -> dis { d_page = lit $ PageContent
-                              { pc_headings = h
-                              , pc_content  = m
-                              , pc_comments = c
-                              }
-                           , d_state    = lit $ bool Explored Unacceptable has_ads
-                           , d_stats    = lit stats
-                           }
+    , set = \ _ dis -> dis
+        { d_page = lit pc
+        , d_state    = lit $ bool Explored Unacceptable has_ads
+        , d_stats    = lit stats
+        }
     , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
     , returning = pure ()
     }
@@ -243,5 +234,7 @@ debugRankerInDb uri r = do
       d <- each documentSchema
       where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
-  fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ prd_data $ d_raw d) r
+  let env = Env (unsafeURI $ T.unpack $ d_uri d) mgr conn
+  fmap (d_uri d, ) $
+    runRanker env (decodeUtf8 $ prd_data $ d_raw d) r
 

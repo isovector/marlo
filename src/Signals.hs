@@ -454,6 +454,14 @@ commentsContent = fmap (T.intercalate " ") $ asum
   , pure []
   ]
 
+
+rankContent :: Ranker (PageContent Identity)
+rankContent = PageContent
+  <$> headingsContent
+  <*> mainContent
+  <*> commentsContent
+
+
 rankStats :: Ranker (PageStats Identity)
 rankStats = PageStats
   <$> fmap fromIntegral jsBundleSize
