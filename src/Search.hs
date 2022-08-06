@@ -234,7 +234,8 @@ traditionalSearch conn q mpage = do
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 (log $ max 1 $ fromIntegral $ ds_js $ sr_stats sr) (sr_ranking sr * 100)
+  { r_pos = V2 ((+ 30) $ log $ max 1 $ fromIntegral $ ds_js $ sr_stats sr)
+               (sr_ranking sr * 100)
   , r_size = measureText $ sr_title sr
   , r_data = sr
   }
@@ -253,7 +254,7 @@ spatialSearch conn q = do
         $ let x = compileSearch q
            in liftA2 (,) (countRows x) x
     pure (fromMaybe 0 (listToMaybe cnt), docs)
-  let qd = foldr place (makeTree (200, 50) Nothing) $ fmap makeRect docs
+  let qd = foldr place (makeTree (250, 80) Nothing) $ fmap makeRect docs
   pure $
     L.html_ $ do
       L.head_ $ do
@@ -315,10 +316,10 @@ spaceResult (d, (x, y, _, _)) =
       , L.style_ $ mconcat
           [ "position: absolute;"
           , "top: "
-          , T.pack $ show $ (* 15) y
+          , T.pack $ show $ 200 + y * 15
           , "; "
           , "left: "
-          , T.pack $ show $ (* 5) x
+          , T.pack $ show $ 50 + x * 5
           ]
       ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
   where
