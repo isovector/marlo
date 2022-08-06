@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      API
       AppMain
       Assets
       Config
@@ -50,10 +51,10 @@ library
       Rel8.Headers
       Rel8.TextSearch
       Search
+      Search.Common
       Search.Compiler
       Search.Machinery
       Search.Parser
-      Search.SearchBar
       Search.Spatial
       Search.Traditional
       Signals

@@ -13,6 +13,7 @@ import Network.HTTP.Types.Header (ResponseHeaders)
 import Network.URI
 import Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
 import Text.HTML.Scalpel
+import Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
 
 
 data Env = Env
@@ -68,6 +69,15 @@ data SearchVariety
   | Spatial
   deriving (Eq, Ord, Show, Prelude.Enum, Bounded)
 
+instance ToHttpApiData SearchVariety where
+  toQueryParam Traditional = "traditional"
+  toQueryParam Spatial = "spatial"
+
+instance FromHttpApiData SearchVariety where
+  parseQueryParam "traditional" = Right Traditional
+  parseQueryParam "spatial"     = Right Spatial
+  parseQueryParam _             = Left "SearchVariety must be one of 'traditional' or 'spatial'"
+
 
 newtype EdgeId = EdgeId
   { unEdgeId :: Int64
@@ -90,4 +100,8 @@ data DocumentState
   | NoContent
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DocumentState
+
+newtype PageNumber = PageNumber
+  { getPageNumber :: Word
+  } deriving newtype (Eq, Ord, Show, ToHttpApiData, FromHttpApiData)
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Signals where
@@ -6,6 +5,7 @@ module Signals where
 import           Assets (getAssetSizes)
 import           Control.Applicative (optional, empty, liftA2, many, (<|>))
 import           Control.Monad.Reader
+import           DB
 import           Data.Char (toLower, isAlpha, isDigit)
 import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
@@ -22,8 +22,6 @@ import           Network.URI
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
-import DB
-import Data.Functor.Identity
 
 
 gif :: Ranker Text

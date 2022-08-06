@@ -1,19 +1,17 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module Search.Compiler
   ( compileSearch
   , compileQuery
-  , encodeQuery
   ) where
 
-import           DB
-import           Data.Coerce (coerce)
-import           Data.Functor.Contravariant ((>$<))
-import           Data.Int (Int32)
-import           Data.Text (Text)
-import qualified Data.Text as T
-import           Rel8 hiding (max, index)
-import           Rel8.TextSearch
-import           Servant.Server.Generic ()
-import           Types
+import DB
+import Data.Functor.Contravariant ((>$<))
+import Data.Int (Int32)
+import Data.Text (Text)
+import Rel8 hiding (max, index)
+import Rel8.TextSearch
+import Servant.Server.Generic ()
+import Types
 
 compileSearch :: Search Text -> Query (SearchResult Expr)
 compileSearch q = orderBy (sr_ranking >$< desc) $ do
@@ -99,25 +97,4 @@ compileQuery (Or lhs rhs) = TsqOr (compileQuery lhs) (compileQuery rhs)
 compileQuery (Negate lhs) = TsqNot (compileQuery lhs)
 compileQuery (SiteLike _) = TsqTerm ""
 compileQuery (WithProperty _ _) = TsqTerm ""
-
-
-encodeQuery :: Search Text -> Text
-encodeQuery (Term kw) = coerce kw
-encodeQuery (Phrase keys) = "\"" <> (T.intercalate " " $ coerce keys) <> "\""
-encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
-encodeQuery (And q1 q2) = encodeQuery q1 <> " " <> encodeQuery q2
-encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
-encodeQuery (SiteLike t) = "site:" <> t
-encodeQuery (WithProperty prop op) = "where:" <> encodeProp prop <> encodeOp op
-
-
-encodeProp :: SiteProp -> Text
-encodeProp JSBundle = "js"
-encodeProp CSSBundle = "css"
-
-
-encodeOp :: Predicate -> Text
-encodeOp (Exactly n) = "=" <> T.pack (show n)
-encodeOp (LessThan n) = "<" <> T.pack (show n)
-encodeOp (GreaterThan n) = ">" <> T.pack (show n)
 

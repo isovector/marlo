@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Search.Parser where
 
@@ -9,11 +9,40 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Void (Void)
 import           Keywords (isKeywordLetter)
+import           Servant (ToHttpApiData, toQueryParam)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char (string, char, space1)
 import           Text.Megaparsec.Char.Lexer (symbol, lexeme, decimal)
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Types
+
+------------------------------------------------------------------------------
+-- Not actually part of the parser, but needs to evolve together
+instance ToHttpApiData (Search Text) where
+  toQueryParam = encodeQuery
+
+encodeQuery :: Search Text -> Text
+encodeQuery (Term kw) = kw
+encodeQuery (Phrase keys) = "\"" <> (T.intercalate " " $ keys) <> "\""
+encodeQuery (Negate q) = "-(" <> encodeQuery q <> ")"
+encodeQuery (And q1 q2) = encodeQuery q1 <> " " <> encodeQuery q2
+encodeQuery (Or q1 q2) = "(" <> encodeQuery q1 <> ") OR (" <> encodeQuery q2 <> ")"
+encodeQuery (SiteLike t) = "site:" <> t
+encodeQuery (WithProperty prop op) = "where:" <> encodeProp prop <> encodeOp op
+
+
+encodeProp :: SiteProp -> Text
+encodeProp JSBundle = "js"
+encodeProp CSSBundle = "css"
+
+
+encodeOp :: Predicate -> Text
+encodeOp (Exactly n) = "=" <> T.pack (show n)
+encodeOp (LessThan n) = "<" <> T.pack (show n)
+encodeOp (GreaterThan n) = ">" <> T.pack (show n)
+
+
+------------------------------------------------------------------------------
 
 
 type Parser = Parsec Void Text
