@@ -1,15 +1,9 @@
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 
 module Utils where
 
 import           Control.Applicative ((<|>))
+import           Control.Arrow (first)
 import           Control.Monad.Reader
 import           Data.Functor.Contravariant ((>$))
 import           Data.Maybe (fromJust)
@@ -17,7 +11,7 @@ import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Time (getCurrentTime)
+import           Data.Time (getCurrentTime, NominalDiffTime)
 import           Data.Time.Clock (diffUTCTime)
 import           Network.URI
 import           Rel8 (limit, offset, Order, nullaryFunction, asc)
@@ -71,16 +65,16 @@ has r = True <$ r <|> pure False
 posKeywordsToInv :: [(Int, Text)] -> Set Text
 posKeywordsToInv = S.fromList . fmap snd
 
-timeItT :: IO a -> IO (Double, a)
+timeItT :: IO a -> IO (NominalDiffTime, a)
 timeItT ioa = do
     t1 <- getCurrentTime
     a <- ioa
     t2 <- getCurrentTime
-    return (realToFrac $ diffUTCTime t2 t1, a)
+    return (diffUTCTime t2 t1, a)
 
 timing :: String -> IO a -> IO a
 timing name ioa = do
-    (t, a) <- timeItT ioa
+    (t, a) <- fmap (first $ realToFrac @_ @Double) $ timeItT ioa
     liftIO $ printf (name ++ ": %6.4fs\n") t
     pure a
 

@@ -27,8 +27,9 @@ import           Search.Spatial ()
 import           Search.Traditional ()
 import           Servant
 import           Servant.Server.Generic ()
+import           Text.Printf (printf)
 import           Types
-import           Utils (timing, paginate)
+import           Utils (paginate, timeItT)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 
 
@@ -78,8 +79,8 @@ doSearch
 doSearch conn q mpage = do
   let page = fromMaybe 1 mpage
       pagenum = subtract 1 $ Prelude.max 1 $ maybe 1 getPageNumber mpage
-  (cnt, res) <- liftIO $ do
-    Right prepped <- timing "find documents" $ do
+  (dur, (cnt, res)) <- liftIO $ timeItT $ do
+    Right prepped <- do
       doSelect conn $ do
         let x = compileSearch q
         ( case limitStrategy @v of
@@ -104,6 +105,9 @@ doSearch conn q mpage = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar (demote @v) $ Just q
+          L.toHtml @String
+            $ printf "Search took: %6.4fs"
+            $ realToFrac @_ @Double dur
           showResults @v res
           pager q (limitStrategy @v) (demote @v) cnt page
 
