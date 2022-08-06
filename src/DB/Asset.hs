@@ -1,3 +1,12 @@
+{-
+
+CREATE TABLE IF NOT EXISTS assets (
+  uri TEXT PRIMARY KEY NOT NULL,
+  size int8 NOT NULL
+);
+
+-}
+
 module DB.Asset where
 
 import Data.Functor.Identity

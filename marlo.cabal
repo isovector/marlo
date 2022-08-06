@@ -35,10 +35,12 @@ library
       Data.RectPacking
       DB
       DB.Asset
+      DB.Document
       DB.Edges
       DB.PageContent
       DB.PageRawData
       DB.PageStats
+      DB.RootSites
       DB.SearchResult
       Index
       Keywords

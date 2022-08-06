@@ -74,7 +74,7 @@ discover depth dist uri = Insert
   { into = documentSchema
   , rows = do
       docid <- nextDocId
-      pure $ (lit emptyPage)
+      pure $ (lit emptyDoc)
         { d_docId = docid
         , d_uri = lit $ T.pack $ show uri
         , d_state = lit Discovered
