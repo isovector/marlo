@@ -51,6 +51,7 @@ library
       Rel8.TextSearch
       Search
       Search.Compiler
+      Search.Machinery
       Search.Parser
       Search.SearchBar
       Search.Spatial
@@ -115,6 +116,7 @@ library
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
+      TypeFamilies
       TypeOperators
       TypeSynonymInstances
       ViewPatterns
@@ -212,6 +214,7 @@ executable marlo
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
+      TypeFamilies
       TypeOperators
       TypeSynonymInstances
       ViewPatterns
@@ -311,6 +314,7 @@ test-suite go-go-test
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
+      TypeFamilies
       TypeOperators
       TypeSynonymInstances
       ViewPatterns

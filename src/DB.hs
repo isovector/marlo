@@ -61,6 +61,7 @@ module DB
   , acquire
   , Connection
   , QueryError
+  , Identity
   ) where
 
 import Config
@@ -72,12 +73,13 @@ import DB.PageRawData
 import DB.PageStats
 import DB.RootSites
 import DB.SearchResult
+import Data.Functor.Identity (Identity)
 import Hasql.Connection (settings, Connection, acquire, ConnectionError)
+import Hasql.Session (run, statement, QueryError)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.Arrays (insertAt')
 import Types
-import Hasql.Session (run, statement, QueryError)
 
 
 

@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Search.Traditional
   ( traditionalSearch
   ) where
@@ -18,6 +20,7 @@ import           Network.URI (escapeURIString, isUnescapedInURI)
 import           Rel8 hiding (max, index)
 import           Rel8.TextSearch
 import           Search.Compiler
+import           Search.Machinery
 import           Search.SearchBar (searchBar)
 import           Servant
 import           Servant.Server.Generic ()
@@ -40,6 +43,28 @@ getSnippet did q = do
             , pc_comments pc
             ])
     $ lit q
+
+
+instance SearchMethod 'Traditional where
+  type SearchMethodResult 'Traditional = (SearchResult Identity, Text)
+
+  prepareSearch = paginate 20
+
+  accumResults conn q docs = do
+    let q' = compileQuery q
+    for docs $ \doc -> do
+      Right [snip] <- doSelect conn $ getSnippet (sr_id doc) q'
+      pure (doc, snip)
+
+  showResults q sz page docs = do
+    for_ docs $ uncurry tradResult
+    let eq = escape $ encodeQuery q
+    when (page > 0) $ do
+      L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show page)  ] "Prev"
+    when ((page + 1) * 20 < fromIntegral sz) $ do
+      L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show (page + 2))  ] "Next"
+    where
+      escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
 
 
 traditionalSearch :: Connection -> Search Text -> Maybe Int -> Handler (L.Html ())

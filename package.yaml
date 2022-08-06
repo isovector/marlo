@@ -109,6 +109,7 @@ default-extensions:
 - TraditionalRecordSyntax
 - TupleSections
 - TypeApplications
+- TypeFamilies
 - TypeOperators
 - TypeSynonymInstances
 - ViewPatterns
