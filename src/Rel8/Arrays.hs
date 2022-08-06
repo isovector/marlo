@@ -13,8 +13,8 @@ import Rel8
 import Data.Int (Int16, Int32)
 import Opaleye.Internal.HaskellDB.PrimQuery
 import Unsafe.Coerce (unsafeCoerce)
-import Data.Kind (Type)
 import Prelude hiding (null)
+
 
 insertAt' :: forall a. (DBType a, Sql DBType a) => Expr Int16 -> Expr Int16 -> Expr (Maybe a) -> Expr [Maybe a]
 insertAt' sz ix a

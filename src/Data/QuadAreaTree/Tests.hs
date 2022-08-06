@@ -2,15 +2,17 @@
 {-# LANGUAGE MultiWayIf          #-}
 {-# LANGUAGE PatternSynonyms     #-}
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Data.QuadAreaTree.Tests where
 
 import Control.Monad (guard)
 import Data.Foldable (traverse_)
 import Data.Proxy
 import Data.QuadAreaTree
+import Data.QuadAreaTree.Internal hiding (insert, fill)
 import GHC.Generics (Generic)
 import GHC.TypeLits (Nat, KnownNat, natVal)
-import Linear.V2
 import Test.QuickCheck
 
 
@@ -104,13 +106,13 @@ props = do
         y' <- elements [0 .. h - 1]
         let tree = makeTree r False
         pure $
-          length (filter id $ asWeighted $ liftTree (insert True $ V2 (x + x') (y + y')) tree) == 1
+          length (filter id $ asWeighted $ insert True (V2 (x + x') (y + y')) tree) == 1
 
     , property $ \(RegionAtLeast (Region x y ((+ 1) -> w) ((+ 1) -> h)) :: RegionAtLeast 2 2) -> do
         x' <- elements [0 .. w - 2]
         y' <- elements [0 .. h - 2]
         let tree = makeTree (Region x y w h) False
-            res = liftTree (fill True $ Region (x + x') (y + y') 2 2) tree
+            res = fill True (Region (x + x') (y + y') 2 2) tree
 
         pure $
           counterexample (show x') $
