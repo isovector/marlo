@@ -51,6 +51,8 @@ dependencies:
 - QuadTree
 - linear
 - lens
+- QuickCheck
+- pretty-show
 
 ghc-options:
 - -Wall

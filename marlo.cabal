@@ -29,6 +29,7 @@ library
       Assets
       Config
       Config.Type
+      Data.QuadAreaTree
       Data.RectPacking
       DB
       Index
@@ -42,6 +43,7 @@ library
       Search.Compiler
       Search.Parser
       Search.SearchBar
+      Search.Spatial
       Search.Traditional
       Signals
       Spider
@@ -110,6 +112,7 @@ library
   build-depends:
       HTTP
     , QuadTree
+    , QuickCheck
     , async
     , base >=4.7 && <5
     , bytestring
@@ -127,6 +130,7 @@ library
     , opaleye
     , optparse-applicative
     , parser-combinators
+    , pretty-show
     , rel8
     , scalpel
     , servant-lucid
@@ -205,6 +209,7 @@ executable marlo
   build-depends:
       HTTP
     , QuadTree
+    , QuickCheck
     , async
     , base >=4.7 && <5
     , bytestring
@@ -223,6 +228,7 @@ executable marlo
     , opaleye
     , optparse-applicative
     , parser-combinators
+    , pretty-show
     , rel8
     , scalpel
     , servant-lucid
@@ -302,6 +308,7 @@ test-suite go-go-test
   build-depends:
       HTTP
     , QuadTree
+    , QuickCheck
     , async
     , base >=4.7 && <5
     , bytestring
@@ -320,6 +327,7 @@ test-suite go-go-test
     , opaleye
     , optparse-applicative
     , parser-combinators
+    , pretty-show
     , rel8
     , scalpel
     , servant-lucid

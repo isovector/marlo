@@ -84,7 +84,7 @@ spaceResult (d, (x, y, _, _)) =
           , T.pack $ show $ 200 + y * 15
           , "; "
           , "left: "
-          , T.pack $ show $ 50 + x * 5
+          , T.pack $ show $ 50 + x * 10
           ]
       ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
   where

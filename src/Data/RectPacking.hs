@@ -24,7 +24,6 @@ import qualified Data.Text as T
 import Debug.Trace (trace)
 
 
-
 data Rect a = Rect
   { r_pos    :: !(V2 Float)
   , r_size   :: !(V2 Int)
