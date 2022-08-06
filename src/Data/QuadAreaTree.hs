@@ -233,26 +233,38 @@ fill _ what q
 fill _ _ q@(Leaf (r, _))
   | isEmptyRegion r
   = fmap snd q
-fill v what (Leaf (r, a)) =
+fill v what q@(Leaf (r, a)) =
   if
       -- The entire space is covered by what
     | containsRegion what r -> -- trace "done" $
         Leaf v
       -- The space entirely contains what
-    | containsRegion r what -> -- trace ("splits a node: " <> show (what, r)) $
+    | containsRegion r what -> trace ("splits a node: " <> show (what, r)) $
+        -- SO what should we do?
+        -- see if it entirely fits in a corner
+        -- if not, do a split
+        --
+        -- except this doesnt matter since this is a leaf
+        -- in which case we DO want to split it
         Node $
           fill v
             <$> pure what
             <*> fmap (pure . (, a)) (subdivide r)
-    | intersects what r -> -- trace ("recursing: " <> show (what, r)) $
+    | intersects what r -> trace ("recursing: " <> show (what, r)) $
+        -- i guess this is the last case??
         Node $
           fill v
-            <$> (subdivide what)
-            <*> pure (pure (r, a))
+            <$> subdivide what
+            <*> pure q
     | otherwise -> -- trace ("no interaction" <> show (what, r)) $
         Leaf a
-fill v what (Node qu)
-  = Node $ fill v <$> subdivide what <*> qu
+fill v what q@(Node qu)
+  = Node $ fill v <$> pure what <*> qu
+  -- so therefore the problem is here --- check each corner !
+  -- but dont even need to -- push what in!
+
+-- LOL SUBDIVIDE IS DIVISION IN HALF
+-- NOT DIVISION ALONG THE CONTAINER
 
 
 getLocation :: V2 Int -> Quadrant (Region, a) -> Maybe a
@@ -306,10 +318,13 @@ main = props
 -- TODO(sandy): there is a bug somewhere :(
 test :: IO ()
 test
-  = putStrLn
-  $ showTree (bool '.' 'X')
+  = id
+  -- $ showTree (bool '.' 'X')
+  $ pPrint
+  $ regionify
   $ liftTree (fill True $ Region 0 0 2 2)
   $ makeTree (Region 0 0 3 3) False
+
 
 
 -- _tl :: Lens' (Quadrant a) (Quadrant a)
