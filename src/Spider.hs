@@ -32,16 +32,16 @@ import           Types hiding (d_headers)
 import           Utils (runRanker, unsafeURI, random)
 
 
-nextDiscovered :: Query (Discovery Expr)
+nextDiscovered :: Query (Document Expr)
 nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
-  d <- each discoverySchema
+  d <- each documentSchema
   where_ $ d_state d ==. lit Discovered
   pure d
 
 
-markExplored :: DiscoveryState -> Discovery Identity -> Update ()
+markExplored :: DocumentState -> Document Identity -> Update ()
 markExplored ds d = Update
-  { target = discoverySchema
+  { target = documentSchema
   , from = pure ()
   , set = \ _ dis -> dis { d_state = lit ds }
   , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId d)
@@ -49,15 +49,15 @@ markExplored ds d = Update
   }
 
 
-docIdFor :: URI -> Query (Discovery Expr)
+docIdFor :: URI -> Query (Document Expr)
 docIdFor uri = do
-  dis <- each discoverySchema
+  dis <- each documentSchema
   where_ $ d_uri dis ==. lit (T.pack $ show uri)
   pure dis
 
 
 
-getDocId :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Discovery Identity)
+getDocId :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Document Identity)
 getDocId conn depth dist uri = do
     Right dids <- flip run conn $ statement () $ select $ docIdFor uri
     case dids of
@@ -69,9 +69,9 @@ getDocId conn depth dist uri = do
       _ -> error $ "invalid database state: " <> show dids
 
 
-discover :: Int32 -> [Maybe Int16] -> URI -> Insert [Discovery Identity]
+discover :: Int32 -> [Maybe Int16] -> URI -> Insert [Document Identity]
 discover depth dist uri = Insert
-  { into = discoverySchema
+  { into = documentSchema
   , rows = do
       docid <- nextDocId
       pure $ (lit emptyPage)
@@ -104,7 +104,7 @@ addEdge src (Link anchor dst) = Insert
   }
 
 
-buildEdges :: Connection -> Discovery Identity -> [Link URI] -> IO [EdgeId]
+buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
 buildEdges conn disc ls = do
   ldocs' <- (traverse . traverse) (getDocId conn (d_depth disc) (d_distance disc)) ls
   let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
@@ -166,7 +166,7 @@ index conn depth dist uri down = do
               , prd_headers = fmap headersToHeaders $ Types.d_headers down
               }
       Right _ <- flip run conn $ statement () $ update $ Update
-        { target = discoverySchema
+        { target = documentSchema
         , from = pure ()
         , set = \ _ dis -> dis { d_state = lit Explored
                                , d_title = lit t
@@ -183,7 +183,7 @@ index conn depth dist uri down = do
     False -> do
       void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
-indexFromDB :: Connection -> Discovery Identity -> IO ()
+indexFromDB :: Connection -> Document Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   mgr <- HTTP.getGlobalManager
@@ -192,7 +192,7 @@ indexFromDB conn disc = do
     False -> do
       void $ flip run conn $ statement () $ update $ markExplored Pruned disc
 
-indexCore :: Connection -> Env -> Discovery Identity -> IO ()
+indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
   Just (m, h, c, has_ads, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
@@ -205,7 +205,7 @@ indexCore conn env disc = do
   let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  flip run conn $ statement () $ update $ Update
-    { target = discoverySchema
+    { target = documentSchema
     , from = pure ()
     , set = \ _ dis -> dis { d_page = lit $ PageContent
                               { pc_headings = h
@@ -243,7 +243,7 @@ debugRankerInDb uri r = do
   mgr <- HTTP.getGlobalManager
   Right [d] <-
     flip run conn $ statement () $ select $ limit 1 $ do
-      d <- each discoverySchema
+      d <- each documentSchema
       where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
   fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ prd_data $ d_raw d) r

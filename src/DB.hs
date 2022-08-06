@@ -43,13 +43,13 @@ import DB.PageStats
 import DB.SearchResult
 
 
-data Discovery f = Discovery
+data Document f = Document
   { d_docId :: Column f DocId
   , d_title    :: Column f Text
   , d_uri   :: Column f Text
 
   -- discovery
-  , d_state :: Column f DiscoveryState
+  , d_state :: Column f DocumentState
   , d_depth :: Column f Int32
 
   , d_distance :: Column f [Maybe Int16]
@@ -62,11 +62,11 @@ data Discovery f = Discovery
   deriving anyclass Rel8able
 
 
-deriving instance Show (Discovery Identity)
+deriving instance Show (Document Identity)
 
 
-data Discovery' f = Discovery'
-  { d_table  :: Discovery f
+data Document' f = Document'
+  { d_table  :: Document f
   , d_search :: Column f Tsvector
   }
   deriving stock Generic
@@ -123,11 +123,11 @@ CREATE INDEX search_idx ON discovery USING GIN (search);
 
 -}
 
-discoverySchema :: TableSchema (Discovery Name)
-discoverySchema = TableSchema
+documentSchema :: TableSchema (Document Name)
+documentSchema = TableSchema
   { name    = "discovery"
   , schema  = Just "public"
-  , columns = Discovery
+  , columns = Document
       { d_docId = "doc_id"
       , d_uri   = "uri"
       , d_title = "title"
@@ -143,23 +143,20 @@ discoverySchema = TableSchema
           , pc_content = "content"
           , pc_comments = "comments"
           }
-      , d_stats = discoveryStatsSchema
+      , d_stats = PageStats
+          { ps_js = "js"
+          , ps_css = "css"
+          , ps_tweets = "tweets"
+          , ps_gifs = "gifs"
+          , ps_cookies = "cookies"
+          }
       }
   }
 
-discoveryStatsSchema :: PageStats Name
-discoveryStatsSchema = PageStats
-  { ps_js = "js"
-  , ps_css = "css"
-  , ps_tweets = "tweets"
-  , ps_gifs = "gifs"
-  , ps_cookies = "cookies"
-  }
-
-discoverySchema' :: TableSchema (Discovery' Name)
-discoverySchema' = discoverySchema
-  { columns = Discovery'
-      { d_table = columns discoverySchema
+documentSchema' :: TableSchema (Document' Name)
+documentSchema' = documentSchema
+  { columns = Document'
+      { d_table = columns documentSchema
       , d_search = "search"
       }
   }
@@ -295,7 +292,7 @@ nullDist = arrayFill (lit $ fromIntegral numRootSites) null
 
 rootNodes :: Insert ()
 rootNodes = Insert
-  { into = discoverySchema
+  { into = documentSchema
   , rows = do
       d <- nextDocId
       (idx, z) <- values $ zip (fmap lit [0..]) rootSites
@@ -314,8 +311,8 @@ rootNodes = Insert
   , returning = pure ()
   }
 
-emptyPage :: Discovery Identity
-emptyPage = Discovery
+emptyPage :: Document Identity
+emptyPage = Document
   { d_docId = DocId 0
   , d_uri   = ""
   , d_title = ""

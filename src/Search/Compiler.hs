@@ -34,7 +34,7 @@ compileSearch q = orderBy (sr_ranking >$< desc) $ do
 
 data IL
   = Match Tsquery
-  | Full (Query (Discovery' Expr))
+  | Full (Query (Document' Expr))
 
 
 compile' :: Search Text -> IL
@@ -44,21 +44,21 @@ compile' (Phrase txts) = Match $ foldr1 TsqPhrase $ fmap TsqTerm txts
 compile' (Negate se) =
   case compile' se of
     Match ts -> Match $ TsqNot ts
-    Full qu -> Full $ except (each discoverySchema') qu
+    Full qu -> Full $ except (each documentSchema') qu
 compile' (And lhs rhs) = merge TsqAnd intersect (compile' lhs) (compile' rhs)
 compile' (Or lhs rhs) = merge TsqOr union (compile' lhs) (compile' rhs)
 compile' (SiteLike t) = Full $ do
-  d <- each discoverySchema'
+  d <- each documentSchema'
   where_ $ like (lit $ "%" <> t <> "%") (d_uri $ d_table d)
        &&. d_state (d_table d) ==. lit Explored
   pure d
 compile' (WithProperty prop op) = Full $ do
-  d <- each discoverySchema'
+  d <- each documentSchema'
   where_ $ compileOp op $ getProp prop d
   pure d
 
 
-getProp :: SiteProp -> Discovery' Expr -> Expr Int32
+getProp :: SiteProp -> Document' Expr -> Expr Int32
 getProp JSBundle  = ps_js  . d_stats . d_table
 getProp CSSBundle = ps_css . d_stats . d_table
 
@@ -71,7 +71,7 @@ compileOp (GreaterThan n) ex = ex >.  fromIntegral n
 
 merge
     :: (Tsquery -> Tsquery -> Tsquery)
-    -> (Query (Discovery' Expr) -> Query (Discovery' Expr) -> Query (Discovery' Expr))
+    -> (Query (Document' Expr) -> Query (Document' Expr) -> Query (Document' Expr))
     -> IL
     -> IL
     -> IL
@@ -81,9 +81,9 @@ merge _ q (Full q1) (Match t2) = Full $ q q1 (matching t2)
 merge _ q (Full q1) (Full q2) = Full $ q q1 q2
 
 
-matching :: Tsquery -> Query (Discovery' Expr)
+matching :: Tsquery -> Query (Document' Expr)
 matching q = do
-  d <- each discoverySchema'
+  d <- each documentSchema'
   where_ $ match (d_search d) (lit q)
        &&. d_state (d_table d) ==. lit Explored
   pure d

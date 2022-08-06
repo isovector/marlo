@@ -19,7 +19,7 @@ main :: IO ()
 main = do
   Right conn <- acquire connectionSettings
   Right n <- flip run conn $ statement () $ delete $ Delete
-    { from = discoverySchema
+    { from = documentSchema
     , using = pure ()
     , deleteWhere = \_ d -> do
         let paths =

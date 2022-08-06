@@ -81,7 +81,7 @@ newtype DocId = DocId
   deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 
-data DiscoveryState
+data DocumentState
   = Discovered
   | Explored
   | Pruned
@@ -89,5 +89,5 @@ data DiscoveryState
   | Unacceptable
   | NoContent
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
-  deriving (DBType, DBEq) via ReadShow DiscoveryState
+  deriving (DBType, DBEq) via ReadShow DocumentState
 

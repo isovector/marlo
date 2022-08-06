@@ -30,7 +30,7 @@ import Data.List (intersperse)
 
 getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
-  d <- d_table <$> each discoverySchema'
+  d <- d_table <$> each documentSchema'
   where_ $ d_docId d ==. lit did
   let pc = d_page d
   pure

@@ -16,9 +16,9 @@ import Types
 wrongDistance :: Query (Expr DocId, Expr [Maybe Int16])
 wrongDistance = do
   e <- each edgesSchema
-  src <- each discoverySchema
+  src <- each documentSchema
   where_ $ e_src e ==. d_docId src
-  dst <- each discoverySchema
+  dst <- each documentSchema
   where_ $ e_dst e ==. d_docId dst
   where_ $ distCard (d_distance src) >. distCard (d_distance dst)
   pure (e_dst e, d_distance src)
@@ -26,7 +26,7 @@ wrongDistance = do
 
 propagateDistances :: Update Int64
 propagateDistances = Update
-  { target = discoverySchema
+  { target = documentSchema
   , from = wrongDistance
   , set = \(_ ,dist) row -> row
               { d_distance = arrayZipWithLeast (arrayInc dist) (d_distance row)
@@ -44,10 +44,10 @@ distCard dist
 findJoins :: Query ((Expr Text, Expr [Maybe Int16]), (Expr Text, Expr [Maybe Int16]))
 findJoins = limit 1 $ orderBy random $ do
   e <- each edgesSchema
-  src <- each discoverySchema
+  src <- each documentSchema
   where_ $ e_src e ==. d_docId src
   where_ $ d_distance src /=. nullDist
-  dst <- each discoverySchema
+  dst <- each documentSchema
   where_ $ e_dst e ==. d_docId dst
   where_ $ d_distance dst /=. nullDist
   where_ $ distCard (d_distance src) <. distCard (d_distance dst)

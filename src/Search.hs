@@ -36,7 +36,7 @@ home conn = do
     Right sizes <- fmap (fmap M.fromList) $
       flip run conn $ statement () $ select $ do
         aggregate $ do
-          d <- each discoverySchema
+          d <- each documentSchema
           pure (groupBy $ d_state d, countStar)
     pure sizes
   pure $
