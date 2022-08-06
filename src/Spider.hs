@@ -74,21 +74,13 @@ discover depth dist uri = Insert
   { into = discoverySchema
   , rows = do
       docid <- nextDocId
-      pure $
-        Discovery
-          docid
-          (lit $ T.pack $ show uri)
-          (lit Discovered)
-          (arrayInc $ lit dist)
-          (lit $ depth + 1)
-          (lit "")
-          (lit [])
-          (lit 0)
-          (lit "")
-          (lit "")
-          (lit "")
-          (lit "")
-          (DiscoveryStats (lit 0) (lit 0) (lit 0) (lit 0) (lit False))
+      pure $ (lit emptyPage)
+        { d_docId = docid
+        , d_uri = lit $ T.pack $ show uri
+        , d_state = lit Discovered
+        , d_distance = arrayInc $ lit dist
+        , d_depth = lit $ depth + 1
+        }
   , onConflict = DoUpdate Upsert
       { index = d_uri
       , set = \new old -> old
@@ -167,13 +159,18 @@ index conn depth dist uri down = do
       let env = Env uri mgr conn
       Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
+
+      let raw =
+            PageRawData
+              { prd_data = d_body down
+              , prd_headers = fmap headersToHeaders $ Types.d_headers down
+              }
       Right _ <- flip run conn $ statement () $ update $ Update
         { target = discoverySchema
         , from = pure ()
         , set = \ _ dis -> dis { d_state = lit Explored
                                , d_title = lit t
-                               , d_data  = lit $ d_body down
-                               , d_headers = lit $ fmap headersToHeaders $ Types.d_headers down
+                               , d_raw = lit raw
                               }
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
@@ -181,8 +178,7 @@ index conn depth dist uri down = do
       indexCore conn env $ disc
         { d_state = Explored
         , d_title = t
-        , d_data = d_body down
-        , d_headers = fmap headersToHeaders $ Types.d_headers down
+        , d_raw = raw
         }
     False -> do
       void $ flip run conn $ statement () $ update $ markExplored Pruned disc
@@ -199,21 +195,23 @@ indexFromDB conn disc = do
 indexCore :: Connection -> Env -> Discovery Identity -> IO ()
 indexCore conn env disc = do
   Just (m, h, c, has_ads, stats') <-
-    runRanker env (decodeUtf8 $ d_data disc) $
+    runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
       (,,,,)
         <$> mainContent
         <*> headingsContent
         <*> commentsContent
         <*> hasGoogleAds
         <*> rankStats
-  let stats = stats' { ds_cookies = isJust $ lookupHeader HdrSetCookie $ d_headers disc }
+  let stats = stats' { ds_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema
     , from = pure ()
-    , set = \ _ dis -> dis { d_content  = lit m
-                           , d_headings = lit h
-                           , d_comments = lit c
+    , set = \ _ dis -> dis { d_page = lit $ PageContent
+                              { pc_headings = h
+                              , pc_content  = m
+                              , pc_comments = c
+                              }
                            , d_state    = lit $ bool Explored Unacceptable has_ads
                            , d_stats    = lit stats
                            }
@@ -248,6 +246,6 @@ debugRankerInDb uri r = do
       d <- each discoverySchema
       where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
-  fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ d_data d) r
+  fmap (d_uri d,) $ runRanker (Env (unsafeURI $ T.unpack $ d_uri d) mgr conn) (decodeUtf8 $ prd_data $ d_raw d) r
 
 

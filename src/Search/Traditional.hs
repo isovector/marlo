@@ -24,6 +24,7 @@ import           Servant
 import           Servant.Server.Generic ()
 import           Types
 import           Utils (paginate, timing)
+import Data.List (intersperse)
 
 
 
@@ -31,7 +32,16 @@ getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
   d <- d_table <$> each discoverySchema'
   where_ $ d_docId d ==. lit did
-  pure $ headline (d_content d <>. " " <>. d_headings d <>. " " <>. d_comments d) $ lit q
+  let pc = d_page d
+  pure
+    $ headline
+        (foldr1 (<>.)
+          $ intersperse " "
+            [ pc_content pc
+            , pc_headings pc
+            , pc_comments pc
+            ])
+    $ lit q
 
 
 traditionalSearch :: Connection -> Search Text -> Maybe Int -> Handler (L.Html ())

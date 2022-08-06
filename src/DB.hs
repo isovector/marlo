@@ -23,11 +23,11 @@ import Data.Int (Int64, Int32, Int16)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
+import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.Arrays (insertAt', arrayFill)
-import Rel8.TextSearch
-import Prelude hiding (null)
 import Rel8.Headers
+import Rel8.TextSearch
 
 
 newtype EdgeId = EdgeId
@@ -59,29 +59,49 @@ data Asset f = Asset
 
 data Discovery f = Discovery
   { d_docId :: Column f DocId
+  , d_title    :: Column f Text
   , d_uri   :: Column f Text
+
+  -- discovery
   , d_state :: Column f DiscoveryState
-  , d_distance :: Column f [Maybe Int16]
   , d_depth :: Column f Int32
-  , d_data :: Column f ByteString
-  , d_headers :: Column f [Header]
-  , d_rank :: Column f Double
-  , d_title :: Column f Text
-  , d_headings :: Column f Text
-  , d_content :: Column f Text
-  , d_comments :: Column f Text
+
+  , d_distance :: Column f [Maybe Int16]
+
+  , d_raw   :: PageRawData f
+  , d_page  :: PageContent f
   , d_stats :: DiscoveryStats f
   }
   deriving stock Generic
   deriving anyclass Rel8able
 
+data PageRawData f = PageRawData
+  { prd_data    :: Column f ByteString
+  , prd_headers :: Column f [Header]
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
+data PageContent f = PageContent
+  { pc_headings :: Column f Text
+  , pc_content  :: Column f Text
+  , pc_comments :: Column f Text
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
+
 deriving instance Show (Discovery Identity)
+deriving instance Show (PageRawData Identity)
+
+deriving instance Eq (PageContent Identity)
+deriving instance Show (PageContent Identity)
 
 data DiscoveryStats f = DiscoveryStats
-  { ds_js :: Column f Int32
-  , ds_css :: Column f Int32
-  , ds_tweets :: Column f Int16
-  , ds_gifs :: Column f Int16
+  { ds_js      :: Column f Int32
+  , ds_css     :: Column f Int32
+  , ds_tweets  :: Column f Int16
+  , ds_gifs    :: Column f Int16
   , ds_cookies :: Column f Bool
   }
   deriving stock Generic
@@ -92,7 +112,7 @@ deriving instance Eq (DiscoveryStats Identity)
 
 
 data Discovery' f = Discovery'
-  { d_table :: Discovery f
+  { d_table  :: Discovery f
   , d_search :: Column f Tsvector
   }
   deriving stock Generic
@@ -101,8 +121,8 @@ data Discovery' f = Discovery'
 
 data Edges f = Edges
   { e_edgeId :: Column f EdgeId
-  , e_src :: Column f DocId
-  , e_dst :: Column f DocId
+  , e_src    :: Column f DocId
+  , e_dst    :: Column f DocId
   , e_anchor :: Column f Text
   }
   deriving stock Generic
@@ -139,7 +159,6 @@ CREATE TABLE IF NOT EXISTS discovery (
   state VARCHAR(10) NOT NULL,
   depth int4 NOT NULL,
   distance int2[] NOT NULL,
-  rank float8 NOT NULL,
   data bytea NOT NULL,
   headers text[] NOT NULL,
   title TEXT NOT NULL,
@@ -186,16 +205,19 @@ discoverySchema = TableSchema
   , columns = Discovery
       { d_docId = "doc_id"
       , d_uri   = "uri"
+      , d_title = "title"
       , d_state = "state"
       , d_depth = "depth"
       , d_distance = "distance"
-      , d_data  = "data"
-      , d_headers  = "headers"
-      , d_rank = "rank"
-      , d_title = "title"
-      , d_headings = "headings"
-      , d_content = "content"
-      , d_comments = "comments"
+      , d_raw = PageRawData
+          { prd_data  = "data"
+          , prd_headers  = "headers"
+          }
+      , d_page = PageContent
+          { pc_headings = "headings"
+          , pc_content = "content"
+          , pc_comments = "comments"
+          }
       , d_stats = discoveryStatsSchema
       }
   }
@@ -365,20 +387,12 @@ rootNodes = Insert
   , rows = do
       d <- nextDocId
       (idx, z) <- values $ zip (fmap lit [0..]) rootSites
-      pure $ Discovery
-        { d_docId = d
-        , d_uri = z
-        , d_state = lit Discovered
-        , d_depth = 0
-        , d_data = ""
-        , d_headers = lit []
+      pure $ (lit emptyPage)
+        { d_docId    = d
+        , d_uri      = z
+        , d_state    = lit Discovered
+        , d_depth    = 0
         , d_distance = insertAt' (lit $ fromIntegral numRootSites) idx $ nullify 0
-        , d_rank = 0
-        , d_title = ""
-        , d_headings = ""
-        , d_content = ""
-        , d_comments = ""
-        , d_stats = DiscoveryStats 0 0 0 0 (lit False)
         }
   , onConflict = DoUpdate Upsert
       { index = d_uri
@@ -386,6 +400,32 @@ rootNodes = Insert
       , updateWhere = \new old -> d_uri new ==. d_uri old
       }
   , returning = pure ()
+  }
+
+emptyPage :: Discovery Identity
+emptyPage = Discovery
+  { d_docId = DocId 0
+  , d_uri   = ""
+  , d_title = ""
+  , d_state = Discovered
+  , d_depth = 0
+  , d_raw = PageRawData
+      { prd_data = ""
+      , prd_headers = []
+      }
+  , d_distance = replicate numRootSites Nothing
+  , d_page = PageContent
+      { pc_headings = ""
+      , pc_content  = ""
+      , pc_comments = ""
+      }
+  , d_stats = DiscoveryStats
+      { ds_js      = 0
+      , ds_css     = 0
+      , ds_tweets  = 0
+      , ds_gifs    = 0
+      , ds_cookies = False
+      }
   }
 
 data SearchResult f = SearchResult
