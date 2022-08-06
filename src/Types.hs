@@ -45,7 +45,20 @@ data Search a
   | And (Search a) (Search a)
   | Or (Search a) (Search a)
   | SiteLike Text
+  | WithProperty SiteProp Predicate
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+
+data SiteProp
+  = JSBundle
+  | CSSBundle
+  deriving (Eq, Ord, Show)
+
+data Predicate
+  = Exactly Int
+  | LessThan Int
+  | GreaterThan Int
+  deriving (Eq, Ord, Show)
+
 
 data SearchVariety
   = Traditional

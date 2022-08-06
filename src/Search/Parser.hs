@@ -2,18 +2,19 @@
 
 module Search.Parser where
 
-import Control.Monad.Combinators.Expr
-import Text.Megaparsec
-import Types
+import           Control.Monad.Combinators.Expr
+import           Data.Char (isAlphaNum)
+import           Data.Foldable (asum)
+import           Data.Text (Text)
 import qualified Data.Text as T
-import Keywords (isKeywordLetter)
-import Data.Void (Void)
-import Data.Text (Text)
-import Text.Megaparsec.Char (string, char, space1)
-import Data.Foldable (asum)
-import Text.Megaparsec.Char.Lexer (symbol, lexeme)
+import           Data.Void (Void)
+import           Keywords (isKeywordLetter)
+import           Text.Megaparsec
+import           Text.Megaparsec.Char (string, char, space1)
+import           Text.Megaparsec.Char.Lexer (symbol, lexeme, decimal)
 import qualified Text.Megaparsec.Char.Lexer as L
-import Data.Char (isAlphaNum)
+import           Types
+
 
 type Parser = Parsec Void Text
 
@@ -22,6 +23,7 @@ term = asum
   [ between (lexeme sp $ char '(') (lexeme sp $ char ')') expr
   , siteParser
   , phraseParser
+  , withPropParser
   , fmap Term keywordParser
   ]
 
@@ -35,6 +37,27 @@ expr = makeExprParser term
   , [ InfixL $ And    <$ symbol sp "AND" ]
   , [ InfixL $ Or     <$ symbol sp "OR"  ]
   ]
+
+withPropParser :: Parser (Search Text)
+withPropParser = do
+  prop <- propParser
+  op <- asum
+    [ LessThan <$ symbol sp "<"
+    , GreaterThan <$ symbol sp ">"
+    , Exactly <$ symbol sp "=="
+    , Exactly <$ symbol sp "="
+    ]
+  val <- decimal
+  pure $ WithProperty prop $ op val
+
+propParser :: Parser SiteProp
+propParser = do
+  _ <- string "with:"
+  asum
+    [ JSBundle <$ symbol sp "js"
+    , CSSBundle <$ symbol sp "javascript"
+    , CSSBundle <$ symbol sp "css"
+    ]
 
 searchParser :: Parser (Search Text)
 searchParser = expr <* eof
