@@ -173,6 +173,7 @@ isAcceptableLink uri
           , ".ipynb"
           , ".xml"
           , ".rss"
+          , ".svg"
           ]
       , not $ any (isOnDomain $ uriRegName auth) forbidSites
       , isWiki auth "wikipedia.org"
@@ -231,6 +232,8 @@ forbidSites =
   , "archive.today"
   , "forbes.com"
   , "gist.github.com"
+  , "pastebin.com"
+  , "justpaste.it"
   , "wikidata.org"
   ]
 
@@ -269,6 +272,8 @@ specificAllowRules uri
   , on_domain "github.com" && isInfixOf "/commits/" path
   , on_domain "github.com" && isInfixOf "/blob/" path
   , on_domain "github.com" && isInfixOf "/edit/" path
+  , on_domain "github.com" && isInfixOf "/stargazers" path
+  , on_domain "github.com" && isInfixOf "/network/members" path
   , on_domain "wikipedia.org" && isInfixOf "Template:" path
   , on_domain "wikipedia.org" && isInfixOf "Talk:" path
   , on_domain "wikipedia.org" && isInfixOf "Category:" path
