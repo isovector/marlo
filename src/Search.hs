@@ -7,7 +7,6 @@ module Search where
 import           API
 import           Config
 import           Control.Applicative (liftA2)
-import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
 import           DB
 import qualified Data.Map as M
@@ -20,7 +19,7 @@ import qualified Lucid as L
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
 import           Rel8 hiding (max, index)
-import           Search.Common (searchBar, searchHref, pager)
+import           Search.Common (searchBar, pager)
 import           Search.Compiler (compileSearch)
 import           Search.Machinery
 import           Search.Parser (encodeQuery)
@@ -31,7 +30,6 @@ import           Servant.Server.Generic ()
 import           Types
 import           Utils (timing, paginate)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
-
 
 
 home :: Connection -> Handler (L.Html ())
@@ -112,8 +110,8 @@ doSearch conn q mpage = do
 
 search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe PageNumber -> Handler (L.Html ())
 search _ _ Nothing _ = pure $ "Give me some keywords, punk!"
-search conn (fromMaybe Traditional -> v) (Just q) mpage =
-  case toSing v of
+search conn v (Just q) mpage =
+  case toSing $ fromMaybe Traditional v of
     SomeSearchVariety (s :: SSearchVariety v) ->
       case dict1 @SearchMethod s of
         Dict1 ->
