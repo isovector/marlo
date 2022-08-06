@@ -1,5 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 module Data.QuadAreaTree where
 
 import Linear.V2
@@ -11,9 +12,11 @@ import Data.Bool (bool)
 import GHC.Generics (Generic)
 import Control.Monad (guard, join)
 import Control.Arrow (first)
-import Debug.Trace (traceShowId)
+import Debug.Trace (traceShowId, trace)
+import GHC.TypeLits (Nat, KnownNat, natVal)
+import Data.Proxy
 
-trace = flip const
+-- trace = flip const
 
 data QuadTree a = Wrapper
   { wrappedTree :: Quadrant a
@@ -59,18 +62,34 @@ sanitizeRegion r@(Region x y w h)
   | otherwise
   = r
 
+getNatVal :: forall a. KnownNat a => Int
+getNatVal = fromInteger $ natVal $ Proxy @a
 
-validRegion :: Region -> Bool
-validRegion (Region _ _ w h) = w >= 1 && h >= 1
 
-instance Arbitrary Region where
+validRegion :: forall w h. (KnownNat w, KnownNat h) => RegionAtLeast w h -> Bool
+validRegion (RegionAtLeast (Region _ _ w h)) =
+  w >= getNatVal @w && h >= getNatVal @h
+
+newtype RegionAtLeast (w :: Nat) (h :: Nat) = RegionAtLeast
+  { getRegionAtLeast :: Region
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance (KnownNat w, KnownNat h) => Arbitrary (RegionAtLeast w h) where
   arbitrary = do
     x <- arbitrary
     y <- arbitrary
-    Positive w <- fmap (fmap (+ 1)) arbitrary
-    Positive h <- fmap (fmap (+ 1)) arbitrary
-    pure $ Region x y w h
-  shrink = filter validRegion . genericShrink
+    Positive w <- arbitrary
+    Positive h <- arbitrary
+    pure $ RegionAtLeast $ Region x y (w + getNatVal @w) (h + getNatVal @h)
+  shrink
+    = filter validRegion
+    . fmap (RegionAtLeast @w @h)
+    . genericShrink
+    . getRegionAtLeast
+
+deriving via (RegionAtLeast 1 1) instance (Arbitrary Region)
+
 
 prop_gen_subdivide :: Testable prop => (Region -> Quad Region -> prop) -> Property
 prop_gen_subdivide f = property $ do
@@ -125,10 +144,25 @@ props = do
               guard $ r1 /= r2
               pure $ not $ intersects r1 r2
 
-    , property $ \r@(Region x y w h) ->
+    , property $ \r@(Region x y w h) -> do
+        x' <- elements [0 .. w - 2]
+        y' <- elements [0 .. h - 2]
         let tree = makeTree r False
-         in
-          length (filter id $ asWeighted $ liftTree (insert True $ V2 x y) tree) == 1
+        pure $
+          length (filter id $ asWeighted $ liftTree (insert True $ V2 (x + x') (y + y')) tree) == 1
+
+    , property $ \(RegionAtLeast (Region x y ((+ 1) -> w) ((+ 1) -> h)) :: RegionAtLeast 2 2) -> do
+        x' <- elements [0 .. w - 3]
+        y' <- elements [0 .. h - 3]
+        let tree = makeTree (Region x y w h) False
+            res = liftTree (fill True $ Region (x + x') (y + y') 2 2) tree
+
+        pure $
+          counterexample (show x') $
+          counterexample (show y') $
+          counterexample (show tree) $
+          counterexample (show $ length (filter id $ asWeighted res)) $
+          length (filter id $ asWeighted res) == 4
 
 
     ]
@@ -202,26 +236,28 @@ fill _ _ q@(Leaf (r, _))
 fill v what (Leaf (r, a)) =
   if
       -- The entire space is covered by what
-    | containsRegion what r -> trace "done" $ Leaf v
+    | containsRegion what r -> -- trace "done" $
+        Leaf v
       -- The space entirely contains what
-    | containsRegion r what -> trace ("splits a node: " <> show (what, r)) $
+    | containsRegion r what -> -- trace ("splits a node: " <> show (what, r)) $
         Node $
           fill v
             <$> pure what
             <*> fmap (pure . (, a)) (subdivide r)
-    | intersects what r -> trace ("recursing: " <> show (what, r)) $
-          Node $
-            fill v
-              <$> (subdivide what)
-              <*> pure (pure (r, a))
-    | otherwise -> trace ("no interaction" <> show (what, r)) $ Leaf a
+    | intersects what r -> -- trace ("recursing: " <> show (what, r)) $
+        Node $
+          fill v
+            <$> (subdivide what)
+            <*> pure (pure (r, a))
+    | otherwise -> -- trace ("no interaction" <> show (what, r)) $
+        Leaf a
 fill v what (Node qu)
   = Node $ fill v <$> subdivide what <*> qu
 
 
 getLocation :: V2 Int -> Quadrant (Region, a) -> Maybe a
 getLocation p (Leaf (r, a))
-  | containsPoint r p = Just a
+  | trace (show (r, p)) $ containsPoint r p = Just a
   | otherwise = Nothing
 getLocation p (Node qu) = asum $ getLocation p <$> (toList qu)
 
@@ -254,7 +290,7 @@ regionSize (Quad _ _ w h) = w * h
 
 
 asWeighted :: Show a => QuadTree a -> [a]
-asWeighted =  join . fmap (uncurry replicate . traceShowId . first regionSize) . toList . regionify
+asWeighted =  join . fmap (uncurry replicate . first regionSize) . toList . regionify
 
 
 makeTree :: Region -> a -> QuadTree a
@@ -264,15 +300,16 @@ makeTree r a = Wrapper (pure a) r
 liftTree :: (Quadrant (Region, a) -> Quadrant a) -> QuadTree a -> QuadTree a
 liftTree f w = w { wrappedTree = f $ regionify w }
 
+main :: IO ()
+main = props
 
 -- TODO(sandy): there is a bug somewhere :(
-main :: IO ()
-main
-  = id
-  -- $ showTree (bool '.' 'X')
-  $ pPrint
-  $ liftTree (fill True $ Region 1 1 2 2)
-  $ makeTree (Region 0 0 4 4) False
+test :: IO ()
+test
+  = putStrLn
+  $ showTree (bool '.' 'X')
+  $ liftTree (fill True $ Region 0 0 2 2)
+  $ makeTree (Region 0 0 3 3) False
 
 
 -- _tl :: Lens' (Quadrant a) (Quadrant a)
