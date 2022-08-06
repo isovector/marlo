@@ -12,16 +12,17 @@ import Data.Bool (bool)
 import GHC.Generics (Generic)
 import Control.Monad (guard, join)
 import Control.Arrow (first)
-import Debug.Trace (traceShowId, trace)
+import Debug.Trace (traceShowId)
 import GHC.TypeLits (Nat, KnownNat, natVal)
 import Data.Proxy
+import Data.Maybe (isJust, fromMaybe)
 
--- trace = flip const
+trace = flip const
 
 data QuadTree a = Wrapper
   { wrappedTree :: Quadrant a
     -- | Must be a power of two!!
-  , quadSize :: Region
+  , qt_size :: Region
   }
   deriving (Show, Read, Eq, Functor, Generic)
 
@@ -132,6 +133,8 @@ props = do
 
     , property $ \r -> intersects r r
 
+    , property $ \r -> getIntersection r r == Just r
+
     , property $ \r1 r2 -> not (containsRegion r1 r2) || intersects r1 r2
 
     , property $ \r1 r2 -> intersects r1 r2 == intersects r2 r1
@@ -145,15 +148,15 @@ props = do
               pure $ not $ intersects r1 r2
 
     , property $ \r@(Region x y w h) -> do
-        x' <- elements [0 .. w - 2]
-        y' <- elements [0 .. h - 2]
+        x' <- elements [0 .. w - 1]
+        y' <- elements [0 .. h - 1]
         let tree = makeTree r False
         pure $
           length (filter id $ asWeighted $ liftTree (insert True $ V2 (x + x') (y + y')) tree) == 1
 
     , property $ \(RegionAtLeast (Region x y ((+ 1) -> w) ((+ 1) -> h)) :: RegionAtLeast 2 2) -> do
-        x' <- elements [0 .. w - 3]
-        y' <- elements [0 .. h - 3]
+        x' <- elements [0 .. w - 2]
+        y' <- elements [0 .. h - 2]
         let tree = makeTree (Region x y w h) False
             res = liftTree (fill True $ Region (x + x') (y + y') 2 2) tree
 
@@ -195,12 +198,20 @@ corners (Region x y w h) = do
 
 
 intersects :: Region -> Region -> Bool
-intersects r1 r2 = or
-  [ any (containsPoint r1) (corners r2)
-  , any (containsPoint r2) (corners r1)
-  , containsRegion r1 r2
-  , containsRegion r2 r1
-  ]
+intersects r1 r2 = isJust $ getIntersection r1 r2
+
+
+getIntersection :: Region -> Region -> Maybe Region
+getIntersection r1 r2 =
+  let x0 = max (r_x r1) (r_x r2)
+      y0 = max (r_y r1) (r_y r2)
+      x1 = min (r_x r1 + r_w r1) (r_x r2 + r_w r2)
+      y1 = min (r_y r1 + r_h r1) (r_y r2 + r_h r2)
+      w = x1 - x0
+      h = y1 - y0
+   in case 0 < w && 0 < h of
+        True -> Just $ Region x0 y0 w h
+        False -> Nothing
 
 
 data Quadrant a
@@ -226,45 +237,83 @@ insert v (V2 x y) = fill v (Region x y 1 1)
 isEmptyRegion :: Region -> Bool
 isEmptyRegion (Quad _ _ x y) = x <= 0 || y <= 0
 
-fill :: Show a => a -> Region -> Quadrant (Region, a) -> Quadrant a
-fill _ what q
-  | isEmptyRegion what
-  = fmap snd q
+fill :: a -> Region -> Quadrant (Region, a) -> Quadrant a
+fill _ what q | isEmptyRegion what = fmap snd q
 fill _ _ q@(Leaf (r, _))
   | isEmptyRegion r
   = fmap snd q
-fill v what q@(Leaf (r, a)) =
-  if
-      -- The entire space is covered by what
-    | containsRegion what r -> -- trace "done" $
-        Leaf v
-      -- The space entirely contains what
-    | containsRegion r what -> trace ("splits a node: " <> show (what, r)) $
-        -- SO what should we do?
-        -- see if it entirely fits in a corner
-        -- if not, do a split
-        --
-        -- except this doesnt matter since this is a leaf
-        -- in which case we DO want to split it
-        Node $
-          fill v
-            <$> pure what
-            <*> fmap (pure . (, a)) (subdivide r)
-    | intersects what r -> trace ("recursing: " <> show (what, r)) $
-        -- i guess this is the last case??
-        Node $
-          fill v
-            <$> subdivide what
-            <*> pure q
-    | otherwise -> -- trace ("no interaction" <> show (what, r)) $
-        Leaf a
-fill v what q@(Node qu)
-  = Node $ fill v <$> pure what <*> qu
-  -- so therefore the problem is here --- check each corner !
-  -- but dont even need to -- push what in!
+fill v what q@(Leaf (r, a))
+  | containsRegion what r
+  = pure v
+  | intersects what r
+  = fillYo v what $ fmap (pure . (, a)) $ subdivide r
+  | otherwise
+  = fmap snd q
+fill v what (Node qu) = fillYo v what qu
+
+quadSize :: Quadrant Region -> Region
+quadSize (Leaf r) = r
+quadSize (Node (Quad tl _ _ br)) =
+  let Region x y _ _ = quadSize tl
+      Region x' y' w h = quadSize br
+   in Region x y (x' + w) (y' + h)
+
+fillYo :: a -> Region -> Quad (Quadrant (Region, a)) -> Quadrant a
+fillYo v what q = Node $
+  fill v
+    <$> fmap (fromMaybe $ Quad 0 0 0 0)
+          (getIntersection
+              <$> pure what
+              <*> fmap (quadSize . fmap fst) q)
+    <*> q
+
+--fill :: Show a => a -> Region -> Quadrant (Region, a) -> Quadrant a
+--fill _ what q
+--  | isEmptyRegion what
+--  = fmap snd q
+--fill _ _ q@(Leaf (r, _))
+--  | isEmptyRegion r
+--  = fmap snd q
+--fill v what q@(Leaf (r, a)) =
+--  if
+--      -- The entire space is covered by what
+--    | containsRegion what r -> -- trace "done" $
+--        Leaf v
+--      -- The space entirely contains what
+--    | containsRegion r what -> trace ("splits a node: " <> show (what, r)) $
+--        -- SO what should we do?
+--        -- see if it entirely fits in a corner
+--        -- if not, do a split
+--        --
+--        -- except this doesnt matter since this is a leaf
+--        -- in which case we DO want to split it
+--        Node $
+--          let subr = subdivide r
+--           in
+--              fill v
+--                <$> (fmap (fromMaybe (Quad 0 0 0 0)) $ getIntersection <$> subdivide what <*> subr)
+
+--                <*> fmap (pure . (, a)) subr
+--    | intersects what r -> trace ("recursing: " <> show (what, r)) $
+--        -- i guess this is the last case??
+--        Node $
+--          let subr = subdivide r
+--           in
+--            fill v
+--                <$> (fmap (fromMaybe (Quad 0 0 0 0)) $ getIntersection <$> subdivide what <*> subr)
+
+--                <*> fmap (pure . (, a)) subr
+--    | otherwise -> -- trace ("no interaction" <> show (what, r)) $
+--        Leaf a
+--fill v what q@(Node qu)
+--  = Node $ fill v <$> pure what <*> qu
+--  -- so therefore the problem is here --- check each corner !
+--  -- but dont even need to -- push what in!
 
 -- LOL SUBDIVIDE IS DIVISION IN HALF
 -- NOT DIVISION ALONG THE CONTAINER
+--
+-- want to take the intersection
 
 
 getLocation :: V2 Int -> Quadrant (Region, a) -> Maybe a
@@ -313,16 +362,14 @@ liftTree :: (Quadrant (Region, a) -> Quadrant a) -> QuadTree a -> QuadTree a
 liftTree f w = w { wrappedTree = f $ regionify w }
 
 main :: IO ()
-main = props
+main = test
 
 -- TODO(sandy): there is a bug somewhere :(
 test :: IO ()
 test
-  = id
-  -- $ showTree (bool '.' 'X')
-  $ pPrint
-  $ regionify
-  $ liftTree (fill True $ Region 0 0 2 2)
+  = putStrLn
+  $ showTree (bool '.' 'X')
+  $ liftTree (fill True $ Region 1 0 3 2)
   $ makeTree (Region 0 0 3 3) False
 
 
