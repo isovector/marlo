@@ -101,7 +101,14 @@ data DocumentState
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DocumentState
 
+
+data LimitStrategy
+  = Limit Word
+  | Paginate Word  -- ^ Page size
+  deriving stock (Eq, Ord, Show, Read, Generic)
+
+
 newtype PageNumber = PageNumber
   { getPageNumber :: Word
-  } deriving newtype (Eq, Ord, Show, ToHttpApiData, FromHttpApiData)
+  } deriving newtype (Eq, Ord, Show, Num, Enum, Bounded, ToHttpApiData, FromHttpApiData)
 

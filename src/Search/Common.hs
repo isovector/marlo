@@ -8,6 +8,8 @@ import qualified Lucid.Servant as L
 import           Servant.Server.Generic ()
 import           Types
 import Search.Parser (encodeQuery)
+import Data.Int (Int64)
+import Control.Monad (when)
 
 
 searchBar :: SearchVariety -> Maybe (Search Text) -> L.Html ()
@@ -33,8 +35,16 @@ searchBar v t =
       | otherwise = z
 
 
-
-searchHref :: SearchVariety -> Search Text -> Int -> L.Attribute
+searchHref :: SearchVariety -> Search Text -> PageNumber -> L.Attribute
 searchHref v q p =
-  L.safeAbsHref_ (Proxy @API) (Proxy @SearchEndpoint) (Just v) (Just q) (Just p)
+  L.safeAbsHref_ (Proxy @API) (Proxy @SearchEndpoint) (Just v) (Just q) (Just $  p)
+
+
+pager :: Search Text -> LimitStrategy -> SearchVariety -> Int64 -> PageNumber ->  L.Html ()
+pager _ (Limit _) _ _ _ = pure ()
+pager q (Paginate pagesize) v cnt page = do
+  when (page > 1) $ do
+    L.a_ [ searchHref v q $ page - 1 ] "Prev "
+  when (fromIntegral ((getPageNumber page) * pagesize) < cnt) $ do
+    L.a_ [ searchHref v q $ page + 1 ] "Next"
 

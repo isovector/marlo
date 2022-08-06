@@ -3,11 +3,9 @@
 module Search.Machinery where
 
 import Types
-import Rel8
 import Data.Kind (Type, Constraint)
 import DB
 import Data.Text (Text)
-import Data.Int (Int64)
 import Lucid (Html)
 
 
@@ -56,18 +54,15 @@ instance Demote 'Spatial where
 
 class Demote v => SearchMethod (v :: SearchVariety) where
   type SearchMethodResult v :: Type
-  prepareSearch
-      :: Word
-      -> Query (Expr Int64, SearchResult Expr)
-      -> Query (Expr Int64, SearchResult Expr)
+
+  limitStrategy :: LimitStrategy
+
   accumResults
       :: Connection
       -> Search Text
       -> [SearchResult Identity]
       -> IO [SearchMethodResult v]
+
   showResults
-      :: Search Text
-      -> Int64
-      -> Word
-      -> [SearchMethodResult v] -> Html ()
+      :: [SearchMethodResult v] -> Html ()
 

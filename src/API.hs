@@ -24,7 +24,7 @@ type SearchEndpoint =
   "search"
     :> QueryParam "v" SearchVariety
     :> QueryParam "q" (Search Text)
-    :> QueryParam "p" Int
+    :> QueryParam "p" PageNumber
     :> Get '[HTML] (L.Html ())
 
 

@@ -15,7 +15,6 @@ import           Search.Compiler
 import           Search.Machinery
 import           Servant.Server.Generic ()
 import           Types
-import           Utils (paginate)
 
 
 
@@ -38,7 +37,7 @@ getSnippet did q = do
 instance SearchMethod 'Traditional where
   type SearchMethodResult 'Traditional = (SearchResult Identity, Text)
 
-  prepareSearch = paginate 20
+  limitStrategy = Paginate 20
 
   accumResults conn q docs = do
     let q' = compileQuery q
@@ -46,15 +45,7 @@ instance SearchMethod 'Traditional where
       Right [snip] <- doSelect conn $ getSnippet (sr_id doc) q'
       pure (doc, snip)
 
-  showResults q sz page =
-    traverse_ (uncurry tradResult)
-    -- let eq = escape $ encodeQuery q
-    -- when (page > 0) $ do
-    --   L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show page)  ] "Prev"
-    -- when ((page + 1) * 20 < fromIntegral sz) $ do
-    --   L.a_ [L.href_ $ "/search?q=" <> eq <> "&p=" <> T.pack (show (page + 2))  ] "Next"
-    -- where
-    --   escape = T.pack . escapeURIString isUnescapedInURI . T.unpack
+  showResults = traverse_ (uncurry tradResult)
 
 
 tradResult :: SearchResult Rel8.Result -> Text -> L.Html ()

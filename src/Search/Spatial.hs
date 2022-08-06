@@ -19,12 +19,11 @@ import           Types
 
 instance SearchMethod 'Spatial where
   type SearchMethodResult 'Spatial = SearchResult Identity
-  prepareSearch _ = limit 20
+  limitStrategy = Limit 20
   accumResults _ _ = pure
-  showResults _ _ _ docs = do
+  showResults docs = do
     let qd = foldr place (makeTree (Region 0 0 250 80) Nothing) $ fmap makeRect docs
     for_ (uniqueTiles $ mapMaybe sequence $ tile $ fmap (fmap r_data) qd) spaceResult
-
 
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)

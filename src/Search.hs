@@ -1,11 +1,13 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Search where
 
 import           API
 import           Config
 import           Control.Applicative (liftA2)
+import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
 import           DB
 import qualified Data.Map as M
@@ -18,17 +20,17 @@ import qualified Lucid as L
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
 import           Rel8 hiding (max, index)
-import           Search.Common (searchBar)
+import           Search.Common (searchBar, searchHref, pager)
 import           Search.Compiler (compileSearch)
 import           Search.Machinery
+import           Search.Parser (encodeQuery)
 import           Search.Spatial ()
 import           Search.Traditional ()
 import           Servant
 import           Servant.Server.Generic ()
 import           Types
-import           Utils (timing)
+import           Utils (timing, paginate)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
-import Search.Parser (encodeQuery)
 
 
 
@@ -68,14 +70,25 @@ commafy
   . T.pack
 
 
-doSearch :: forall v. SearchMethod v => Connection -> Search Text -> Maybe Int -> Handler (L.Html ())
+doSearch
+    :: forall v
+     . SearchMethod v
+    => Connection
+    -> Search Text
+    -> Maybe PageNumber
+    -> Handler (L.Html ())
 doSearch conn q mpage = do
-  let pagenum = fromIntegral $ Prelude.max 0 $ maybe 0 (subtract 1) mpage
+  let page = fromMaybe 1 mpage
+      pagenum = subtract 1 $ Prelude.max 1 $ maybe 1 getPageNumber mpage
   (cnt, res) <- liftIO $ do
     Right prepped <- timing "find documents" $ do
       doSelect conn $ do
         let x = compileSearch q
-        prepareSearch @v pagenum $ liftA2 (,) (countRows x) x
+        ( case limitStrategy @v of
+            Limit n       -> limit n
+            Paginate size -> paginate size pagenum
+          ) $ liftA2 (,) (countRows x) x
+
     let cnt = maybe 0 fst $ listToMaybe prepped
         docs = fmap snd prepped
     res <- accumResults @v conn q docs
@@ -93,10 +106,11 @@ doSearch conn q mpage = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar (demote @v) $ Just q
-          showResults @v q cnt pagenum res
+          showResults @v res
+          pager q (limitStrategy @v) (demote @v) cnt page
 
 
-search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe Int -> Handler (L.Html ())
+search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe PageNumber -> Handler (L.Html ())
 search _ _ Nothing _ = pure $ "Give me some keywords, punk!"
 search conn (fromMaybe Traditional -> v) (Just q) mpage =
   case toSing v of
@@ -104,7 +118,6 @@ search conn (fromMaybe Traditional -> v) (Just q) mpage =
       case dict1 @SearchMethod s of
         Dict1 ->
           doSearch @v conn q mpage
-
 
 
 
