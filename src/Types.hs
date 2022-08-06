@@ -1,15 +1,18 @@
 module Types where
 
-import           Control.Monad.Reader
-import           Data.ByteString (ByteString)
-import           Data.Functor.Identity
-import           Data.Text (Text)
-import           Hasql.Connection (Connection)
-import           Network.HTTP.Client (Manager)
-import           Network.HTTP.Types.Header (ResponseHeaders)
-import           Network.URI
-import           Text.HTML.Scalpel
+import Control.Monad.Reader
+import Data.ByteString (ByteString)
+import Data.Functor.Identity
+import Data.Int (Int64)
 import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import GHC.Generics (Generic)
+import Hasql.Connection (Connection)
+import Network.HTTP.Client (Manager)
+import Network.HTTP.Types.Header (ResponseHeaders)
+import Network.URI
+import Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
+import Text.HTML.Scalpel
 
 
 data Env = Env
@@ -64,4 +67,27 @@ data SearchVariety
   = Traditional
   | Spatial
   deriving (Eq, Ord, Show, Prelude.Enum, Bounded)
+
+
+newtype EdgeId = EdgeId
+  { unEdgeId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
+
+
+newtype DocId = DocId
+  { unDocId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
+
+
+data DiscoveryState
+  = Discovered
+  | Explored
+  | Pruned
+  | Errored
+  | Unacceptable
+  | NoContent
+  deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
+  deriving (DBType, DBEq) via ReadShow DiscoveryState
 

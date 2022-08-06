@@ -13,49 +13,35 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# OPTIONS_GHC -Wall                   #-}
 
-module DB where
+module DB
+  ( module DB
+  , module DB.Asset
+  , module DB.Edges
+  , module DB.PageContent
+  , module DB.PageRawData
+  , module DB.PageStats
+  , module DB.SearchResult
+  ) where
 
 import Config
-import Data.ByteString (ByteString)
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int64, Int32, Int16)
+import Data.Int (Int32, Int16)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Hasql.Connection (Settings, settings)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.Arrays (insertAt', arrayFill)
-import Rel8.Headers
 import Rel8.TextSearch
+import Types
+import DB.Asset
+import DB.PageRawData
+import DB.PageContent
+import DB.Edges
+import DB.PageStats
+import DB.SearchResult
 
-
-newtype EdgeId = EdgeId
-  { unEdgeId :: Int64
-  }
-  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
-
-newtype DocId = DocId
-  { unDocId :: Int64
-  }
-  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
-
-data DiscoveryState
-  = Discovered
-  | Explored
-  | Pruned
-  | Errored
-  | Unacceptable
-  | NoContent
-  deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
-  deriving (DBType, DBEq) via ReadShow DiscoveryState
-
-data Asset f = Asset
-  { a_uri   :: Column f Text
-  , a_size :: Column f Int64
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
 
 data Discovery f = Discovery
   { d_docId :: Column f DocId
@@ -70,45 +56,13 @@ data Discovery f = Discovery
 
   , d_raw   :: PageRawData f
   , d_page  :: PageContent f
-  , d_stats :: DiscoveryStats f
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-data PageRawData f = PageRawData
-  { prd_data    :: Column f ByteString
-  , prd_headers :: Column f [Header]
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-data PageContent f = PageContent
-  { pc_headings :: Column f Text
-  , pc_content  :: Column f Text
-  , pc_comments :: Column f Text
+  , d_stats :: PageStats f
   }
   deriving stock Generic
   deriving anyclass Rel8able
 
 
 deriving instance Show (Discovery Identity)
-deriving instance Show (PageRawData Identity)
-
-deriving instance Eq (PageContent Identity)
-deriving instance Show (PageContent Identity)
-
-data DiscoveryStats f = DiscoveryStats
-  { ds_js      :: Column f Int32
-  , ds_css     :: Column f Int32
-  , ds_tweets  :: Column f Int16
-  , ds_gifs    :: Column f Int16
-  , ds_cookies :: Column f Bool
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-deriving instance Show (DiscoveryStats Identity)
-deriving instance Eq (DiscoveryStats Identity)
 
 
 data Discovery' f = Discovery'
@@ -119,36 +73,7 @@ data Discovery' f = Discovery'
   deriving anyclass Rel8able
 
 
-data Edges f = Edges
-  { e_edgeId :: Column f EdgeId
-  , e_src    :: Column f DocId
-  , e_dst    :: Column f DocId
-  , e_anchor :: Column f Text
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
 
-nextDocId :: Query (Expr DocId)
-nextDocId = fmap coerce $ pure $ nextval "doc_id_seq"
-
-{-
-
-CREATE TABLE IF NOT EXISTS assets (
-  uri TEXT PRIMARY KEY NOT NULL,
-  size int8 NOT NULL
-);
-
--}
-
-assetSchema :: TableSchema (Asset Name)
-assetSchema = TableSchema
-  { name    = "assets"
-  , schema  = Just "public"
-  , columns = Asset
-      { a_uri   = "uri"
-      , a_size = "size"
-      }
-  }
 
 {-
 
@@ -222,13 +147,13 @@ discoverySchema = TableSchema
       }
   }
 
-discoveryStatsSchema :: DiscoveryStats Name
-discoveryStatsSchema = DiscoveryStats
-  { ds_js = "js"
-  , ds_css = "css"
-  , ds_tweets = "tweets"
-  , ds_gifs = "gifs"
-  , ds_cookies = "cookies"
+discoveryStatsSchema :: PageStats Name
+discoveryStatsSchema = PageStats
+  { ps_js = "js"
+  , ps_css = "css"
+  , ps_tweets = "tweets"
+  , ps_gifs = "gifs"
+  , ps_cookies = "cookies"
   }
 
 discoverySchema' :: TableSchema (Discovery' Name)
@@ -239,9 +164,8 @@ discoverySchema' = discoverySchema
       }
   }
 
-
-nextEdgeId :: Query (Expr EdgeId)
-nextEdgeId = fmap coerce $ pure $ nextval "edge_id_seq"
+nextDocId :: Query (Expr DocId)
+nextDocId = fmap coerce $ pure $ nextval "doc_id_seq"
 
 {-
 
@@ -312,18 +236,6 @@ IMMUTABLE;
 
 
 -}
-
-edgesSchema :: TableSchema (Edges Name)
-edgesSchema = TableSchema
-  { name    = "edges"
-  , schema  = Just "public"
-  , columns = Edges
-      { e_edgeId = "id"
-      , e_src = "src"
-      , e_dst = "dst"
-      , e_anchor = "anchor"
-      }
-  }
 
 
 connectionSettings :: Settings
@@ -419,24 +331,12 @@ emptyPage = Discovery
       , pc_content  = ""
       , pc_comments = ""
       }
-  , d_stats = DiscoveryStats
-      { ds_js      = 0
-      , ds_css     = 0
-      , ds_tweets  = 0
-      , ds_gifs    = 0
-      , ds_cookies = False
+  , d_stats = PageStats
+      { ps_js      = 0
+      , ps_css     = 0
+      , ps_tweets  = 0
+      , ps_gifs    = 0
+      , ps_cookies = False
       }
   }
-
-data SearchResult f = SearchResult
-  { sr_ranking :: !(Column f Float)
-  , sr_id      :: !(Column f DocId)
-  , sr_uri     :: !(Column f Text)
-  , sr_title   :: !(Column f Text)
-  , sr_stats   :: !(DiscoveryStats f)
-  }
-  deriving stock Generic
-  deriving anyclass Rel8able
-
-deriving instance Eq (SearchResult Identity)
 

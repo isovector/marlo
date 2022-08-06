@@ -28,7 +28,7 @@ import           Utils (timing)
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 ((+ 30) $ log $ max 1 $ fromIntegral $ ds_js $ sr_stats sr)
+  { r_pos = V2 ((+ 30) $ log $ max 1 $ fromIntegral $ ps_js $ sr_stats sr)
                (sr_ranking sr * 100)
   , r_size = measureText $ sr_title sr
   , r_data = sr

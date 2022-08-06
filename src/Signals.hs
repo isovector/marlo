@@ -449,8 +449,8 @@ commentsContent = fmap (T.intercalate " ") $ asum
   , pure []
   ]
 
-rankStats :: Ranker (DiscoveryStats Identity)
-rankStats = DiscoveryStats
+rankStats :: Ranker (PageStats Identity)
+rankStats = PageStats
   <$> fmap fromIntegral jsBundleSize
   <*> fmap fromIntegral cssBundleSize
   <*> fmap fromIntegral tweets

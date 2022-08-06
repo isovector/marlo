@@ -8,6 +8,7 @@ import Hasql.Session
 import Rel8
 import Spider (indexFromDB)
 import Data.Foldable (for_)
+import Types
 
 
 main :: IO ()

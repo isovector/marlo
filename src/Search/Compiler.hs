@@ -59,8 +59,8 @@ compile' (WithProperty prop op) = Full $ do
 
 
 getProp :: SiteProp -> Discovery' Expr -> Expr Int32
-getProp JSBundle  = ds_js  . d_stats . d_table
-getProp CSSBundle = ds_css . d_stats . d_table
+getProp JSBundle  = ps_js  . d_stats . d_table
+getProp CSSBundle = ps_css . d_stats . d_table
 
 
 compileOp :: Predicate -> Expr Int32 -> Expr Bool

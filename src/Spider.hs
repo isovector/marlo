@@ -202,7 +202,7 @@ indexCore conn env disc = do
         <*> commentsContent
         <*> hasGoogleAds
         <*> rankStats
-  let stats = stats' { ds_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
+  let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  flip run conn $ statement () $ update $ Update
     { target = discoverySchema

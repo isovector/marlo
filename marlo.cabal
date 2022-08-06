@@ -34,6 +34,12 @@ library
       Data.QuadAreaTree.Tests
       Data.RectPacking
       DB
+      DB.Asset
+      DB.Edges
+      DB.PageContent
+      DB.PageRawData
+      DB.PageStats
+      DB.SearchResult
       Index
       Keywords
       Metric
