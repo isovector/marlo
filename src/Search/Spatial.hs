@@ -29,7 +29,9 @@ instance SearchMethod 'Spatial where
   type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
   limitStrategy = Limit 500
   accumResults _ _ docs = do
-    let rs = fmap makeRect docs
+    let best = maximum $ fmap sr_ranking docs
+    let rs = fmap makeRect
+           $ fmap (\x -> x { sr_ranking = best - sr_ranking x }) docs
     evaluate $ foldr place (makeTree (Region 0 0 150 200) Nothing) rs
   showResults
     = traverse_ spaceResult
