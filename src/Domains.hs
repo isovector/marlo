@@ -11,6 +11,8 @@ import           Integration.Alexa (getGlobalRank')
 import           Network.URI
 import           Rel8
 import           Types
+import Control.Monad (join)
+import Utils (hush)
 
 
 getDomain :: Connection -> URI -> IO DomainId
@@ -43,11 +45,7 @@ getDomain conn uri = do
 rerankPopularity :: Connection -> Text -> IO (Either DomainId DomainId)
 rerankPopularity conn domname = do
   erank <- getGlobalRank' domname
-  rank <- case erank of
-    Left _ -> do
-      putStrLn $ T.unpack $ "failed to get a rank for " <> domname
-      pure Nothing
-    Right rank -> pure rank
+  let rank = join $ hush erank
 
   Right [x] <- doInsert conn $ Insert
     { into = domainsSchema
