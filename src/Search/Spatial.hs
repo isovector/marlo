@@ -5,7 +5,7 @@ module Search.Spatial () where
 import           Control.Exception
 import           Control.Monad.State (evalState, gets, modify)
 import           DB
-import           Data.Foldable (for_)
+import           Data.Foldable (traverse_)
 import           Data.Maybe (catMaybes, mapMaybe)
 import           Data.RectPacking
 import qualified Data.Set as S
@@ -18,6 +18,7 @@ import           Search.Machinery
 import           Servant.Server.Generic ()
 import           Types
 
+
 -- there is ANOTHER bug in the quadtree
 -- this time maybe when the starting xy are negative?
 
@@ -27,8 +28,12 @@ instance SearchMethod 'Spatial where
   accumResults _ _ docs = do
     let rs = fmap makeRect docs
     evaluate $ foldr place (makeTree (Region 0 0 250 80) Nothing) rs
-  showResults qd = do
-    for_ (uniqueTiles $ mapMaybe sequence $ tile $ fmap (fmap r_data) qd) spaceResult
+  showResults
+    = traverse_ spaceResult
+    . uniqueTiles
+    . mapMaybe sequence
+    . tile
+    . fmap (fmap r_data)
 
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
@@ -40,7 +45,6 @@ makeRect sr = Rect
   }
   where
     title' = chopTitle $ sr_title sr
-
 
 
 chopTitle :: Text -> Text
@@ -75,7 +79,7 @@ spaceResult (Region x y _ _, d) =
       , L.style_ $ mconcat
           [ "position: absolute;"
           , "top: "
-          , T.pack $ show $ 250 + y * 15
+          , T.pack $ show $ 250 + y * 18
           , "; "
           , "left: "
           , T.pack $ show $ 50 + x * 10

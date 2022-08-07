@@ -112,7 +112,12 @@ doSearch conn q mpage = do
           pager q (limitStrategy @v) (demote @v) cnt page
 
 
-search :: Connection -> Maybe SearchVariety -> Maybe (Search Text) -> Maybe PageNumber -> Handler (L.Html ())
+search
+    :: Connection
+    -> Maybe SearchVariety
+    -> Maybe (Search Text)
+    -> Maybe PageNumber
+    -> Handler (L.Html ())
 search _ _ Nothing _ = pure $ "Give me some keywords, punk!"
 search conn v (Just q) mpage =
   case toSing $ fromMaybe Traditional v of
@@ -120,6 +125,7 @@ search conn v (Just q) mpage =
       case dict1 @SearchMethod s of
         Dict1 ->
           doSearch @v conn q mpage
+
 
 
 

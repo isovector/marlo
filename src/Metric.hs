@@ -9,6 +9,7 @@ import Utils (random)
 import Data.Text (Text)
 import Data.Function (fix)
 import Types
+import Text.Show.Pretty (pPrint)
 
 
 wrongDistance :: Query (Expr DocId, Expr [Maybe Int16])
@@ -65,3 +66,8 @@ metricMain = do
         loop
       Left err -> print err
 
+
+main :: IO ()
+main = do
+  Right conn <- connect
+  (pPrint =<<) $ doSelect conn $ findJoins

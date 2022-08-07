@@ -16,10 +16,9 @@ module Data.QuadAreaTree
   ) where
 
 import           Control.Arrow (first)
-import           Control.Monad (join)
-import           Data.Foldable (toList)
-import           Data.QuadAreaTree.Internal (Region, Quadrant)
+import           Data.QuadAreaTree.Internal (Region, Quadrant, Squadrant)
 import qualified Data.QuadAreaTree.Internal as I
+import           Debug.Trace (trace)
 import           GHC.Generics (Generic)
 import           Linear.V2
 
@@ -41,15 +40,15 @@ getLocation :: QuadTree a -> V2 Int -> Maybe a
 getLocation q v =  I.getLocation v $ regionify q
 
 
-regionify :: QuadTree a -> Quadrant (Region, a)
-regionify (Wrapper q r) = I.apRegion r q
+regionify :: QuadTree a -> Squadrant a
+regionify (Wrapper q r) = (r, q)
 
 
 showTree :: (a -> Char) -> QuadTree a -> String
 showTree f q@(Wrapper _ (I.Region x y w h)) =
   unlines $ do
     yp <- [y .. y + h - 1]
-    pure $ do
+    pure $ trace (show (yp)) $ do
       xp <- [x .. x + w - 1]
       let p = V2 xp yp
       case getLocation q p of
@@ -59,21 +58,21 @@ showTree f q@(Wrapper _ (I.Region x y w h)) =
 
 
 asWeighted :: Show a => QuadTree a -> [a]
-asWeighted =  join . fmap (uncurry replicate . first I.regionSize) . toList . regionify
+asWeighted = (uncurry replicate . first I.regionSize  =<<) . tile
 
 
 makeTree :: Region -> a -> QuadTree a
-makeTree r a = Wrapper (pure a) r
+makeTree r a = Wrapper (I.Leaf a) r
 
 
-liftTree :: (Quadrant (Region, a) -> Quadrant a) -> QuadTree a -> QuadTree a
+liftTree :: (Squadrant a -> Quadrant a) -> QuadTree a -> QuadTree a
 liftTree f w = w { qt_quad = f $ regionify w }
 
 
 tile :: QuadTree a -> [(Region, a)]
-tile = toList . regionify
+tile = I.tile . regionify
 
 
 hitTest :: Monoid m => (a -> m) -> Region -> QuadTree a -> m
-hitTest f r = I.hitTest f r . regionify
+hitTest f r = I.hitTest (const f) r . regionify
 

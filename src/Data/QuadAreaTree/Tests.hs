@@ -11,6 +11,7 @@ import Data.Foldable (traverse_)
 import Data.Proxy
 import Data.QuadAreaTree
 import Data.QuadAreaTree.Internal hiding (insert, fill)
+import Data.QuadAreaTree.Geometry
 import GHC.Generics (Generic)
 import GHC.TypeLits (Nat, KnownNat, natVal)
 import Test.QuickCheck
@@ -120,7 +121,5 @@ props = do
           counterexample (show tree) $
           counterexample (show $ length (filter id $ asWeighted res)) $
           length (filter id $ asWeighted res) == 4
-
-
     ]
 
