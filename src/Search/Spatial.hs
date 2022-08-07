@@ -23,6 +23,7 @@ import           Search.Machinery
 import           Servant.Server.Generic ()
 import           Types
 import           Utils (unsafeURI)
+import Search.DoSearch (debugSearch)
 
 
 -- parameters:
@@ -37,7 +38,7 @@ instance SearchMethod 'Spatial where
     let best = maximum $ fmap sr_ranking docs
     let rs = fmap makeRect
            $ fmap (\x -> x { sr_ranking = best - sr_ranking x }) docs
-    evaluate $ foldr place (makeTree (Region 0 0 150 200) Nothing) rs
+    evaluate $ foldr place (makeTree (Region 0 0 150 30) Nothing) rs
   showResults
     = traverse_ spaceResult
     . uniqueTiles
@@ -129,4 +130,8 @@ spaceResult (Region x y _ _, d) = do
         , L.height_ "12"
         ]
       L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
+
+
+main :: IO ()
+main = debugSearch @'Spatial (Term "city") 1
 

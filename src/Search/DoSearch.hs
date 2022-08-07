@@ -14,10 +14,7 @@ import           Rel8 hiding (max, index)
 import           Search.Common (searchPage)
 import           Search.Compiler (compileSearch)
 import           Search.Machinery
-import           Search.Spatial ()
-import           Search.Traditional ()
 import           Servant
-import           Servant.Server.Generic ()
 import           Types
 import           Utils (paginate, timeItT)
 
@@ -59,13 +56,14 @@ doSearch conn q mpage = do
   pure $ searchPage @v q dur page cnt res
 
 
-debugSearch :: SearchVariety -> Search Text -> PageNumber -> IO ()
-debugSearch v q pn = do
+debugSearch
+    :: forall v
+     . SearchMethod v
+    => Search Text
+    -> PageNumber
+    -> IO ()
+debugSearch q pn = do
   Right conn <- connect
-  case toSing v of
-    SomeSearchVariety (s :: SSearchVariety v) ->
-      case dict1 @SearchMethod s of
-        Dict1 -> do
-          (_, (_, (_, res))) <- liftIO $ gatherSearch @v conn q $ Just pn
-          debugResults @v res
+  (_, (_, (_, res))) <- liftIO $ gatherSearch @v conn q $ Just pn
+  debugResults @v res
 
