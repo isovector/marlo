@@ -57,6 +57,10 @@ dependencies:
 - hspec
 - aeson
 - servant-client
+- cassava
+- streaming-cassava
+- streaming
+- streaming-with
 
 ghc-options:
 - -Wall

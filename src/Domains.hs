@@ -47,14 +47,22 @@ rerankPopularity conn domname = do
   erank <- getGlobalRank' domname
   let rank = join $ hush erank
 
-  Right [x] <- doInsert conn $ Insert
+  Right [x] <-
+    doInsert conn $ upsertDomain $
+      (lit emptyDomain)
+        { dom_domain = lit domname
+        , dom_rank   = lit $ fmap fromIntegral rank
+        }
+  pure $ bimap (const x) (const x) erank
+
+
+upsertDomain :: Domain Expr -> Insert [DomainId]
+upsertDomain dom = Insert
     { into = domainsSchema
     , rows = do
         domid <- nextDomainId
-        pure $ Domain
+        pure $ dom
           { dom_id = domid
-          , dom_domain = lit domname
-          , dom_rank = lit $ fmap fromIntegral rank
           }
     , onConflict = DoUpdate $ Upsert
         { index = dom_domain
@@ -63,7 +71,6 @@ rerankPopularity conn domname = do
         }
     , returning = Projection dom_id
     }
-  pure $ bimap (const x) (const x) erank
 
 
 dropSubdomain :: String -> String

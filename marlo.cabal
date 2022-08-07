@@ -61,6 +61,7 @@ library
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
+      Tools.ImportPopularity
       Tools.Purge
       Tools.Reindex
       Types
@@ -134,6 +135,7 @@ library
     , async
     , base >=4.7 && <5
     , bytestring
+    , cassava
     , checkers
     , containers
     , hasql
@@ -156,6 +158,9 @@ library
     , servant-client
     , servant-lucid
     , servant-server
+    , streaming
+    , streaming-cassava
+    , streaming-with
     , stylist
     , tagsoup
     , text
@@ -236,6 +241,7 @@ executable marlo
     , async
     , base >=4.7 && <5
     , bytestring
+    , cassava
     , checkers
     , containers
     , hasql
@@ -259,6 +265,9 @@ executable marlo
     , servant-client
     , servant-lucid
     , servant-server
+    , streaming
+    , streaming-cassava
+    , streaming-with
     , stylist
     , tagsoup
     , text
@@ -343,6 +352,7 @@ test-suite marlo-tests
     , async
     , base >=4.7 && <5
     , bytestring
+    , cassava
     , checkers
     , containers
     , hasql
@@ -366,6 +376,9 @@ test-suite marlo-tests
     , servant-client
     , servant-lucid
     , servant-server
+    , streaming
+    , streaming-cassava
+    , streaming-with
     , stylist
     , tagsoup
     , text

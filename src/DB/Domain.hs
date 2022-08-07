@@ -34,6 +34,14 @@ data Domain f = Domain
 deriving instance Eq (Domain Identity)
 deriving instance Show (Domain Identity)
 
+emptyDomain :: Domain Identity
+emptyDomain = Domain
+  { dom_id = DomainId 0
+  , dom_domain = ""
+  , dom_rank = Nothing
+  }
+
+
 
 nextDomainId :: Query (Expr DomainId)
 nextDomainId = fmap coerce $ pure $ nextval "domains_id_seq"

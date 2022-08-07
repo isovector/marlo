@@ -46,6 +46,20 @@ packages:
       sha256: 36ce3c789e950a038ddeeade3193b7d3e9f167bcdbca59b270df07090859a59f
   original:
     hackage: QuadTree-0.11.0@sha256:e2911b6ce3d3f1dd9eea0d7d4cea5545a6252fb32fb0c1040fd49678e4f5018e,2227
+- completed:
+    hackage: streaming-cassava-0.2.0.0@sha256:aea99400ef6e7fa064bb275601503544608b8e3fbee6f6c661b019033dc40d11,1812
+    pantry-tree:
+      size: 386
+      sha256: c7c6b19608fb9d06b02cc3236eab7fd59f30730b1133b00bf55ed6e75ef04b4e
+  original:
+    hackage: streaming-cassava-0.2.0.0@sha256:aea99400ef6e7fa064bb275601503544608b8e3fbee6f6c661b019033dc40d11,1812
+- completed:
+    hackage: streaming-with-0.3.0.0@sha256:5d1637de1023aa2bb3fac5999f4c915afdbf702c81461b54ebfcc9749a372c46,1298
+    pantry-tree:
+      size: 390
+      sha256: 9df17014864b5c0bd30fe91c1933b7ee951b5f3d832dd5ca43ff2c370cc8e3a3
+  original:
+    hackage: streaming-with-0.3.0.0@sha256:5d1637de1023aa2bb3fac5999f4c915afdbf702c81461b54ebfcc9749a372c46,1298
 snapshots:
 - completed:
     size: 586286
