@@ -233,6 +233,7 @@ forbidSites =
   , "pastebin.com"
   , "justpaste.it"
   , "wikidata.org"
+  , "brid.gy"
   ]
 
 
@@ -255,6 +256,8 @@ forbidPaths =
   , "/author/"
   , "/authors/"
   , "/news/"
+  , "/vod/"
+  , "/watch/"
   , "/politics/20"
   ]
 

@@ -6,17 +6,21 @@ import Data.Aeson
 import Data.Text (Text)
 import Network.HTTP.Client hiding (Proxy)
 import Servant
-import Servant.Client (client, runClientM, BaseUrl(..), Scheme (Http), mkClientEnv, ClientM)
+import Servant.Client (client, runClientM, BaseUrl(..), Scheme (Http), mkClientEnv, ClientM, ClientError)
 import System.IO.Unsafe (unsafePerformIO)
 
 
 getGlobalRank :: Text -> IO (Maybe Int)
-getGlobalRank uri = do
+getGlobalRank
+  = fmap (either (const Nothing) id)
+  . getGlobalRank'
+
+getGlobalRank' :: Text -> IO (Either ClientError (Maybe Int))
+getGlobalRank' uri = do
   let alexa = BaseUrl Http "data.similarweb.com" 80 ""
   let env = mkClientEnv alexaManager alexa
-  fmap (either (pure Nothing) (Just . ar_globalRank))
+  fmap (fmap (Just . ar_globalRank))
     $ runClientM (getAlexaResult uri) env
-
 
 
 newtype AlexaResult = AlexaResult

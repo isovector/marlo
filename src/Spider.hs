@@ -28,13 +28,7 @@ import           Signals
 import qualified Types
 import           Types hiding (d_headers)
 import           Utils (runRanker, unsafeURI, random)
-
-
-nextDiscovered :: Query (Document Expr)
-nextDiscovered = limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
-  d <- each documentSchema
-  where_ $ d_state d ==. lit Discovered
-  pure d
+import Data.Foldable (for_)
 
 
 markExplored :: DocumentState -> Document Identity -> Update ()
@@ -112,13 +106,20 @@ buildEdges conn disc ls = do
     pure eid
 
 
-spiderMain :: IO ()
-spiderMain = do
+spiderMain :: Maybe Text -> IO ()
+spiderMain mexclude = do
   Right conn <- connect
   z <- doInsert conn rootNodes
   print z
   forever $ do
-    Right [disc] <- doSelect conn nextDiscovered
+    Right [disc] <- doSelect conn $
+      limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
+        d <- each documentSchema
+        where_ $ d_state d ==. lit Discovered
+        for_ mexclude $ \exc ->
+          where_ $ not_ $ like (lit exc) (d_uri d)
+        pure d
+
     let url = d_uri disc
     case parseURI $ T.unpack url of
       Nothing -> error $ "died on bad URI: " <> show url

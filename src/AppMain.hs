@@ -8,14 +8,15 @@ import qualified Spider
 import qualified Purge
 import qualified Metric
 import qualified Index
+import Data.Text (Text)
 
 data Command
   = SearchCommand
-  | SpiderCommand
+  | SpiderCommand (Maybe Text)
   | PurgeCommand
   | IndexCommand
   | MetricCommand
-  deriving (Eq, Ord, Show, Enum, Bounded)
+  deriving (Eq, Ord, Show)
 
 
 sub :: Parser Command
@@ -23,7 +24,7 @@ sub = subparser $ mconcat
   [ command "search" $ info (pure SearchCommand) $ mconcat
       [ progDesc "Start the search server"
       ]
-  , command "spider" $ info (pure SpiderCommand) $ mconcat
+  , command "spider" $ info (helper <*> parseSpider) $ mconcat
       [ progDesc "Start the spider"
       ]
   , command "purge" $ info (pure PurgeCommand) $ mconcat
@@ -37,24 +38,32 @@ sub = subparser $ mconcat
       ]
   ]
 
+parseSpider :: Parser Command
+parseSpider =
+  SpiderCommand
+    <$> optional (strOption $ mconcat
+          [ long "exclude"
+          , help "A sql LIKE pattern to exclude uris from being indexed"
+          ])
+
 
 commandParser :: ParserInfo Command
 commandParser =
   info (helper <*> versionOption <*> sub) $ mconcat
     [ fullDesc
-    , header "lapse - make programming timelapses"
+    , header "marlo - search, for humans"
     ]
 
 
 versionOption :: Parser (a -> a)
-versionOption = infoOption "1.0" $ long "version" <> help "Show version"
+versionOption = infoOption "0.0" $ long "version" <> help "Show version"
 
 
 main :: IO ()
 main = do
   execParser commandParser >>= \case
      SearchCommand -> Search.main
-     SpiderCommand -> Spider.spiderMain
+     SpiderCommand exc -> Spider.spiderMain exc
      PurgeCommand -> Purge.main
      IndexCommand -> Index.main
      MetricCommand -> Metric.metricMain
