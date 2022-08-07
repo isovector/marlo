@@ -6,9 +6,9 @@ cabal-version: 1.12
 
 name:           marlo
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/isovector/go-go#readme>
-homepage:       https://github.com/isovector/go-go#readme
-bug-reports:    https://github.com/isovector/go-go/issues
+description:    Please see the README on GitHub at <https://github.com/isovector/marlo#readme>
+homepage:       https://github.com/isovector/marlo#readme
+bug-reports:    https://github.com/isovector/marlo/issues
 author:         Sandy Maguire
 maintainer:     sandy@sandymaguire.me
 copyright:      Sandy Maguire
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/isovector/go-go
+  location: https://github.com/isovector/marlo
 
 library
   exposed-modules:
@@ -31,8 +31,8 @@ library
       Config
       Config.Type
       Data.QuadAreaTree
+      Data.QuadAreaTree.Geometry
       Data.QuadAreaTree.Internal
-      Data.QuadAreaTree.Tests
       Data.RectPacking
       DB
       DB.Asset
@@ -129,8 +129,10 @@ library
     , async
     , base >=4.7 && <5
     , bytestring
+    , checkers
     , containers
     , hasql
+    , hspec
     , http-client
     , http-client-tls
     , http-types
@@ -227,8 +229,10 @@ executable marlo
     , async
     , base >=4.7 && <5
     , bytestring
+    , checkers
     , containers
     , hasql
+    , hspec
     , http-client
     , http-client-tls
     , http-types
@@ -256,10 +260,11 @@ executable marlo
     , warp
   default-language: Haskell2010
 
-test-suite go-go-test
+test-suite marlo-tests
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Main.hs
   other-modules:
+      QuadAreaTreeSpec
       Paths_marlo
   hs-source-dirs:
       test
@@ -320,6 +325,8 @@ test-suite go-go-test
       TypeSynonymInstances
       ViewPatterns
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      hspec-discover:hspec-discover
   build-depends:
       HTTP
     , QuadTree
@@ -327,15 +334,17 @@ test-suite go-go-test
     , async
     , base >=4.7 && <5
     , bytestring
+    , checkers
     , containers
-    , go-go
     , hasql
+    , hspec
     , http-client
     , http-client-tls
     , http-types
     , lens
     , linear
     , lucid
+    , marlo
     , megaparsec
     , mtl
     , network-uri
