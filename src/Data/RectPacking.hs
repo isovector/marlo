@@ -44,7 +44,7 @@ uncenter sz center = center - fmap fromIntegral sz / 2
 place :: Eq a => Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
 place = go (0 :: Int)
   where
-    go 2 _ qt = qt
+    go 3 _ qt = qt
     go n r qt =
       case getFirst $ hitTest First (rectToRegion r) qt of
         Nothing -> fillRect r qt

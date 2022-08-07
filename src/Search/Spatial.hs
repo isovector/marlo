@@ -27,7 +27,7 @@ instance SearchMethod 'Spatial where
   limitStrategy = Limit 300
   accumResults _ _ docs = do
     let rs = fmap makeRect docs
-    evaluate $ foldr place (makeTree (Region 0 0 250 80) Nothing) rs
+    evaluate $ foldr place (makeTree (Region 0 0 200 80) Nothing) rs
   showResults
     = traverse_ spaceResult
     . uniqueTiles
@@ -44,7 +44,16 @@ makeRect sr = Rect
   , r_data = sr { sr_title = title' }
   }
   where
-    title' = chopTitle $ sr_title sr
+    title'
+      = trimTo 40 "..."
+      $ chopTitle
+      $ sr_title sr
+
+trimTo :: Int -> Text -> Text -> Text
+trimTo sz rest t
+  | T.length t > sz
+  = T.take sz t <> rest
+  | otherwise = t
 
 
 chopTitle :: Text -> Text
@@ -75,7 +84,7 @@ uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
 spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
 spaceResult (Region x y _ _, d) =
     L.span_
-      [ L.class_ "title"
+      [ L.class_ "spatial-title"
       , L.style_ $ mconcat
           [ "position: absolute;"
           , "top: "

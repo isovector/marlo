@@ -15,7 +15,7 @@
 }
 
 body {
-  background: var(--mango);
+  background-color: var(--mango);
   padding: 1em;
   color: var(--prussian-blue);
 }
@@ -27,7 +27,7 @@ body {
 }
 
 .result {
-  background: var(--baby-powder);
+  background-color: var(--baby-powder);
   padding: 1em;
   font-family: sans;
   overflow: hidden;
@@ -41,6 +41,21 @@ body {
   color: #444;
   text-decoration: none;
   font-size: 10pt;
+}
+
+.spatial-title {
+  font-family: monospace;
+  font-size: 10pt;
+  white-space: nowrap;
+  color: var(--prussian-blue);
+}
+
+.spatial-title a {
+  text-decoration: none;
+}
+
+.spatial-title a:visited {
+  color: var(--plum);
 }
 
 .title a:visited {
@@ -97,3 +112,4 @@ h1::after {
   font-weight: normal;
   src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
 }
+
