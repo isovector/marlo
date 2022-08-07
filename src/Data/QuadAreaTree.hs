@@ -4,7 +4,7 @@ module Data.QuadAreaTree
   ( QuadTree
   , type Region
   , pattern I.Region
-  , V2  (..)
+  , V2 (..)
   , makeTree
   , foldTree
   , fill

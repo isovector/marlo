@@ -53,6 +53,7 @@ library
       Search
       Search.Common
       Search.Compiler
+      Search.DoSearch
       Search.Machinery
       Search.Parser
       Search.Spatial

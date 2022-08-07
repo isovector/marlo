@@ -1,35 +1,26 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module Search where
 
 import           API
 import           Config
-import           Control.Applicative (liftA2)
 import           Control.Monad.IO.Class (liftIO)
 import           DB
 import qualified Data.Map as M
-import           Data.Maybe (fromMaybe, listToMaybe)
+import           Data.Maybe (fromMaybe)
 import           Data.Proxy
-import           Data.String (fromString)
 import           Data.Text (Text)
-import qualified Data.Text as T
 import qualified Lucid as L
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
 import           Rel8 hiding (max, index)
-import           Search.Common (searchBar, pager)
-import           Search.Compiler (compileSearch)
+import           Search.Common (searchBar)
+import           Search.DoSearch (doSearch)
 import           Search.Machinery
-import           Search.Parser (encodeQuery)
 import           Search.Spatial ()
 import           Search.Traditional ()
 import           Servant
 import           Servant.Server.Generic ()
-import           Text.Printf (printf)
 import           Types
-import           Utils (paginate, timeItT)
+import           Utils (commafy)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 
 
@@ -58,61 +49,6 @@ home conn = do
             ]
 
 
-commafy :: String -> String
-commafy
-  = T.unpack
-  . T.intercalate ","
-  . reverse
-  . fmap T.reverse
-  . T.chunksOf 3
-  . T.reverse
-  . T.pack
-
-
-doSearch
-    :: forall v
-     . SearchMethod v
-    => Connection
-    -> Search Text
-    -> Maybe PageNumber
-    -> Handler (L.Html ())
-doSearch conn q mpage = do
-  let page = fromMaybe 1 mpage
-      pagenum = subtract 1 $ Prelude.max 1 $ maybe 1 getPageNumber mpage
-  (dur, (cnt, res)) <- liftIO $ timeItT $ do
-    Right prepped <- do
-      doSelect conn $ do
-        let x = compileSearch q
-        ( case limitStrategy @v of
-            Limit n       -> limit n
-            Paginate size -> paginate size pagenum
-          ) $ liftA2 (,) (countRows x) x
-
-    let cnt = maybe 0 fst $ listToMaybe prepped
-        docs = fmap snd prepped
-    res <- accumResults @v conn q docs
-    pure (cnt, res)
-  pure $
-    L.html_ $ do
-      L.head_ $ do
-        L.title_ $ mconcat
-          [ "marlo search - results for "
-          , L.toHtml (encodeQuery q)
-          , " (" <> fromString (show cnt)
-          , ")"
-          ]
-        L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
-      L.body_ $ do
-        L.div_ [L.class_ "box"] $ do
-          searchBar (demote @v) $ Just q
-          L.toHtmlRaw @String
-            $ printf "%s results &mdash; rendered in %6.2fs seconds"
-                (commafy $ show cnt)
-                (realToFrac @_ @Double dur)
-          showResults @v res
-          pager q (limitStrategy @v) (demote @v) cnt page
-
-
 search
     :: Connection
     -> Maybe SearchVariety
@@ -126,8 +62,6 @@ search conn v (Just q) mpage =
       case dict1 @SearchMethod s of
         Dict1 ->
           doSearch @v conn q mpage
-
-
 
 
 ------------------------------------------------------------------------------

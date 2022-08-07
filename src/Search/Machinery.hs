@@ -62,4 +62,6 @@ class Demote v => SearchMethod (v :: SearchVariety) where
       -> IO (SearchMethodResult v)
   showResults
       :: SearchMethodResult v -> Html ()
+  debugResults
+     :: SearchMethodResult v -> IO ()
 

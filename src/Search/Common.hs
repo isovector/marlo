@@ -1,15 +1,52 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 module Search.Common where
 
 import           API
+import           Control.Monad (when)
+import           Data.Int (Int64)
 import           Data.Proxy
+import           Data.String (fromString)
 import           Data.Text (Text)
+import           Data.Time (NominalDiffTime)
 import qualified Lucid as L
 import qualified Lucid.Servant as L
+import           Search.Machinery
+import           Search.Parser (encodeQuery)
 import           Servant.Server.Generic ()
+import           Text.Printf (printf)
 import           Types
-import Search.Parser (encodeQuery)
-import Data.Int (Int64)
-import Control.Monad (when)
+import           Utils (commafy)
+
+
+searchPage
+    :: forall v
+     . SearchMethod v
+    => Search Text
+    -> NominalDiffTime
+    -> PageNumber
+    -> Int64
+    -> SearchMethodResult v
+    -> L.Html ()
+searchPage q dur page cnt res = do
+  L.html_ $ do
+    L.head_ $ do
+      L.title_ $ mconcat
+        [ "marlo search - results for "
+        , L.toHtml (encodeQuery q)
+        , " (" <> fromString (show cnt)
+        , ")"
+        ]
+      L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
+    L.body_ $ do
+      L.div_ [L.class_ "box"] $ do
+        searchBar (demote @v) $ Just q
+        L.toHtmlRaw @String
+          $ printf "%s results &mdash; rendered in %6.2fs seconds"
+              (commafy $ show cnt)
+              (realToFrac @_ @Double dur)
+        showResults @v res
+        pager q (limitStrategy @v) (demote @v) cnt page
 
 
 searchBar :: SearchVariety -> Maybe (Search Text) -> L.Html ()

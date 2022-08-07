@@ -95,3 +95,14 @@ hush :: Either a b -> Maybe b
 hush (Left _) = Nothing
 hush (Right b) = Just b
 
+
+commafy :: String -> String
+commafy
+  = T.unpack
+  . T.intercalate ","
+  . reverse
+  . fmap T.reverse
+  . T.chunksOf 3
+  . T.reverse
+  . T.pack
+

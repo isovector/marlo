@@ -1,3 +1,5 @@
+{-# LANGUAGE NumDecimals #-}
+
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Search.Spatial () where
@@ -8,6 +10,7 @@ import           DB
 import           Data.Bool (bool)
 import           Data.Foldable (traverse_, asum)
 import           Data.Maybe (catMaybes, mapMaybe, fromMaybe)
+import           Data.QuadAreaTree (showTree)
 import           Data.RectPacking
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -22,8 +25,10 @@ import           Types
 import           Utils (unsafeURI)
 
 
--- there is ANOTHER bug in the quadtree
--- this time maybe when the starting xy are negative?
+-- parameters:
+--   actual positions assigned to the nodes
+--   transformation into screen space
+
 
 instance SearchMethod 'Spatial where
   type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
@@ -39,11 +44,18 @@ instance SearchMethod 'Spatial where
     . mapMaybe sequence
     . tile
     . fmap (fmap r_data)
+  debugResults = putStrLn . showTree (maybe '.' $ const 'X')
+
+
+
+measureText :: Text -> V2 Int
+measureText s = V2 (T.length s + 1) 1
+-- plus one for the icon
 
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 (log $ max 1 $ fromIntegral $ ps_js (sr_stats sr) + ps_css (sr_stats sr))
+  { r_pos = V2 ((* 5) $ log $ max 1 $ fromIntegral $ fromMaybe 1e7 $ sr_popularity sr)
                (sr_ranking sr * 3)
   , r_size = measureText title'
   , r_data = sr { sr_title = title' }
@@ -53,6 +65,7 @@ makeRect sr = Rect
       = trimTo 40 "..."
       $ chopTitle
       $ sr_title sr
+
 
 trimTo :: Int -> Text -> Text -> Text
 trimTo sz rest t

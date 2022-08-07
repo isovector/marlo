@@ -6,7 +6,6 @@ module Data.RectPacking
   , V2 (..)
   , place
   , forcePlace
-  , measureText
   , rectToRegion
   , QuadTree
   , makeTree
@@ -15,11 +14,9 @@ module Data.RectPacking
   , pattern Region
   ) where
 
-import           Data.Monoid
-import           Data.QuadAreaTree
-import           Data.Text (Text)
-import qualified Data.Text as T
-import           Linear hiding (trace)
+import Data.Monoid
+import Data.QuadAreaTree
+import Linear hiding (trace)
 
 
 data Rect a = Rect
@@ -83,9 +80,4 @@ offsetBy want collide =
 unzero :: V2 Float -> V2 Float
 unzero v | quadrance v < 0.1  = V2 0 1
 unzero v = v
-
-
-measureText :: Text -> V2 Int
-measureText s = V2 (T.length s + 1) 1
--- plus one for the icon
 

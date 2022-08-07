@@ -47,6 +47,11 @@ instance SearchMethod 'Traditional where
 
   showResults = traverse_ (uncurry tradResult)
 
+  debugResults = traverse_ $ uncurry $ \r snip -> do
+    putStrLn $ T.unpack $ sr_title r
+    putStrLn $ T.unpack $ snip
+    putStrLn "\n"
+
 
 tradResult :: SearchResult Rel8.Result -> Text -> L.Html ()
 tradResult d snip =
