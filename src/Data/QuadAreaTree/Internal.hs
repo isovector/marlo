@@ -15,7 +15,7 @@ import Data.Monoid
 import Data.QuadAreaTree.Geometry
 import Linear.V2
 import Control.Applicative (liftA2)
-
+import GHC.Generics (Generic)
 
 
 type Squadrant a = (Region, Quadrant a)
@@ -24,7 +24,7 @@ type Squadrant a = (Region, Quadrant a)
 data Quadrant a
   = Leaf a
   | Node (Quad (Quadrant a))
-  deriving (Show, Read, Eq, Functor, Foldable, Traversable)
+  deriving stock (Show, Read, Eq, Functor, Foldable, Traversable, Generic)
 
 instance Applicative Quadrant where
   pure = Leaf
@@ -32,10 +32,13 @@ instance Applicative Quadrant where
   f <*> Leaf a = fmap ($ a) f
   Node f <*> Node a = Node $ liftA2 (<*>) f a
 
-instance Monad Quadrant where
-  Leaf a >>= f = f a
-  Node (Quad tl tr bl br) >>= f =
-    Node $ Quad (tl >>= f) (tr >>= f) (bl >>= f) (br >>= f)
+
+-- TODO(sandy): doesn't satisfy the laws. not sure why, but I don't need this.
+
+-- instance Monad Quadrant where
+--   Leaf a >>= f = f a
+--   Node (Quad tl tr bl br) >>= f =
+--     Node $ Quad (tl >>= f) (tr >>= f) (bl >>= f) (br >>= f)
 
 
 insert :: a -> V2 Int -> Squadrant a -> Quadrant a

@@ -5,10 +5,12 @@ module Data.QuadAreaTree.Geometry where
 import GHC.Generics (Generic)
 import Linear.V2
 import Data.Maybe (isJust)
+import Data.Monoid
 
 data Quad a
   = Quad !a !a !a !a
-  deriving (Show, Read, Eq, Functor, Foldable, Traversable, Generic)
+  deriving stock (Show, Read, Eq, Functor, Foldable, Traversable, Generic)
+  deriving (Semigroup, Monoid) via (Ap Quad a)
 
 instance Applicative Quad where
   pure a = Quad a a a a

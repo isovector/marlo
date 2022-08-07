@@ -14,6 +14,10 @@ import GHC.TypeLits (Nat, KnownNat, natVal)
 import Test.QuickCheck
 import Test.Hspec
 import Test.Hspec.QuickCheck
+import Test.QuickCheck.Classes (functor, applicative, semigroup, monoid)
+import Test.QuickCheck.Checkers (TestBatch, EqProp, (=-=))
+import Data.Foldable (for_)
+import Data.Monoid (Sum)
 
 getNatVal :: forall a. KnownNat a => Int
 getNatVal = fromInteger $ natVal $ Proxy @a
@@ -29,6 +33,10 @@ newtype RegionAtLeast (w :: Nat) (h :: Nat) = RegionAtLeast
   }
   deriving stock (Eq, Show, Generic)
 
+instance Arbitrary a => Arbitrary (Quad a) where
+  arbitrary = Quad <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
+  shrink = genericShrink
+
 instance (KnownNat w, KnownNat h) => Arbitrary (RegionAtLeast w h) where
   arbitrary = do
     x <- arbitrary
@@ -42,7 +50,26 @@ instance (KnownNat w, KnownNat h) => Arbitrary (RegionAtLeast w h) where
     . genericShrink
     . getRegionAtLeast
 
-deriving via (RegionAtLeast 1 1) instance (Arbitrary Region)
+deriving via (RegionAtLeast 1 1) instance {-# OVERLAPPING #-} (Arbitrary Region)
+
+instance EqProp a => EqProp (Quad a) where
+
+instance EqProp a => EqProp (Quadrant a) where
+  Leaf a  =-= Leaf b   =           a =-= b
+  Leaf a  =-= Node qu  = splitLeaf a =-= qu
+  Node qu =-= Leaf b   = splitLeaf b =-= qu
+  Node qu =-= Node qu' =          qu =-= qu'
+
+
+instance Arbitrary a => Arbitrary (Quadrant a) where
+  arbitrary =
+    let terminal = [Leaf <$> arbitrary]
+     in sized $ \n ->
+          case n <= 1 of
+            True -> oneof terminal
+            False -> oneof $
+              (Node <$> scale (flip div 4) arbitrary) : terminal
+  shrink = genericShrink
 
 
 prop_gen_subdivide :: Testable prop => String -> (Region -> Quad Region -> prop) -> Spec
@@ -129,6 +156,22 @@ spec = do
     p <- pointInRegion sub
     let tree = fill v sub $ makeTree r v0
     pure $ getLocation tree p == Just v
+
+  describe "quads" $ do
+    propBatch $ semigroup   $ (undefined :: (Quad (Sum Int), Int))
+    propBatch $ monoid      $ (undefined :: Quad (Sum Int))
+    propBatch $ functor     $ (undefined :: Quad (Int, Int, Int))
+    propBatch $ applicative $ (undefined :: Quad (Int, Int, Int))
+
+  describe "quadrants" $ do
+    propBatch $ functor     $ (undefined :: Quadrant (Int, Int, Int))
+    propBatch $ applicative $ (undefined :: Quadrant (Int, Int, Int))
+
+
+propBatch :: TestBatch -> Spec
+propBatch (batch, ts) =
+  describe batch $ do
+    for_ ts $ uncurry prop
 
 
 
