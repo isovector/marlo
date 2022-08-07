@@ -91,6 +91,12 @@ newtype DocId = DocId
   deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 
+newtype DomainId = DomainId
+  { unDomainId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
+
+
 data DocumentState
   = Discovered
   | Explored

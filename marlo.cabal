@@ -37,12 +37,14 @@ library
       DB
       DB.Asset
       DB.Document
+      DB.Domain
       DB.Edges
       DB.PageContent
       DB.PageRawData
       DB.PageStats
       DB.RootSites
       DB.SearchResult
+      Domains
       Index
       Integration.Alexa
       Keywords

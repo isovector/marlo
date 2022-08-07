@@ -3,6 +3,7 @@
 CREATE SEQUENCE doc_id_seq;
 CREATE TABLE IF NOT EXISTS discovery (
   doc_id int8 PRIMARY KEY,
+  domain int8 REFERENCES domains(id),
   uri TEXT UNIQUE NOT NULL,
   state VARCHAR(10) NOT NULL,
   depth int4 NOT NULL,
@@ -22,6 +23,9 @@ CREATE TABLE IF NOT EXISTS discovery (
 );
 
 CREATE INDEX depth_idx ON discovery (depth);
+
+ALTER TABLE discovery
+  ADD COLUMN domain int8 REFERENCES domains(id);
 
 ALTER TABLE discovery
     ADD COLUMN distance int2[]
@@ -66,6 +70,7 @@ import DB.RootSites
 
 data Document f = Document
   { d_docId :: Column f DocId
+  , d_domain :: Column f (Maybe DomainId)
   , d_title    :: Column f Text
   , d_uri   :: Column f Text
 
@@ -91,6 +96,7 @@ documentSchema = TableSchema
   , schema  = Just "public"
   , columns = Document
       { d_docId = "doc_id"
+      , d_domain = "domain"
       , d_uri   = "uri"
       , d_title = "title"
       , d_state = "state"
@@ -141,6 +147,7 @@ emptyDoc :: Document Identity
 emptyDoc = Document
   { d_docId = DocId 0
   , d_uri   = ""
+  , d_domain = Nothing
   , d_title = ""
   , d_state = Discovered
   , d_depth = 0

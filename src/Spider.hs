@@ -8,13 +8,13 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor.Contravariant ((>$<))
-import           Data.Functor.Identity (Identity)
 import           Data.Int (Int32, Int16)
 import           Data.Maybe (isJust)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
+import           Domains (getDomain)
 import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
@@ -187,6 +187,8 @@ indexFromDB conn disc = do
 
 indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
+  let uri = unsafeURI $ T.unpack $ d_uri disc
+  dom_id <- getDomain conn uri
   Just (pc, has_ads, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
       (,,)
@@ -199,7 +201,8 @@ indexCore conn env disc = do
     { target = documentSchema
     , from = pure ()
     , set = \ _ dis -> dis
-        { d_page = lit pc
+        { d_domain = lit $ Just dom_id
+        , d_page = lit pc
         , d_state    = lit $ bool Explored Unacceptable has_ads
         , d_stats    = lit stats
         }

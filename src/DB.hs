@@ -53,6 +53,7 @@ module DB
   ( module DB
   , module DB.Asset
   , module DB.Document
+  , module DB.Domain
   , module DB.Edges
   , module DB.PageContent
   , module DB.PageRawData
@@ -71,6 +72,7 @@ module DB
 import Config
 import DB.Asset
 import DB.Document
+import DB.Domain
 import DB.Edges
 import DB.PageContent
 import DB.PageRawData
