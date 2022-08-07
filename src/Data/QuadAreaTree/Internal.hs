@@ -1,6 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE MultiWayIf          #-}
-{-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Data.QuadAreaTree.Internal
   ( module Data.QuadAreaTree.Internal

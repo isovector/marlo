@@ -1,4 +1,4 @@
-{-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Data.QuadAreaTree.Geometry where
 
