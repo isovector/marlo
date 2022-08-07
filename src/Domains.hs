@@ -1,10 +1,13 @@
 module Domains where
 
 import           DB
+import           Data.Bifunctor (bimap)
+import           Data.Function (on)
 import           Data.Functor ((<&>))
 import           Data.Maybe (listToMaybe)
+import           Data.Text (Text)
 import qualified Data.Text as T
-import           Integration.Alexa (getGlobalRank)
+import           Integration.Alexa (getGlobalRank')
 import           Network.URI
 import           Rel8
 import           Types
@@ -33,20 +36,36 @@ getDomain conn uri = do
   case listToMaybe mdom of
     Just di -> pure di
     Nothing -> do
-      rank <- getGlobalRank domname
-      Right [x] <- doInsert conn $ Insert
-        { into = domainsSchema
-        , rows = do
-            domid <- nextDomainId
-            pure $ Domain
-              { dom_id = domid
-              , dom_domain = lit domname
-              , dom_rank = lit $ fmap fromIntegral rank
-              }
-        , onConflict = DoNothing
-        , returning = Projection dom_id
+      fmap (either id id) $
+        rerankPopularity conn domname
+
+
+rerankPopularity :: Connection -> Text -> IO (Either DomainId DomainId)
+rerankPopularity conn domname = do
+  erank <- getGlobalRank' domname
+  rank <- case erank of
+    Left _ -> do
+      putStrLn $ T.unpack $ "failed to get a rank for " <> domname
+      pure Nothing
+    Right rank -> pure rank
+
+  Right [x] <- doInsert conn $ Insert
+    { into = domainsSchema
+    , rows = do
+        domid <- nextDomainId
+        pure $ Domain
+          { dom_id = domid
+          , dom_domain = lit domname
+          , dom_rank = lit $ fmap fromIntegral rank
+          }
+    , onConflict = DoUpdate $ Upsert
+        { index = dom_domain
+        , set = \new old -> old { dom_rank = dom_rank new }
+        , updateWhere = on (==.) dom_domain
         }
-      pure x
+    , returning = Projection dom_id
+    }
+  pure $ bimap (const x) (const x) erank
 
 
 dropSubdomain :: String -> String

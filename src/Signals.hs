@@ -234,6 +234,7 @@ forbidSites =
   , "justpaste.it"
   , "wikidata.org"
   , "brid.gy"
+  , "t.co"
   ]
 
 

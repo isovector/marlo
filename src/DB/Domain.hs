@@ -3,7 +3,7 @@
 CREATE SEQUENCE domains_id_seq;
 CREATE TABLE IF NOT EXISTS domains (
   id int8 PRIMARY KEY,
-  domain text NOT NULL,
+  domain text UNIQUE NOT NULL,
   rank int4
 );
 

@@ -2,13 +2,15 @@
 
 module AppMain where
 
-import Options.Applicative
+import           Data.Text (Text)
+import qualified Index
+import qualified Metric
+import           Options.Applicative
+import qualified Purge
 import qualified Search
 import qualified Spider
-import qualified Purge
-import qualified Metric
-import qualified Index
-import Data.Text (Text)
+import qualified Tools.BackfillPopularity as BackfillPopularity
+
 
 data Command
   = SearchCommand
@@ -16,6 +18,7 @@ data Command
   | PurgeCommand
   | IndexCommand
   | MetricCommand
+  | BackfillPopularityCommand
   deriving (Eq, Ord, Show)
 
 
@@ -35,6 +38,9 @@ sub = subparser $ mconcat
       ]
   , command "root-distance" $ info (pure MetricCommand) $ mconcat
       [ progDesc "Rerun the root-distance algorithm"
+      ]
+  , command "backfill-popularity" $ info (pure BackfillPopularityCommand) $ mconcat
+      [ progDesc "Backfill website popularity from the alexa api"
       ]
   ]
 
@@ -62,9 +68,10 @@ versionOption = infoOption "0.0" $ long "version" <> help "Show version"
 main :: IO ()
 main = do
   execParser commandParser >>= \case
-     SearchCommand -> Search.main
-     SpiderCommand exc -> Spider.spiderMain exc
-     PurgeCommand -> Purge.main
-     IndexCommand -> Index.main
-     MetricCommand -> Metric.metricMain
+     SearchCommand             -> Search.main
+     SpiderCommand exc         -> Spider.spiderMain exc
+     PurgeCommand              -> Purge.main
+     IndexCommand              -> Index.main
+     MetricCommand             -> Metric.metricMain
+     BackfillPopularityCommand -> BackfillPopularity.main
 

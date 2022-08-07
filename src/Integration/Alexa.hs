@@ -1,13 +1,15 @@
 module Integration.Alexa
   ( getGlobalRank
+  , getGlobalRank'
   ) where
 
 import Data.Aeson
 import Data.Text (Text)
 import Network.HTTP.Client hiding (Proxy)
 import Servant
-import Servant.Client (client, runClientM, BaseUrl(..), Scheme (Http), mkClientEnv, ClientM, ClientError)
+import Servant.Client (client, runClientM, BaseUrl(..), Scheme (Http), mkClientEnv, ClientM, ClientError (..), ResponseF (Response))
 import System.IO.Unsafe (unsafePerformIO)
+import Network.HTTP.Types (Status(Status))
 
 
 getGlobalRank :: Text -> IO (Maybe Int)
@@ -19,8 +21,11 @@ getGlobalRank' :: Text -> IO (Either ClientError (Maybe Int))
 getGlobalRank' uri = do
   let alexa = BaseUrl Http "data.similarweb.com" 80 ""
   let env = mkClientEnv alexaManager alexa
-  fmap (fmap (Just . ar_globalRank))
-    $ runClientM (getAlexaResult uri) env
+  runClientM (getAlexaResult uri) env >>= \case
+     Left (FailureResponse _ (Response (Status 404 _) _ _ _)) -> do
+       pure $ Right Nothing
+     Left ce -> pure $ Left ce
+     Right ar -> pure $ Right $ Just $ ar_globalRank ar
 
 
 newtype AlexaResult = AlexaResult
@@ -44,7 +49,7 @@ getAlexaResult = client (Proxy @AlexaAPI) . Just
 
 
 alexaManager :: Manager
-alexaManager = unsafePerformIO $
+alexaManager = unsafePerformIO $ do
   newManager $ defaultManagerSettings
     { managerModifyRequest = \req ->
         pure $ req

@@ -62,6 +62,7 @@ library
       Search.Traditional
       Signals
       Spider
+      Tools.BackfillPopularity
       Types
       Utils
   other-modules:
