@@ -16,7 +16,7 @@ import Types
 
 
 compileSearch :: Search Text -> Query (SearchResult Expr)
-compileSearch q = orderBy (sr_ranking >$< desc) $ do
+compileSearch q = orderBy ((sr_ranking >$< asc) <> (sr_id >$< asc)) $ do
   d <-
     case compile' q of
       Match ts -> matching ts
