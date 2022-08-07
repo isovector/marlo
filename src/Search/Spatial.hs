@@ -30,7 +30,7 @@ instance SearchMethod 'Spatial where
   limitStrategy = Limit 500
   accumResults _ _ docs = do
     let rs = fmap makeRect docs
-    evaluate $ foldr place (makeTree (Region 0 0 150 80) Nothing) rs
+    evaluate $ foldr place (makeTree (Region 0 0 150 200) Nothing) rs
   showResults
     = traverse_ spaceResult
     . uniqueTiles
