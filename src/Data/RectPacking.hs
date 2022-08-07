@@ -20,7 +20,6 @@ import           Data.QuadAreaTree
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Linear hiding (trace)
-import Debug.Trace (trace)
 
 
 data Rect a = Rect
@@ -44,7 +43,7 @@ uncenter sz center = center - fmap fromIntegral sz / 2
 place :: Eq a => Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
 place = go (0 :: Int)
   where
-    go 3 _ qt = qt
+    go 4 _ qt = qt
     go n r qt =
       case getFirst $ hitTest First (rectToRegion r) qt of
         Nothing -> fillRect r qt
@@ -76,7 +75,7 @@ offsetBy :: Rect a -> Rect a -> Rect a
 offsetBy want collide =
   let dir = unzero $ normalize $ rectCenter want - rectCenter collide
       get_ext = extent dir . r_size
-      new_center = rectCenter want + dir ^* (get_ext want + get_ext collide * 2)
+      new_center = rectCenter want + dir ^* ((get_ext want + get_ext collide) * 1.5)
       res = want { r_pos = uncenter (r_size want) new_center }
    in -- trace (show ("offsetting ", r_pos want, " to ", r_pos res, dir ))
       res
@@ -87,5 +86,6 @@ unzero v = v
 
 
 measureText :: Text -> V2 Int
-measureText s = V2 (T.length s) 1
+measureText s = V2 (T.length s + 0) 1
+-- plus two for some padding afterwards
 

@@ -272,6 +272,7 @@ specificAllowRules uri
   , on_domain "github.com" && isInfixOf "/edit/" path
   , on_domain "github.com" && isInfixOf "/stargazers" path
   , on_domain "github.com" && isInfixOf "/network/members" path
+  , on_domain "neocities.org" && isInfixOf "/site/" path
   , on_domain "wikipedia.org" && isInfixOf "Template:" path
   , on_domain "wikipedia.org" && isInfixOf "Talk:" path
   , on_domain "wikipedia.org" && isInfixOf "Category:" path

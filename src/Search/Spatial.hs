@@ -24,10 +24,10 @@ import           Types
 
 instance SearchMethod 'Spatial where
   type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
-  limitStrategy = Limit 300
+  limitStrategy = Limit 500
   accumResults _ _ docs = do
     let rs = fmap makeRect docs
-    evaluate $ foldr place (makeTree (Region 0 0 200 80) Nothing) rs
+    evaluate $ foldr place (makeTree (Region 0 0 150 80) Nothing) rs
   showResults
     = traverse_ spaceResult
     . uniqueTiles
@@ -38,8 +38,8 @@ instance SearchMethod 'Spatial where
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 ((+ 30) $ log $ max 1 $ fromIntegral $ ps_js $ sr_stats sr)
-               (sr_ranking sr * 10)
+  { r_pos = V2 (log $ max 1 $ fromIntegral $ ps_js (sr_stats sr) + ps_css (sr_stats sr))
+               (sr_ranking sr * 3)
   , r_size = measureText title'
   , r_data = sr { sr_title = title' }
   }
@@ -91,7 +91,7 @@ spaceResult (Region x y _ _, d) =
           , T.pack $ show $ 250 + y * 18
           , "; "
           , "left: "
-          , T.pack $ show $ 50 + x * 10
+          , T.pack $ show $ 50 + x * 11
           ]
       ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
   where
