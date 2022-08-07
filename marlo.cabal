@@ -33,7 +33,6 @@ library
       Data.QuadAreaTree
       Data.QuadAreaTree.Geometry
       Data.QuadAreaTree.Internal
-      Data.RectPacking
       DB
       DB.Asset
       DB.Document
