@@ -113,3 +113,20 @@ h1::after {
   src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
 }
 
+footer {
+  display: flex;
+  justify-content: space-around;
+}
+
+footer > * {
+  margin-top: 0;
+}
+
+.pager {
+  padding: 0.3em;
+  font-size: 14pt;
+  background-color: var(--rosso-corsa);
+  color: var(--baby-powder);
+  text-decoration: none;
+}
+

@@ -105,9 +105,10 @@ doSearch conn q mpage = do
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
           searchBar (demote @v) $ Just q
-          L.toHtml @String
-            $ printf "Search took: %6.4fs"
-            $ realToFrac @_ @Double dur
+          L.toHtmlRaw @String
+            $ printf "%s results &mdash; rendered in %6.2fs seconds"
+                (commafy $ show cnt)
+                (realToFrac @_ @Double dur)
           showResults @v res
           pager q (limitStrategy @v) (demote @v) cnt page
 

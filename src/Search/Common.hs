@@ -43,8 +43,9 @@ searchHref v q p =
 pager :: Search Text -> LimitStrategy -> SearchVariety -> Int64 -> PageNumber ->  L.Html ()
 pager _ (Limit _) _ _ _ = pure ()
 pager q (Paginate pagesize) v cnt page = do
-  when (page > 1) $ do
-    L.a_ [ searchHref v q $ page - 1 ] "Prev "
-  when (fromIntegral ((getPageNumber page) * pagesize) < cnt) $ do
-    L.a_ [ searchHref v q $ page + 1 ] "Next"
+  L.footer_ $ do
+    when (page > 1) $ do
+      L.a_ [ L.class_ "pager", searchHref v q $ page - 1 ] "Previous"
+    when (fromIntegral ((getPageNumber page) * pagesize) < cnt) $ do
+      L.a_ [ L.class_ "pager", searchHref v q $ page + 1 ] "Next"
 
