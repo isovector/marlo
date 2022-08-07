@@ -3,20 +3,23 @@
 module Search.Spatial () where
 
 import           Control.Exception
-import           Control.Monad.State (evalState, gets, modify)
+import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
-import           Data.Foldable (traverse_)
-import           Data.Maybe (catMaybes, mapMaybe)
+import           Data.Bool (bool)
+import           Data.Foldable (traverse_, asum)
+import           Data.Maybe (catMaybes, mapMaybe, fromMaybe)
 import           Data.RectPacking
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
 import qualified Lucid as L
-import           Rel8 hiding (evaluate, max, index)
+import           Network.URI (uriPath)
+import           Rel8 hiding (bool, evaluate, max, index)
 import           Search.Machinery
 import           Servant.Server.Generic ()
 import           Types
+import           Utils (unsafeURI)
 
 
 -- there is ANOTHER bug in the quadtree
@@ -57,18 +60,26 @@ trimTo sz rest t
 
 
 chopTitle :: Text -> Text
-chopTitle
-  = T.intercalate ""
-  . init
-  . T.split
-      (flip elem
-        [ '|'
-        , '-'
-        , ':'
-        , '·'
-        , '\8211'
-        ]
-      )
+chopTitle t = fromMaybe t $ asum
+  [ onlyIfDifferent (dropTail [ '|', '-', '·', '\8211' ]) t
+  , onlyIfDifferent (dropHead [ ':' ]) t
+  ]
+  where
+    dropTail, dropHead :: [Char] -> Text -> Text
+    dropTail els
+      = T.intercalate ""
+      . init
+      . T.split (flip elem els)
+    dropHead els
+      = T.intercalate ""
+      . drop 1
+      . T.split (flip elem els)
+
+
+onlyIfDifferent :: Eq a => (a -> a) -> a -> Maybe a
+onlyIfDifferent f a =
+  let fa = f a
+   in bool (Just fa) Nothing $ fa == a
 
 
 uniqueTiles :: [(Region, SearchResult Identity)] -> [(Region, SearchResult Identity)]
@@ -82,21 +93,25 @@ uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
 
 
 spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
-spaceResult (Region x y _ _, d) =
+spaceResult (Region x y _ _, d) = do
+  let title = T.strip $ sr_title d
+  when (not $ T.null title) $ do
     L.span_
-      [ L.class_ "spatial-title"
-      , L.style_ $ mconcat
-          [ "position: absolute;"
-          , "top: "
-          , T.pack $ show $ 250 + y * 18
-          , "; "
-          , "left: "
-          , T.pack $ show $ 50 + x * 11
-          ]
-      ] $ L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
-  where
-    title =
-      case T.strip $ sr_title d of
-        "" -> "(no title)"
-        t -> t
+        [ L.class_ "spatial-title"
+        , L.style_ $ mconcat
+            [ "position: absolute;"
+            , "top: "
+            , T.pack $ show $ 250 + y * 18
+            , "; "
+            , "left: "
+            , T.pack $ show $ 50 + x * 11
+            ]
+        ] $ do
+      let uri = unsafeURI $ T.unpack $ sr_uri d
+      L.img_
+        [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
+        , L.width_  "12"
+        , L.height_ "12"
+        ]
+      L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
 

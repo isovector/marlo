@@ -86,6 +86,6 @@ unzero v = v
 
 
 measureText :: Text -> V2 Int
-measureText s = V2 (T.length s + 0) 1
--- plus two for some padding afterwards
+measureText s = V2 (T.length s + 1) 1
+-- plus one for the icon
 
