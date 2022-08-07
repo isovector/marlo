@@ -1,11 +1,8 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 module Data.QuadAreaTree
   (
     -- * Important types
     QuadTree
-  , type Region
-  , pattern I.Region
+  , Region (..)
   , V2 (..)
 
     -- * Construction
@@ -29,16 +26,18 @@ module Data.QuadAreaTree
   , bounds
   , inBounds
 
-    -- * Geometry
+    -- * Subdivision
   , Quad (..)
   , subdivide
+  , corners
+
+    -- * Geometry
   , containsRegion
   , containsPoint
   , intersects
   , getIntersection
   , regionSize
   , regionPoints
-  , corners
   ) where
 
 import           Control.Arrow (first)

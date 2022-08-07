@@ -1,5 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 module Data.QuadAreaTree.Geometry where
 
 import Control.Applicative (liftA2)

@@ -1,9 +1,6 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 module Data.QuadAreaTree.Internal
   ( module Data.QuadAreaTree.Internal
-  , pattern Region
-  , Region
+  , Region (..)
   , Quad (..)
   , regionSize
   ) where
