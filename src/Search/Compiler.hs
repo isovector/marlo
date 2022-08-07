@@ -8,10 +8,12 @@ import DB
 import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int32)
 import Data.Text (Text)
+import Prelude hiding (null)
 import Rel8 hiding (max, index)
 import Rel8.TextSearch
 import Servant.Server.Generic ()
 import Types
+
 
 compileSearch :: Search Text -> Query (SearchResult Expr)
 compileSearch q = orderBy (sr_ranking >$< desc) $ do
@@ -19,8 +21,14 @@ compileSearch q = orderBy (sr_ranking >$< desc) $ do
     case compile' q of
       Match ts -> matching ts
       Full qu -> qu
+  popularity <- optional $ do
+      dom <- each domainsSchema
+      where_ $ nullify (dom_id dom) ==. d_domain (d_table d)
+      pure $ dom_rank dom
+
   pure $ SearchResult
     { sr_ranking = rank (d_search d) (lit q') rDISTANCE
+    , sr_popularity = maybeTable null id popularity
     , sr_id      = d_docId $ d_table d
     , sr_uri     = d_uri   $ d_table d
     , sr_title   = d_title $ d_table d
