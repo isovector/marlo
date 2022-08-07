@@ -69,6 +69,21 @@ hitTest f what (r, Node q) =
   fold $ origami (const mempty) (hitTest f) what (r, q)
 
 
+foldTree
+    :: forall m a
+     . Monoid m
+    => (Region -> a -> m)
+    -> Squadrant a
+    -> m
+foldTree _ (r, Leaf _)
+  | isEmptyRegion r = mempty
+foldTree f (r, Leaf a)
+  = f r a
+foldTree f (r, Node q) =
+  foldMap (foldTree f) $
+    (,) <$> subdivide r <*> q
+
+
 origami
     :: (a -> b)                      -- ^ What to do if there is no intersection
     -> (Region -> (Region, a) -> b)  -- ^ What to do on an intersection
@@ -104,7 +119,7 @@ fill v what (r, Node qu) = subFill v what (r, qu)
 
 
 tile :: Squadrant a -> [(Region, a)]
-tile q@(r, _) = hitTest ((pure .) . (,)) r q
+tile q = foldTree ((pure .) . (,)) q
 
 
 subFill :: forall a. a -> Region -> (Region, Quad (Quadrant a)) -> Quadrant a

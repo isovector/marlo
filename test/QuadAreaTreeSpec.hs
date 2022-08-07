@@ -14,7 +14,7 @@ import GHC.TypeLits (Nat, KnownNat, natVal)
 import Test.QuickCheck
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck.Classes (functor, applicative, semigroup, monoid)
+import Test.QuickCheck.Classes (foldable, functor, applicative, semigroup, monoid)
 import Test.QuickCheck.Checkers (TestBatch, EqProp, (=-=))
 import Data.Foldable (for_)
 import Data.Monoid (Sum)
@@ -49,6 +49,14 @@ instance (KnownNat w, KnownNat h) => Arbitrary (RegionAtLeast w h) where
     . fmap (RegionAtLeast @w @h)
     . genericShrink
     . getRegionAtLeast
+
+instance Arbitrary a => Arbitrary (QuadTree a) where
+  arbitrary = do
+    r <- arbitrary
+    x <- makeTree <$> pure r <*> arbitrary
+    inserts <- scale (flip div 4) $ listOf $ (,) <$> arbitrary <*> subRegion r
+    pure $ foldr (uncurry fill) x inserts
+
 
 deriving via (RegionAtLeast 1 1) instance {-# OVERLAPPING #-} (Arbitrary Region)
 
@@ -166,6 +174,9 @@ spec = do
   describe "quadrants" $ do
     propBatch $ functor     $ (undefined :: Quadrant (Int, Int, Int))
     propBatch $ applicative $ (undefined :: Quadrant (Int, Int, Int))
+
+  describe "quadtree" $ do
+    propBatch $ foldable    $ (undefined :: QuadTree (Sum Int, Sum Int, Sum Int, Sum Int, Sum Int))
 
 
 propBatch :: TestBatch -> Spec

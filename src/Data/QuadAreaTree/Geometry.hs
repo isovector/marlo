@@ -97,3 +97,10 @@ getIntersection r1 r2 =
 regionSize :: Region -> Int
 regionSize (Quad _ _ w h) = w * h
 
+
+regionPoints :: Region -> [V2 Int]
+regionPoints (Region x y w h) = do
+  yp <- [y .. y + h - 1]
+  xp <- [x .. x + w - 1]
+  pure $ V2 xp yp
+
