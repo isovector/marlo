@@ -55,6 +55,8 @@ dependencies:
 - pretty-show
 - checkers
 - hspec
+- aeson
+- servant-client
 
 ghc-options:
 - -Wall
