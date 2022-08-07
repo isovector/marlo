@@ -1,12 +1,4 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ViewPatterns          #-}
-{-# OPTIONS_GHC -Wall              #-}
-
-module Purge where
+module Tools.Purge where
 
 import DB
 import Rel8

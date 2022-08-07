@@ -1,15 +1,14 @@
-module Metric where
+module Tools.BackfillDistance where
 
-import Rel8
 import DB
-import Rel8.Arrays
-import Prelude hiding (null)
-import Data.Int (Int16, Int64, Int32)
-import Utils (random)
-import Data.Text (Text)
 import Data.Function (fix)
+import Data.Int (Int16, Int64, Int32)
+import Data.Text (Text)
+import Prelude hiding (null)
+import Rel8
+import Rel8.Arrays
 import Types
-import Text.Show.Pretty (pPrint)
+import Utils (random)
 
 
 wrongDistance :: Query (Expr DocId, Expr [Maybe Int16])
@@ -53,8 +52,8 @@ findJoins = limit 1 $ orderBy random $ do
   pure ((d_uri src, d_distance src), (d_uri dst, d_distance dst))
 
 
-metricMain :: IO ()
-metricMain = do
+main :: IO ()
+main = do
   Right conn <- connect
   (print =<<) $ doInsert conn rootNodes
   fix $ \loop -> do
@@ -66,8 +65,3 @@ metricMain = do
         loop
       Left err -> print err
 
-
-main :: IO ()
-main = do
-  Right conn <- connect
-  (pPrint =<<) $ doSelect conn $ findJoins

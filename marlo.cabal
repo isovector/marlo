@@ -45,11 +45,8 @@ library
       DB.RootSites
       DB.SearchResult
       Domains
-      Index
       Integration.Alexa
       Keywords
-      Metric
-      Purge
       Rel8.Arrays
       Rel8.Headers
       Rel8.TextSearch
@@ -62,7 +59,10 @@ library
       Search.Traditional
       Signals
       Spider
+      Tools.BackfillDistance
       Tools.BackfillPopularity
+      Tools.Purge
+      Tools.Reindex
       Types
       Utils
   other-modules:

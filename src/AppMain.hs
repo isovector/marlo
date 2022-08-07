@@ -3,50 +3,50 @@
 module AppMain where
 
 import           Data.Text (Text)
-import qualified Index
-import qualified Metric
 import           Options.Applicative
-import qualified Purge
 import qualified Search
 import qualified Spider
-import qualified Tools.BackfillPopularity as BackfillPopularity
+import qualified Tools.BackfillDistance
+import qualified Tools.BackfillPopularity
+import qualified Tools.Purge
+import qualified Tools.Reindex
 
 
 data Command
-  = SearchCommand
-  | SpiderCommand (Maybe Text)
-  | PurgeCommand
-  | IndexCommand
-  | MetricCommand
-  | BackfillPopularityCommand
+  = SearchC
+  | SpiderC (Maybe Text)
+  | PurgeC
+  | ReindexC
+  | BackfillDistanceC
+  | BackfillPopularityC
   deriving (Eq, Ord, Show)
 
 
 sub :: Parser Command
 sub = subparser $ mconcat
-  [ command "search" $ info (pure SearchCommand) $ mconcat
+  [ command "search" $ info (pure SearchC) $ mconcat
       [ progDesc "Start the search server"
       ]
   , command "spider" $ info (helper <*> parseSpider) $ mconcat
       [ progDesc "Start the spider"
       ]
-  , command "purge" $ info (pure PurgeCommand) $ mconcat
+  , command "purge" $ info (pure PurgeC) $ mconcat
       [ progDesc "Prune webpages that are now excluded by filter rules"
       ]
-  , command "reindex" $ info (pure IndexCommand) $ mconcat
+  , command "reindex" $ info (pure ReindexC) $ mconcat
       [ progDesc "Reindex every explored site"
       ]
-  , command "root-distance" $ info (pure MetricCommand) $ mconcat
+  , command "backfill-distance" $ info (pure BackfillDistanceC) $ mconcat
       [ progDesc "Rerun the root-distance algorithm"
       ]
-  , command "backfill-popularity" $ info (pure BackfillPopularityCommand) $ mconcat
+  , command "backfill-popularity" $ info (pure BackfillPopularityC) $ mconcat
       [ progDesc "Backfill website popularity from the alexa api"
       ]
   ]
 
 parseSpider :: Parser Command
 parseSpider =
-  SpiderCommand
+  SpiderC
     <$> optional (strOption $ mconcat
           [ long "exclude"
           , help "A sql LIKE pattern to exclude uris from being indexed"
@@ -68,10 +68,10 @@ versionOption = infoOption "0.0" $ long "version" <> help "Show version"
 main :: IO ()
 main = do
   execParser commandParser >>= \case
-     SearchCommand             -> Search.main
-     SpiderCommand exc         -> Spider.spiderMain exc
-     PurgeCommand              -> Purge.main
-     IndexCommand              -> Index.main
-     MetricCommand             -> Metric.metricMain
-     BackfillPopularityCommand -> BackfillPopularity.main
+     SearchC             -> Search.main
+     SpiderC exc         -> Spider.spiderMain exc
+     PurgeC              -> Tools.Purge.main
+     ReindexC            -> Tools.Reindex.main
+     BackfillDistanceC   -> Tools.BackfillDistance.main
+     BackfillPopularityC -> Tools.BackfillPopularity.main
 

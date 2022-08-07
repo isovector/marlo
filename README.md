@@ -98,7 +98,7 @@ Run the main search engine server!
 
 
 ```haskell
-$ stack run marlo root-distance
+$ stack run marlo backfill-distance
 ```
 
 Recompute the root-distance metric, which can sometimes get thrown off by the
