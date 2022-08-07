@@ -15,6 +15,7 @@ module Data.QuadAreaTree
 
     -- * Destruction
   , foldTree
+  , tightlySatisfying
   , hitTest
   , pointMap
   , getLocation
@@ -41,6 +42,7 @@ module Data.QuadAreaTree
   ) where
 
 import           Control.Arrow (first)
+import           Data.Bool (bool)
 import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.QuadAreaTree.Geometry
@@ -124,4 +126,9 @@ bounds = qt_size
 
 inBounds :: QuadTree a -> Region -> Bool
 inBounds = containsRegion . bounds
+
+
+tightlySatisfying :: (a -> Bool) -> QuadTree a -> Region
+tightlySatisfying f =
+  foldTree $ \r a -> bool mempty r $ f a
 

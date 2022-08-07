@@ -33,6 +33,15 @@ import           Utils (unsafeURI)
 -- parameters:
 --   actual positions assigned to the nodes
 --   transformation into screen space
+--
+-- algorithm?
+--   find the midpoint of the dataset
+--   order by distance from midpoint
+--   build an infinte quadtree guaranteed to fit everything
+--   insert in order of distance
+--      break ties by sliding AWAY from the midpoint
+--      biased vertically
+--   renormalize the tree
 
 
 instance SearchMethod 'Spatial where

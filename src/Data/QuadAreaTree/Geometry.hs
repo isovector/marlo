@@ -2,10 +2,11 @@
 
 module Data.QuadAreaTree.Geometry where
 
-import GHC.Generics (Generic)
-import Linear.V2
+import Control.Applicative (liftA2)
 import Data.Maybe (isJust)
 import Data.Monoid
+import GHC.Generics (Generic)
+import Linear.V2
 
 data Quad a
   = Quad !a !a !a !a
@@ -18,11 +19,29 @@ instance Applicative Quad where
     Quad (ftl atl) (ftr atr) (fbl abl) (fbr abr)
 
 
-type Region = Quad Int
+data Region = Region
+  { r_x :: !Int
+  , r_y :: !Int
+  , r_w :: !Int
+  , r_h :: !Int
+  }
+  deriving stock (Show, Read, Eq, Generic)
 
-pattern Region :: Int -> Int -> Int -> Int -> Region
-pattern Region { r_x, r_y, r_w, r_h } = Quad r_x r_y r_w r_h
-{-# COMPLETE Region #-}
+-- | Gives a region which fully contains both
+instance Semigroup Region where
+  r1 <> r2
+    | isEmptyRegion r1 = r2
+    | isEmptyRegion r2 = r1
+    | otherwise =
+        let Quad tl@(V2 x y) _ _ br =
+              fmap liftA2 (Quad min const const max)
+                <*> corners r1
+                <*> corners r2
+            V2 w h = br - tl
+        in Region x y w h
+
+instance Monoid Region where
+  mempty = Region 0 0 0 0
 
 
 subdivide :: Region -> Quad Region
@@ -71,11 +90,12 @@ containsPoint (Region x y w h) (V2 tx ty) =
     ]
 
 
-corners :: Region -> [V2 Int]
-corners (Region x y w h) = do
-  dx <- [0, w - 1]
-  dy <- [0, h - 1]
-  pure $ V2 (x + dx) (y + dy)
+corners :: Region -> Quad (V2 Int)
+corners (Region x y w h) =
+  let p = V2 x y
+      dx = V2 w 0
+      dy = V2 0 h
+   in fmap (p +) $ Quad 0 dx dy (dx + dy)
 
 
 intersects :: Region -> Region -> Bool
@@ -96,7 +116,7 @@ getIntersection r1 r2 =
 
 
 regionSize :: Region -> Int
-regionSize (Quad _ _ w h) = w * h
+regionSize (Region _ _ w h) = w * h
 
 
 regionPoints :: Region -> [V2 Int]
@@ -104,4 +124,7 @@ regionPoints (Region x y w h) = do
   yp <- [y .. y + h - 1]
   xp <- [x .. x + w - 1]
   pure $ V2 xp yp
+
+isEmptyRegion :: Region -> Bool
+isEmptyRegion (Region _ _ w h) = w <= 0 || h <= 0
 

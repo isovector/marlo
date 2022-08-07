@@ -43,10 +43,6 @@ insert :: a -> V2 Int -> Squadrant a -> Quadrant a
 insert v (V2 x y) = fill v (Region x y 1 1)
 
 
-isEmptyRegion :: Region -> Bool
-isEmptyRegion (Quad _ _ x y) = x <= 0 || y <= 0
-
-
 hitTest
     :: forall m a
      . Monoid m

@@ -118,6 +118,15 @@ spec = do
         , trx == brx
         ]
 
+  prop "tightly satisfies / fill" $ \r b -> do
+    subr <- subRegion r
+    let tree = fill b subr $ makeTree r $ not b
+    pure $ tightlySatisfying (== b) tree == subr
+
+  prop "region semigroup is the convex hull" $ \r1 r2 ->
+    containsRegion (r1 <> r2) r1 &&
+      containsRegion (r1 <> r2) r2
+
   prop "regions contain themselves" $ \r ->
     containsRegion r r
 
