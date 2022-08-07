@@ -1,27 +1,50 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 module Data.QuadAreaTree
-  ( QuadTree
+  (
+    -- * Important types
+    QuadTree
   , type Region
   , pattern I.Region
   , V2 (..)
+
+    -- * Construction
   , makeTree
-  , foldTree
+  , insert
   , fill
+
+    -- * Destruction
+  , foldTree
   , hitTest
   , pointMap
-  , insert
   , getLocation
-  , showTree
   , asWeighted
   , tile
+
+    -- * Debugging
+  , showTree
+
+    -- * Helpers
+  , bounds
+  , inBounds
+
+    -- * Geometry
+  , Quad (..)
+  , subdivide
+  , containsRegion
+  , containsPoint
+  , intersects
+  , getIntersection
+  , regionSize
+  , regionPoints
+  , corners
   ) where
 
 import           Control.Arrow (first)
 import           Data.Map (Map)
 import qualified Data.Map as M
-import           Data.QuadAreaTree.Geometry (regionPoints)
-import           Data.QuadAreaTree.Internal (Region, Quadrant, Squadrant)
+import           Data.QuadAreaTree.Geometry
+import           Data.QuadAreaTree.Internal (Quadrant, Squadrant)
 import qualified Data.QuadAreaTree.Internal as I
 import           GHC.Generics (Generic)
 import           Linear.V2
@@ -70,7 +93,6 @@ showTree f q@(Wrapper _ (I.Region x y w h)) = do
         Just a -> pure $ f a
 
 
-
 asWeighted :: Show a => QuadTree a -> [a]
 asWeighted = (uncurry replicate . first I.regionSize  =<<) . tile
 
@@ -94,4 +116,12 @@ pointMap
 
 hitTest :: Monoid m => (a -> m) -> Region -> QuadTree a -> m
 hitTest f r = I.hitTest (const f) r . regionify
+
+
+bounds :: QuadTree a -> Region
+bounds = qt_size
+
+
+inBounds :: QuadTree a -> Region -> Bool
+inBounds = containsRegion . bounds
 

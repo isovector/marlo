@@ -24,6 +24,7 @@ pattern Region :: Int -> Int -> Int -> Int -> Region
 pattern Region { r_x, r_y, r_w, r_h } = Quad r_x r_y r_w r_h
 {-# COMPLETE Region #-}
 
+
 subdivide :: Region -> Quad Region
 subdivide (Region x y 1 1) =
   let r = Region x y 0 0
