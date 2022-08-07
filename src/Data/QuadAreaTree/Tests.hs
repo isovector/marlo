@@ -10,7 +10,7 @@ import Control.Monad (guard)
 import Data.Foldable (traverse_)
 import Data.Proxy
 import Data.QuadAreaTree
-import Data.QuadAreaTree.Internal hiding (insert, fill)
+import Data.QuadAreaTree.Internal hiding (getLocation, insert, fill)
 import Data.QuadAreaTree.Geometry
 import GHC.Generics (Generic)
 import GHC.TypeLits (Nat, KnownNat, natVal)
@@ -121,5 +121,27 @@ props = do
           counterexample (show tree) $
           counterexample (show $ length (filter id $ asWeighted res)) $
           length (filter id $ asWeighted res) == 4
+
+    , property $ \r (v0 :: Int) v -> do
+        sub <- subRegion r
+        p <- pointInRegion sub
+        let tree = fill v sub $ makeTree r v0
+        pure $ getLocation tree p == Just v
     ]
+
+
+pointInRegion :: Region -> Gen (V2 Int)
+pointInRegion (Region x y w h) = do
+  dx <- elements [0 .. w - 1]
+  dy <- elements [0 .. h - 1]
+  pure $ V2 (x + dx) (y + dy)
+
+subRegion :: Region -> Gen Region
+subRegion r@(Region x0 y0 w0 h0) = do
+  V2 x y <- pointInRegion r
+  let remx = x0 + w0 - x
+      remy = y0 + h0 - y
+  w <- elements [1 .. remx]
+  h <- elements [1 .. remy]
+  pure $ Region x y w h
 
