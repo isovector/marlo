@@ -104,3 +104,80 @@ $ stack run marlo root-distance
 Recompute the root-distance metric, which can sometimes get thrown off by the
 spider when it discovers a backlink between descendants of different root nodes.
 
+
+## Query Syntax
+
+### Bare Words
+
+```
+hello world
+```
+
+You can just type words. Each one needs to be present in the document.
+
+
+### Phrases
+
+```
+"hello world"
+```
+
+You can also use quotes, in which case the words must appear all together, in
+the same order as you specified.
+
+
+### Site Selectors
+
+```
+site:marlo.sandymaguire.me
+```
+
+Look exclusively at pages whose URIs match the given pattern.
+
+
+### Content Size Selectors
+
+```
+where:js > 0
+where:javascript = 100
+where:css < 5000
+```
+
+Compare the sizes of bundled javascript or CSS to the given number. This is
+expressed in bytes, which is probably not very helpful. PRs welcome.
+
+
+### Operators
+
+In the following examples, `x` and `y` are arbitrary queries --- not necessarily
+bare words.
+
+```
+x AND y
+```
+
+Combine two queries, requiring both to hold.
+
+
+```
+x OR y
+```
+
+Combine two queries, requiring either to hold.
+
+```
+-x
+```
+
+Negate a query, requiring it to not hold.
+
+
+### Grouping
+
+```
+(x)
+```
+
+Any query can be wrapped in parentheses. Useful when working with the `OR` and
+`-` operators.
+
