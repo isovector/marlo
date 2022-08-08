@@ -18,6 +18,11 @@ module Data.QuadAreaTree
   , asWeighted
   , tile
 
+  -- * Modifying
+  , renormalize
+  , tighten
+  , cookieCut
+
     -- * Debugging
   , showTree
 
@@ -49,9 +54,10 @@ import           Data.QuadAreaTree.Internal (Quadrant, Squadrant)
 import qualified Data.QuadAreaTree.Internal as I
 import           GHC.Generics (Generic)
 import           Linear.V2
+import Data.Maybe (mapMaybe)
 
 
-data QuadTree a = Wrapper
+data QuadTree a = QuadTree
   { qt_quad :: Quadrant a
   , qt_size :: Region
   }
@@ -59,8 +65,8 @@ data QuadTree a = Wrapper
   deriving (Semigroup, Monoid) via Ap QuadTree a
 
 instance Applicative QuadTree where
-  pure a = Wrapper (pure a) mempty
-  Wrapper fq fr <*> Wrapper aq ar = Wrapper (fq <*> aq) (fr <> ar)
+  pure a = QuadTree (pure a) mempty
+  QuadTree fq fr <*> QuadTree aq ar = QuadTree (fq <*> aq) (fr <> ar)
 
 instance Foldable QuadTree where
   foldMap = foldTree . const
@@ -83,11 +89,11 @@ getLocation q v =  I.getLocation v $ regionify q
 
 
 regionify :: QuadTree a -> Squadrant a
-regionify (Wrapper q r) = (r, q)
+regionify (QuadTree q r) = (r, q)
 
 
 showTree :: (a -> Char) -> QuadTree a -> String
-showTree f q@(Wrapper _ (I.Region x y w h)) = do
+showTree f q@(QuadTree _ (I.Region x y w h)) = do
   let pm = pointMap q
   unlines $ do
     yp <- [y .. y + h - 1]
@@ -104,7 +110,7 @@ asWeighted = (uncurry replicate . first I.regionSize  =<<) . tile
 
 
 makeTree :: Region -> a -> QuadTree a
-makeTree r a = Wrapper (I.Leaf a) r
+makeTree r a = QuadTree (I.Leaf a) r
 
 
 liftTree :: (Squadrant a -> Quadrant a) -> QuadTree a -> QuadTree a
@@ -135,4 +141,34 @@ inBounds = containsRegion . bounds
 tightlySatisfying :: (a -> Bool) -> QuadTree a -> Region
 tightlySatisfying f =
   foldTree $ \r a -> bool mempty r $ f a
+
+
+------------------------------------------------------------------------------
+-- | Map the space contained by the QuadTree.
+--
+-- $O(1)$
+renormalize :: (Region -> Region) -> QuadTree a -> QuadTree a
+renormalize f (QuadTree q r) = QuadTree q $ f r
+
+
+------------------------------------------------------------------------------
+-- | Change the bounds of the QuadTree to be a bounding box satisfying the
+-- predicate.
+--
+-- $O(n)$
+tighten :: (a -> Bool) -> QuadTree a -> QuadTree a
+tighten f q = cookieCut (tightlySatisfying f q) q
+
+
+------------------------------------------------------------------------------
+-- | Cut out the given region of the QuadTree.
+--
+-- $O(n)$
+cookieCut :: Region -> QuadTree a -> QuadTree a
+cookieCut r q = do
+  let pm = tile q
+      a0 = snd $ head pm
+      keep = mapMaybe (\(r', a) -> fmap (, a) $ getIntersection r r') pm
+      q' = makeTree r a0
+  foldr (uncurry $ flip fill) q' keep
 
