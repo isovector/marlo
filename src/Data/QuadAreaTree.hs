@@ -1,6 +1,5 @@
 module Data.QuadAreaTree
-  (
-    -- * Important types
+  ( -- * Important types
     QuadTree
   , Region (..)
   , V2 (..)
@@ -44,6 +43,7 @@ import           Control.Arrow (first)
 import           Data.Bool (bool)
 import           Data.Map (Map)
 import qualified Data.Map as M
+import           Data.Monoid
 import           Data.QuadAreaTree.Geometry
 import           Data.QuadAreaTree.Internal (Quadrant, Squadrant)
 import qualified Data.QuadAreaTree.Internal as I
@@ -56,6 +56,11 @@ data QuadTree a = Wrapper
   , qt_size :: Region
   }
   deriving (Show, Read, Eq, Functor, Generic, Traversable)
+  deriving (Semigroup, Monoid) via Ap QuadTree a
+
+instance Applicative QuadTree where
+  pure a = Wrapper (pure a) mempty
+  Wrapper fq fr <*> Wrapper aq ar = Wrapper (fq <*> aq) (fr <> ar)
 
 instance Foldable QuadTree where
   foldMap = foldTree . const

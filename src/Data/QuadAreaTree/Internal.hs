@@ -20,6 +20,7 @@ data Quadrant a
   = Leaf a
   | Node (Quad (Quadrant a))
   deriving stock (Show, Read, Eq, Functor, Foldable, Traversable, Generic)
+  deriving (Semigroup, Monoid) via Ap Quadrant a
 
 instance Applicative Quadrant where
   pure = Leaf

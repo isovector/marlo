@@ -4,6 +4,9 @@
 
 module QuadAreaTreeSpec where
 
+import qualified Data.Map as M
+import Data.Map (Map)
+import Data.Function (on)
 import Control.Monad (guard)
 import Data.Proxy
 import Data.QuadAreaTree
@@ -54,7 +57,8 @@ instance Arbitrary a => Arbitrary (QuadTree a) where
   arbitrary = do
     r <- arbitrary
     x <- makeTree <$> pure r <*> arbitrary
-    inserts <- scale (flip div 4) $ listOf $ (,) <$> arbitrary <*> subRegion r
+    n <- elements [0..5]
+    inserts <- scale (flip div 4) $ vectorOf n $ (,) <$> arbitrary <*> subRegion r
     pure $ foldr (uncurry fill) x inserts
 
 
@@ -175,7 +179,7 @@ spec = do
     pure $ getLocation tree p == Just v
 
   describe "quads" $ do
-    propBatch $ semigroup   $ (undefined :: (Quad (Sum Int), Int))
+    propBatch $ semigroup   $ (undefined :: Quad (Sum Int), Int)
     propBatch $ monoid      $ (undefined :: Quad (Sum Int))
     propBatch $ functor     $ (undefined :: Quad (Int, Int, Int))
     propBatch $ applicative $ (undefined :: Quad (Int, Int, Int))
@@ -186,6 +190,17 @@ spec = do
 
   describe "quadtree" $ do
     propBatch $ foldable    $ (undefined :: QuadTree (Sum Int, Sum Int, Sum Int, Sum Int, Sum Int))
+    propBatch $ semigroup   $ (undefined :: QuadTree (Sum Int), Int)
+    propBatch $ monoid      $ (undefined :: QuadTree (Sum Int))
+    propBatch $ functor     $ (undefined :: QuadTree (Int, Int, Int))
+    propBatch $ applicative $ (undefined :: QuadTree (Int, Int, Int))
+
+instance Arbitrary (V2 Int) where
+  arbitrary = V2 <$> arbitrary <*> arbitrary
+
+instance EqProp a => EqProp (QuadTree a) where
+  a =-= b = flip M.lookup (pointMap a) =-= flip M.lookup (pointMap b)
+
 
 
 propBatch :: TestBatch -> Spec
