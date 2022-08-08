@@ -24,7 +24,6 @@ import           Network.URI (uriPath)
 import           Rel8 hiding (filter, bool, evaluate, max, index)
 import           Search.DoSearch (debugSearch)
 import           Search.Machinery
-import           Search.Spatial.Test.Data (testResults)
 import           Servant.Server.Generic ()
 import           Types
 import           Utils (unsafeURI)
