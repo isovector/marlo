@@ -216,6 +216,7 @@ forbidSites =
   , "tiktok.com"
   , "snapchat.com"
   , "spoilertv.com"
+  , "peacocktv.com"
   , "bloomberg.com"
   , "linkedin.com"
   , "tumblr.com"
@@ -263,10 +264,22 @@ forbidPaths =
   ]
 
 
+-- | IMPORTANT
+--
+-- THIS IS ALL LOWER CASE
+--
+-- DO NOT PUT A CAPITAL IN YOUR PATH CHECKS
 specificAllowRules :: URI -> Bool
 specificAllowRules uri
   | Just auth <- uriAuthority uri =
     let on_domain = isOnDomain (uriRegName auth)
+        is_wiki site = or
+          [ on_domain site && isInfixOf "template:" path
+          , on_domain site && isInfixOf "talk:" path
+          , on_domain site && isInfixOf "category:" path
+          , on_domain site && isInfixOf "special:" path
+          , on_domain site && isInfixOf "template:" path
+          ]
      in not $ or $
   -- Succeeds if none of the following are true
   fmap (flip isInfixOf path) forbidPaths <>
@@ -277,18 +290,9 @@ specificAllowRules uri
   , on_domain "github.com" && isInfixOf "/stargazers" path
   , on_domain "github.com" && isInfixOf "/network/members" path
   , on_domain "neocities.org" && isInfixOf "/site/" path
-  , on_domain "wikipedia.org" && isInfixOf "Template:" path
-  , on_domain "wikipedia.org" && isInfixOf "Talk:" path
-  , on_domain "wikipedia.org" && isInfixOf "Category:" path
-  , on_domain "wikipedia.org" && isInfixOf "Special:" path
-  , on_domain "wiktionary.org" && isInfixOf "Template:" path
-  , on_domain "wiktionary.org" && isInfixOf "Talk:" path
-  , on_domain "wiktionary.org" && isInfixOf "Category:" path
-  , on_domain "wiktionary.org" && isInfixOf "Special:" path
-  , on_domain "wikimedia.org" && isInfixOf "Template:" path
-  , on_domain "wikimedia.org" && isInfixOf "Talk:" path
-  , on_domain "wikimedia.org" && isInfixOf "Category:" path
-  , on_domain "wikimedia.org" && isInfixOf "Special:" path
+  , is_wiki "wikipedia.org"
+  , is_wiki "wiktionary.org"
+  , is_wiki "wikimedia.org"
   , isYearMonthPage path
   ]
   | otherwise = error "yo"
