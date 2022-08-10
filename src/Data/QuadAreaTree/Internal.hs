@@ -37,7 +37,7 @@ instance Applicative Quadrant where
 --     Node $ Quad (tl >>= f) (tr >>= f) (bl >>= f) (br >>= f)
 
 
-insert :: a -> V2 Int -> Squadrant a -> Quadrant a
+insert :: Monoid a => a -> V2 Int -> Squadrant a -> Quadrant a
 insert v (V2 x y) = fill v (Region x y 1 1)
 
 
@@ -95,14 +95,14 @@ splitLeaf :: a -> Quad (Quadrant a)
 splitLeaf a = let l = Leaf a in Quad l l l l
 
 
-fill :: a -> Region -> Squadrant a -> Quadrant a
+fill :: Monoid a => a -> Region -> Squadrant a -> Quadrant a
 fill _ what q | isEmptyRegion what = snd q
 fill _ _ q@(r, Leaf{})
   | isEmptyRegion r
   = snd q
 fill v what q@(r, Leaf a)
   | containsRegion what r
-  = Leaf v
+  = Leaf (v <> a)
   | intersects what r
   = subFill v what (r, splitLeaf a)
   | otherwise
@@ -114,10 +114,10 @@ tile :: Squadrant a -> [(Region, a)]
 tile q = foldTree ((pure .) . (,)) q
 
 
-subFill :: forall a. a -> Region -> (Region, Quad (Quadrant a)) -> Quadrant a
+subFill :: Monoid a => a -> Region -> (Region, Quad (Quadrant a)) -> Quadrant a
 subFill v what q = Node $ origami id (fill v) what q
 
 
-getLocation :: V2 Int -> Squadrant a -> Maybe a
-getLocation (V2 x y) = getFirst . hitTest (const pure) (Region x y 1 1)
+getLocation :: Monoid a => V2 Int -> Squadrant a -> a
+getLocation (V2 x y) = hitTest (const id) (Region x y 1 1)
 

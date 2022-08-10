@@ -8,7 +8,6 @@ module Search.Spatial () where
 
 import           Control.Arrow ((&&&), second)
 import           Control.Exception
-import           Control.Lens (view)
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
 import           Data.Bool (bool)
@@ -22,7 +21,6 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
-import           Debug.Trace (trace, traceShowId)
 import           Linear hiding (trace)
 import qualified Lucid as L
 import           Network.URI (uriPath)
@@ -50,7 +48,7 @@ import           Utils (unsafeURI)
 
 instance SearchMethod 'Spatial where
   -- type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
-  type SearchMethodResult 'Spatial = QuadTree (Maybe (SearchResult Identity))
+  type SearchMethodResult 'Spatial = QuadTree (First (SearchResult Identity))
   limitStrategy = Limit 500
   accumResults _ _
     = evaluate
@@ -66,11 +64,11 @@ instance SearchMethod 'Spatial where
   showResults
     = traverse_ spaceResult
     . uniqueTiles
-    . mapMaybe sequence
+    . mapMaybe (traverse getFirst)
     . tile
     -- . fmap (fmap r_data)
   debugResults =
-    putStrLn . showTree (maybe ' ' $ const 'X' )
+    putStrLn . showTree (maybe ' ' (const 'X') . getFirst)
     -- $ toEnum . (+33) . view _x . r_size )
 
 
@@ -182,14 +180,14 @@ uncenter :: V2 Int -> V2 Float -> V2 Float
 uncenter sz center = center - fmap fromIntegral sz / 2
 
 
-place :: Eq a => Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
+place :: Eq a => Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
 place r0 q0
   | not $ inBounds q0 $ rectToRegion r0 = q0
   | otherwise = go (0 :: Int) r0 q0
   where
     go 15 _ qt = qt
     go n r qt =
-      case getFirst $ hitTest First (rectToRegion r) qt of
+      case getFirst $ hitTest id (rectToRegion r) qt of
         Nothing -> fillRect r qt
         Just re ->
           go (n + 1) (offsetBy r re) qt
@@ -199,8 +197,8 @@ rectToRegion :: Rect a -> Region
 rectToRegion Rect{r_pos = fmap round -> V2 x y, r_size = V2 w h } = Region x y w h
 
 
-fillRect :: Rect a -> QuadTree (Maybe (Rect a)) -> QuadTree (Maybe (Rect a))
-fillRect r = fill (Just r) $ rectToRegion r
+fillRect :: Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
+fillRect r = fill (pure r) $ rectToRegion r
 
 
 ------------------------------------------------------------------------------
@@ -237,17 +235,17 @@ nonzeroDiff v1 v2 = do
 
 newLayoutAlgorithm
     :: [SearchResult Identity]
-    -> QuadTree (Maybe (SearchResult Identity))
+    -> QuadTree (First (SearchResult Identity))
 newLayoutAlgorithm res = do
   let n        = length res
       placed0  = fmap (id &&& plop) res
       midpoint = sum (fmap snd placed0) / fromIntegral n
       ordered  = sortOn (quadrance . snd) $ fmap (second $ subtract midpoint) placed0
       sz       = (^) @Int @Int 2 14
-      tree0    = makeTree (Region (-sz) (-sz) (sz * 2) (sz * 2)) Nothing
+      tree0    = makeTree (Region (-sz) (-sz) (sz * 2) (sz * 2))
       tree     = foldr (uncurry place') tree0 ordered
   renormalize (\(Region _ _ w h) -> Region 0 0 w h)
-    $ tighten isJust
+    $ tighten (isJust . getFirst)
     $ fmap (fmap snd)
     $ tree
 
@@ -255,8 +253,8 @@ newLayoutAlgorithm res = do
 place'
     :: SearchResult Identity
     -> V2 Float
-    -> QuadTree (Maybe ((V2 Float, Region), SearchResult Identity))
-    -> QuadTree (Maybe ((V2 Float, Region), SearchResult Identity))
+    -> QuadTree (First ((V2 Float, Region), SearchResult Identity))
+    -> QuadTree (First ((V2 Float, Region), SearchResult Identity))
 place' sr p0 q = do
   let V2 w h = measureText $ sr_title sr
   flip fix p0 $ \go p@(V2 x y) -> do
@@ -264,11 +262,11 @@ place' sr p0 q = do
     case inBounds q r of
       False -> q
       True ->
-        case getFirst $ hitTest First r q of
+        case getFirst $ hitTest id r q of
           Just (hit, _) -> do
             let p' = r_pos $ offsetBy (regionToRect p r) $ uncurry regionToRect hit
             go $ p' + signum p'
-          Nothing -> fill (Just ((p, r), sr)) r q
+          Nothing -> fill (First $ Just ((p, r), sr)) r q
 
 
 regionToRect :: V2 Float -> Region -> Rect ()

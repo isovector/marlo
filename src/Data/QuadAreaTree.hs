@@ -76,15 +76,15 @@ foldTree :: Monoid m => (Region -> a -> m) -> QuadTree a -> m
 foldTree f = I.foldTree f . regionify
 
 
-fill :: a -> Region -> QuadTree a -> QuadTree a
+fill :: Monoid a => a -> Region -> QuadTree a -> QuadTree a
 fill a r = liftTree $ I.fill a r
 
 
-insert :: a -> V2 Int -> QuadTree a -> QuadTree a
+insert :: Monoid a => a -> V2 Int -> QuadTree a -> QuadTree a
 insert a r = liftTree $ I.insert a r
 
 
-getLocation :: QuadTree a -> V2 Int -> Maybe a
+getLocation :: Monoid a => QuadTree a -> V2 Int -> a
 getLocation q v =  I.getLocation v $ regionify q
 
 
@@ -109,8 +109,8 @@ asWeighted :: Show a => QuadTree a -> [a]
 asWeighted = (uncurry replicate . first I.regionSize  =<<) . tile
 
 
-makeTree :: Region -> a -> QuadTree a
-makeTree r a = QuadTree (I.Leaf a) r
+makeTree :: Monoid a => Region -> QuadTree a
+makeTree r = QuadTree (I.Leaf mempty) r
 
 
 liftTree :: (Squadrant a -> Quadrant a) -> QuadTree a -> QuadTree a
@@ -156,7 +156,7 @@ renormalize f (QuadTree q r) = QuadTree q $ f r
 -- predicate.
 --
 -- $O(n)$
-tighten :: (a -> Bool) -> QuadTree a -> QuadTree a
+tighten :: Monoid a => (a -> Bool) -> QuadTree a -> QuadTree a
 tighten f q = cookieCut (tightlySatisfying f q) q
 
 
@@ -164,11 +164,10 @@ tighten f q = cookieCut (tightlySatisfying f q) q
 -- | Cut out the given region of the QuadTree.
 --
 -- $O(n)$
-cookieCut :: Region -> QuadTree a -> QuadTree a
+cookieCut :: Monoid a => Region -> QuadTree a -> QuadTree a
 cookieCut r q = do
   let pm = tile q
-      a0 = snd $ head pm
       keep = mapMaybe (\(r', a) -> fmap (, a) $ getIntersection r r') pm
-      q' = makeTree r a0
+      q' = makeTree r
   foldr (uncurry $ flip fill) q' keep
 

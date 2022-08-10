@@ -20,7 +20,7 @@ import Test.Hspec.QuickCheck
 import Test.QuickCheck.Classes (foldable, functor, applicative, semigroup, monoid)
 import Test.QuickCheck.Checkers (TestBatch, EqProp, (=-=))
 import Data.Foldable (for_)
-import Data.Monoid (Sum)
+import Data.Monoid (Sum (Sum), First (First))
 
 getNatVal :: forall a. KnownNat a => Int
 getNatVal = fromInteger $ natVal $ Proxy @a
@@ -53,10 +53,10 @@ instance (KnownNat w, KnownNat h) => Arbitrary (RegionAtLeast w h) where
     . genericShrink
     . getRegionAtLeast
 
-instance Arbitrary a => Arbitrary (QuadTree a) where
+instance (Monoid a, Arbitrary a) => Arbitrary (QuadTree a) where
   arbitrary = do
     r <- arbitrary
-    x <- makeTree <$> pure r <*> arbitrary
+    let x = makeTree r
     n <- elements [0..5]
     inserts <- scale (flip div 4) $ vectorOf n $ (,) <$> arbitrary <*> subRegion r
     pure $ foldr (uncurry fill) x inserts
@@ -122,10 +122,10 @@ spec = do
         , trx == brx
         ]
 
-  prop "tightly satisfies / fill" $ \r b -> do
+  prop "tightly satisfies / fill" $ \r -> do
     subr <- subRegion r
-    let tree = fill b subr $ makeTree r $ not b
-    pure $ tightlySatisfying (== b) tree == subr
+    let tree = fill @String "x" subr $ makeTree r
+    pure $ tightlySatisfying (== "x") tree == subr
 
   prop "region semigroup is the convex hull" $ \r1 r2 ->
     containsRegion (r1 <> r2) r1 &&
@@ -154,32 +154,28 @@ spec = do
   prop "insert adds one value to a QAT" $ \r@(Region x y w h) -> do
     x' <- elements [0 .. w - 1]
     y' <- elements [0 .. h - 1]
-    let tree = makeTree r False
+    let tree = makeTree r
     pure $
-      length (filter id $ asWeighted $ insert True (V2 (x + x') (y + y')) tree) == 1
+      length (filter (not . null) $ asWeighted $ insert @String "hello" (V2 (x + x') (y + y')) tree) == 1
 
   prop "fill 2x2 adds four values to a QAT" $
     \(RegionAtLeast (Region x y ((+ 1) -> w) ((+ 1) -> h)) :: RegionAtLeast 2 2) -> do
       x' <- elements [0 .. w - 2]
       y' <- elements [0 .. h - 2]
-      let tree = makeTree (Region x y w h) False
-          res = fill True (Region (x + x') (y + y') 2 2) tree
+      let tree = makeTree (Region x y w h)
+          res = fill @String "x" (Region (x + x') (y + y') 2 2) tree
 
       pure $
-        counterexample (show x') $
-        counterexample (show y') $
-        counterexample (show tree) $
-        counterexample (show $ length (filter id $ asWeighted res)) $
-        length (filter id $ asWeighted res) == 4
+        length (filter (not . null) $ asWeighted res) == 4
 
-  prop "fill gives you back what you put in" $ \r (v0 :: Int) v -> do
+  prop "fill gives you back what you put in" $ \r (v :: Sum Int) -> do
     sub <- subRegion r
     p <- pointInRegion sub
-    let tree = fill v sub $ makeTree r v0
-    pure $ getLocation tree p == Just v
+    let tree = fill v sub $ makeTree r
+    pure $ getLocation tree p == v
 
   describe "quads" $ do
-    propBatch $ semigroup   $ (undefined :: Quad (Sum Int), Int)
+    propBatch $ semigroup   $ (undefined :: (Quad (Sum Int), Int))
     propBatch $ monoid      $ (undefined :: Quad (Sum Int))
     propBatch $ functor     $ (undefined :: Quad (Int, Int, Int))
     propBatch $ applicative $ (undefined :: Quad (Int, Int, Int))
@@ -190,10 +186,10 @@ spec = do
 
   describe "quadtree" $ do
     propBatch $ foldable    $ (undefined :: QuadTree (Sum Int, Sum Int, Sum Int, Sum Int, Sum Int))
-    propBatch $ semigroup   $ (undefined :: QuadTree (Sum Int), Int)
+    propBatch $ semigroup   $ (undefined :: (QuadTree (Sum Int), Int))
     propBatch $ monoid      $ (undefined :: QuadTree (Sum Int))
-    propBatch $ functor     $ (undefined :: QuadTree (Int, Int, Int))
-    propBatch $ applicative $ (undefined :: QuadTree (Int, Int, Int))
+    propBatch $ functor     $ (undefined :: QuadTree (Sum Int, Sum Int, Sum Int))
+    propBatch $ applicative $ (undefined :: QuadTree (Sum Int, Sum Int, Sum Int))
 
 instance Arbitrary (V2 Int) where
   arbitrary = V2 <$> arbitrary <*> arbitrary
