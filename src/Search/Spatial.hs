@@ -51,7 +51,7 @@ import           Utils (unsafeURI)
 instance SearchMethod 'Spatial where
   -- type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
   type SearchMethodResult 'Spatial = QuadTree (Maybe (SearchResult Identity))
-  limitStrategy = Limit 100
+  limitStrategy = Limit 500
   accumResults _ _
     = evaluate
     . newLayoutAlgorithm
@@ -84,8 +84,8 @@ measureText s = V2 (T.length s + 1) 1
 
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 ((* 1.4) $ log $ max 1 $ fromIntegral $ fromMaybe 1e6 $ sr_popularity sr)
-               (sr_ranking sr * 5)
+  { r_pos = V2 (log $ log $ max 1 $ fromIntegral $ fromMaybe 1e6 $ sr_popularity sr)
+               (sr_ranking sr * 10)
   , r_size = measureText title'
   , r_data = sr { sr_title = title' }
   }
@@ -208,12 +208,12 @@ fillRect r = fill (Just r) $ rectToRegion r
 -- envelope
 extent :: V2 Float -> V2 Int -> Float
 extent dir (fmap fromIntegral -> V2 w h) =
-  norm $ V2 (dot dir $ V2 (w / 2) 0) (dot dir $ V2 0 (h / 2))
+  norm $ V2 (dot dir $ V2 (w / 2) 0) (dot dir $ V2 0 (h * 2))
 
 
 offsetBy :: Rect a -> Rect a -> Rect a
 offsetBy want collide =
-  let dir = unzero $ normalize $ rectCenter want - rectCenter collide
+  let dir = nonzeroDiff (rectCenter want)  (rectCenter collide)
       get_ext = extent dir . r_size
       new_center = rectCenter want + dir ^* ((get_ext want + get_ext collide))
       res = want { r_pos = uncenter (r_size want) new_center }
@@ -223,6 +223,14 @@ offsetBy want collide =
 unzero :: V2 Float -> V2 Float
 unzero v | quadrance v < 0.1  = V2 0.707 0.707
 unzero v = v
+
+nonzeroDiff :: V2 Float -> V2 Float -> V2 Float
+nonzeroDiff v1 v2 = do
+  let dir = normalize $ v1 - v2
+  case quadrance dir < 0.1 of
+    True -> normalize v1
+    False -> dir
+
 
 ------------------------------------------------------------------------------
 
@@ -257,7 +265,9 @@ place' sr p0 q = do
       False -> q
       True ->
         case getFirst $ hitTest First r q of
-          Just (hit, _) -> go $ r_pos $ offsetBy (regionToRect p r) $ uncurry regionToRect hit
+          Just (hit, _) -> do
+            let p' = r_pos $ offsetBy (regionToRect p r) $ uncurry regionToRect hit
+            go $ p' + signum p'
           Nothing -> fill (Just ((p, r), sr)) r q
 
 
