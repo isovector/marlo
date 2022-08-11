@@ -21,11 +21,13 @@ main csv = do
     $ S.mapM_
       ( \(rank, domnameish) -> do
           putStrLn $ T.unpack $ "importing " <> domnameish
-          Right _ <- doInsert conn $ upsertDomain $ (lit emptyDomain)
+          z <- doInsert conn $ upsertDomain $ (lit emptyDomain)
             { dom_domain = lit $ "https://" <> domnameish
             , dom_rank   = lit $ Just rank
             }
-          pure ()
+          case z of
+            Left qe -> print qe
+            Right _ -> pure ()
       )
     . S.mapMaybe hush
     . decodeWithErrors @_ @(Int32, Text) defaultDecodeOptions NoHeader
