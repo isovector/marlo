@@ -5,6 +5,7 @@ module Marlo.Robots
   , RobotCheck (..)
   ) where
 
+import           Control.Exception (catch, SomeException (SomeException))
 import           Data.Monoid
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -13,7 +14,6 @@ import           Network.HTTP.Robots
 import           Network.URI
 import           Types
 import           Utils (downloadBody)
-import Control.Exception (catch, SomeException (SomeException))
 
 
 fetchRobotDirectives :: URI -> IO RobotDirectives
@@ -22,18 +22,14 @@ fetchRobotDirectives uri = do
   catch ( do
     dl <- downloadBody $ show robotstxt
     case parseRobots $ d_body dl of
-      Left e -> do
-        putStrLn $ "can't parse robots.txt: " <> show e
-        pure mempty
+      Left _ -> pure mempty
       Right (robots, _) ->
         pure $ flip foldMap robots $ \(agent, dirs) ->
           case isApplicable agent of
             False -> mempty
             True -> foldMap applyDir dirs
           )
-    $ \(SomeException e) -> do
-      putStrLn $ "can't get robots.txt: " <> show e
-      pure mempty
+    $ \(SomeException _) -> pure mempty
 
 
 applyDir :: Directive -> RobotDirectives

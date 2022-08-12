@@ -43,7 +43,7 @@ rerankPopularity
     -> Text
     -> IO (Either DomainId DomainId, RobotDirectives)
 rerankPopularity conn uri domname = do
-  directives <- fetchRobotDirectives uri
+  rules <- fetchRobotDirectives uri
   erank <- getGlobalRank' domname
   let rank = join $ hush erank
 
@@ -51,10 +51,11 @@ rerankPopularity conn uri domname = do
     doInsert conn $ upsertDomain $
       (lit emptyDomain)
         { dom_domain = lit domname
+        , dom_rules = lit rules
         , dom_rank   = lit $ fmap fromIntegral rank
         }
   pure
-    $ (, directives)
+    $ (, rules)
     $ bimap (const x) (const x) erank
 
 
