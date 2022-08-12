@@ -310,29 +310,34 @@ specificAllowRules uri
   where
     path = fmap toLower $ uriPath uri
 
+
 isYearMonthPage :: String -> Bool
 isYearMonthPage p =
-  case fmap T.unpack $ T.split (== '/') $ T.pack p of
-    ["", year@(y:_:_:_:[]), month@(_:_:[]), ""]
+  case takeEnd 2
+      $ fmap T.unpack
+      $ filter (not . T.null)
+      $ T.split (== '/')
+      $ T.pack p of
+    [year@(y:_:_:_:[]), month@(_:_:[])]
       | all isDigit year
       , all isDigit month
       , elem y ['1', '2']
       -> True
-    ["", year@(y:_:_:_:[]), month@(_:_:[])]
-      | all isDigit year
-      , all isDigit month
-      , elem y ['1', '2']
-      -> True
-    ["", year@(y:_:_:_:[]), ""]
+    [_, year@(y:_:_:_:[])]
       | all isDigit year
       , elem y ['1', '2']
       -> True
-    ["", year@(y:_:_:_:[])]
+    [year@(y:_:_:_:[])]
       | all isDigit year
       , elem y ['1', '2']
       -> True
     _ -> False
 
+
+takeEnd :: Int -> [a] -> [a]
+takeEnd n ls =
+  let sz = length ls
+   in drop (sz - n) ls
 
 
 jsBundleSize :: Ranker Int64
