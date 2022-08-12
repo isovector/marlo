@@ -205,6 +205,9 @@ forbidSites =
   , "google.com"
   , "archive.today"
   , "amazon.com"
+  , "amazon.ca"
+  , "amazon.co.uk"
+  , "amazon.de"
   , "flickr.com"
   , "spotify.com"
   , "last.fm"
@@ -267,6 +270,7 @@ forbidPaths =
   , "/vod/"
   , "/watch/"
   , "/politics/20"
+  , "archive"
   ]
 
 
@@ -295,6 +299,7 @@ specificAllowRules uri
   , on_domain "github.com" && isInfixOf "/edit/" path
   , on_domain "github.com" && isInfixOf "/stargazers" path
   , on_domain "github.com" && isInfixOf "/network/members" path
+  , on_domain "github.com" && isInfixOf "/branches" path
   , on_domain "neocities.org" && isInfixOf "/site/" path
   , is_wiki "wikipedia.org"
   , is_wiki "wiktionary.org"
