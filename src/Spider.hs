@@ -182,7 +182,7 @@ titleSegs
   . fmap T.strip
   . concatMap (T.splitOn ". ")
   . concatMap (T.splitOn " - ")
-  . T.split (flip elem [';', ':', '.', '|', '·', '\8211' ])
+  . T.split (flip elem [';', ':', '|', '·', '\8211' ])
 
 
 buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
