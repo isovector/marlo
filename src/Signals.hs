@@ -160,7 +160,10 @@ isAcceptableLink uri
           , ".mpv"
           , ".avi"
           , ".ogg"
+          , ".csv"
+          , ".cdf"
           , ".mkv"
+          , ".txt"
           , ".bmp"
           , ".gz"
           , ".py"
@@ -271,6 +274,9 @@ forbidPaths =
   , "/watch/"
   , "/politics/20"
   , "archive"
+  , "/rss"
+  , "/feed"
+  , "/download"
   ]
 
 
