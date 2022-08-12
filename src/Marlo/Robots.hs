@@ -22,14 +22,18 @@ fetchRobotDirectives uri = do
   catch ( do
     dl <- downloadBody $ show robotstxt
     case parseRobots $ d_body dl of
-      Left _ -> pure mempty
+      Left e -> do
+        putStrLn $ "can't parse robots.txt: " <> show e
+        pure mempty
       Right (robots, _) ->
         pure $ flip foldMap robots $ \(agent, dirs) ->
           case isApplicable agent of
             False -> mempty
             True -> foldMap applyDir dirs
           )
-    $ \(SomeException _) -> pure mempty
+    $ \(SomeException e) -> do
+      putStrLn $ "can't get robots.txt: " <> show e
+      pure mempty
 
 
 applyDir :: Directive -> RobotDirectives
