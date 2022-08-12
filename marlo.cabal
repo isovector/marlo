@@ -43,11 +43,13 @@ library
       DB.PageStats
       DB.RootSites
       DB.SearchResult
+      DB.Titles
       Domains
       Integration.Alexa
       Keywords
       Rel8.Arrays
       Rel8.Headers
+      Rel8.Machinery
       Rel8.TextSearch
       Search
       Search.Common

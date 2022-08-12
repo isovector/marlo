@@ -97,6 +97,18 @@ newtype DomainId = DomainId
   deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 
+newtype TitleEdgeId = TitleEdgeId
+  { unTitleEdgeId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
+
+
+newtype TitleSegId = TitleSegId
+  { unTitleSegId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
+
+
 data DocumentState
   = Discovered
   | Explored

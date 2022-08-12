@@ -59,6 +59,7 @@ module DB
   , module DB.PageRawData
   , module DB.PageStats
   , module DB.SearchResult
+  , module DB.Titles
 
   , nullDist
   , numRootSites
@@ -79,6 +80,7 @@ import DB.PageRawData
 import DB.PageStats
 import DB.RootSites
 import DB.SearchResult
+import DB.Titles
 import Data.Functor.Identity (Identity)
 import Hasql.Connection (settings, Connection, acquire, ConnectionError)
 import Hasql.Session (run, statement, QueryError)

@@ -1,3 +1,5 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 module Spider where
 
 import           Control.Exception.Base
@@ -7,9 +9,13 @@ import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
+import           Data.Foldable (for_, toList)
 import           Data.Functor.Contravariant ((>$<))
-import           Data.Int (Int32, Int16)
+import           Data.Int (Int32, Int16, Int64)
+import           Data.Map (Map)
+import qualified Data.Map as M
 import           Data.Maybe (isJust)
+import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -20,15 +26,16 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
+import           Prelude hiding (max)
 import qualified Rel8 as R8 hiding (filter, bool)
 import           Rel8 hiding (filter, bool, index)
 import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
 import           Rel8.Headers (headersToHeaders)
+import           Rel8.Machinery
 import           Signals
 import qualified Types
 import           Types hiding (d_headers)
 import           Utils (runRanker, unsafeURI, random)
-import Data.Foldable (for_)
 
 
 markExplored :: DocumentState -> Document Identity -> Update ()
@@ -94,6 +101,91 @@ addEdge src (Link anchor dst) = Insert
   , onConflict = DoNothing
   , returning = Projection e_edgeId
   }
+
+
+buildTitleSegs :: Connection -> DocId -> Text -> IO ()
+buildTitleSegs conn doc t = do
+  let segs = titleSegs t
+  segids <- getOrInsert conn TitleSeg ts_seg segs
+  Right _ <- doInsert conn $ Insert
+    { into = titleEdgeSchema
+    , rows = do
+        teid <- nextTitleEdgeId
+        seg <- values $ fmap lit $ toList segids
+        pure $ TitleEdge
+          { te_id = teid
+          , te_doc = lit doc
+          , te_seg = seg
+          }
+    , onConflict = DoNothing
+    , returning = pure ()
+    }
+  pure ()
+
+
+commonTitleSegs :: Query (Expr TitleSegId, Expr Int64)
+commonTitleSegs = do
+  orderBy ((snd >$< asc) <> (fst >$< asc)) $ aggregate $ do
+    te <- each titleEdgeSchema
+    pure (groupBy $ te_seg te, countStar)
+
+
+getBestTitle :: DocId -> Query (Expr Text)
+getBestTitle did = do
+  segid <- limit 1 $ fmap fst $ orderBy (snd >$< asc) $ do
+    te <- each titleEdgeSchema
+    where_ $ te_doc te ==. lit did
+    res <- commonTitleSegs
+    where_ $ te_seg te ==. fst res
+    pure res
+  seg <- each titleSegSchema
+  where_ $ ts_id seg ==. segid
+  pure $ ts_seg seg
+
+
+setBestTitle :: DocId -> Update [Text]
+setBestTitle did = Update
+  { target = documentSchema
+  , from = getBestTitle did
+  , set = \ ex doc -> doc { d_title = ex }
+  , updateWhere = \ _ doc -> d_docId doc ==. lit did
+  , returning = Projection d_title
+  }
+
+
+getOrInsert
+    :: (HasUniqueId f key, Ord a, _)
+    => Connection
+    -> (Expr key -> Expr a -> f Expr)
+    -> (f Expr -> Expr a)
+    -> [a]
+    -> IO (Map a key)
+getOrInsert conn build what as = do
+  let all_vals = S.fromList as
+  Right vals <- fmap (fmap M.fromList) $ doSelect conn $ do
+    r <- each allRows
+    where_ $ in_ (what r) $ fmap lit as
+    pure (what r, uniqueId r)
+  let missing_vals = all_vals S.\\ M.keysSet vals
+  Right more_vals <- fmap (fmap M.fromList) $ doInsert conn $ Insert
+    { into = allRows
+    , rows = do
+        rid <- nextUniqueId
+        a <- values $ fmap lit $ S.toList missing_vals
+        pure $ build rid a
+    , onConflict = DoNothing
+    , returning = Projection $ \r -> (what r, uniqueId r)
+    }
+  pure $ vals <> more_vals
+
+
+titleSegs :: Text -> [Text]
+titleSegs
+  = filter (not . T.null)
+  . fmap T.strip
+  . concatMap (T.splitOn ". ")
+  . concatMap (T.splitOn " - ")
+  . T.split (flip elem [';', ':', '.', '|', '·', '\8211' ])
 
 
 buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
@@ -190,13 +282,17 @@ indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   dom_id <- getDomain conn uri
-  Just (pc, has_ads, stats') <-
+  Just (titl, pc, has_ads, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
-      (,,)
-        <$> rankContent
+      (,,,)
+        <$> title
+        <*> rankContent
         <*> hasGoogleAds
         <*> rankStats
   let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
+
+  buildTitleSegs conn (d_docId disc) titl
+
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  doUpdate conn $ Update
     { target = documentSchema
