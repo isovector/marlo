@@ -68,4 +68,5 @@ alexaManager = unsafePerformIO $ do
               ] <> requestHeaders req
           }
     }
+{-# NOINLINE alexaManager #-}
 

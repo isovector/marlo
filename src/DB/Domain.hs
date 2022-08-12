@@ -4,10 +4,13 @@ CREATE SEQUENCE domains_id_seq;
 CREATE TABLE IF NOT EXISTS domains (
   id int8 PRIMARY KEY,
   domain text UNIQUE NOT NULL,
+  rules text NOT NULL,
   rank int4
 );
 
 CREATE INDEX domains_domain_idx ON domains (domain);
+
+ALTER TABLE domains ADD COLUMN rules text NOT NULL DEFAULT ('RobotDirectives {rb_allow = [], rb_disallow = []}');
 
 -}
 
@@ -26,6 +29,7 @@ import Types
 data Domain f = Domain
   { dom_id :: Column f DomainId
   , dom_domain :: Column f Text
+  , dom_rules :: Column f RobotDirectives
   , dom_rank :: Column f (Maybe Int32)
   }
   deriving stock Generic
@@ -38,9 +42,9 @@ emptyDomain :: Domain Identity
 emptyDomain = Domain
   { dom_id = DomainId 0
   , dom_domain = ""
+  , dom_rules = mempty
   , dom_rank = Nothing
   }
-
 
 
 nextDomainId :: Query (Expr DomainId)
@@ -54,6 +58,7 @@ domainsSchema = TableSchema
   , columns = Domain
       { dom_id = "id"
       , dom_domain = "domain"
+      , dom_rules = "rules"
       , dom_rank = "rank"
       }
   }

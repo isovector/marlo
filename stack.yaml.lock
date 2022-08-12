@@ -60,6 +60,13 @@ packages:
       sha256: 9df17014864b5c0bd30fe91c1933b7ee951b5f3d832dd5ca43ff2c370cc8e3a3
   original:
     hackage: streaming-with-0.3.0.0@sha256:5d1637de1023aa2bb3fac5999f4c915afdbf702c81461b54ebfcc9749a372c46,1298
+- completed:
+    hackage: robots-txt-0.4.1.7@sha256:fc4308ea1076b8b868fa52f26aafbefc5281ed90a893515a37b1aeebffeab04e,1629
+    pantry-tree:
+      size: 452
+      sha256: bf28efd70115ca58a039f6fc20fea1494916257a8a325c74cdadd74e895513cb
+  original:
+    hackage: robots-txt-0.4.1.7@sha256:fc4308ea1076b8b868fa52f26aafbefc5281ed90a893515a37b1aeebffeab04e,1629
 snapshots:
 - completed:
     size: 586286

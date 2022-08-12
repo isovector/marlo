@@ -1,21 +1,21 @@
 module Domains where
 
+import           Control.Monad (join)
 import           DB
-import           Data.Bifunctor (bimap)
+import           Data.Bifunctor (bimap, first)
 import           Data.Function (on)
-import           Data.Functor ((<&>))
 import           Data.Maybe (listToMaybe)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Integration.Alexa (getGlobalRank')
+import           Marlo.Robots
 import           Network.URI
 import           Rel8
 import           Types
-import Control.Monad (join)
-import Utils (hush)
+import           Utils (hush)
 
 
-getDomain :: Connection -> URI -> IO DomainId
+getDomain :: Connection -> URI -> IO (DomainId, RobotDirectives)
 getDomain conn uri = do
   let domname =
         T.pack $ show $ uri
@@ -23,27 +23,27 @@ getDomain conn uri = do
           , uriQuery = ""
           , uriPath = ""
           , uriScheme = "https:"
-          , uriAuthority = uriAuthority uri <&> \auth -> auth
-              { uriUserInfo = ""
-              , uriPort = ""
-              , uriRegName = dropSubdomain $ uriRegName auth
-              }
           }
   Right mdom <-
     doSelect conn $ do
       dom <- each domainsSchema
       where_ $ dom_domain dom ==. lit domname
-      pure $ dom_id dom
+      pure (dom_id dom, dom_rules dom)
 
   case listToMaybe mdom of
     Just di -> pure di
     Nothing -> do
-      fmap (either id id) $
-        rerankPopularity conn domname
+      fmap (first $ either id id) $
+        rerankPopularity conn uri domname
 
 
-rerankPopularity :: Connection -> Text -> IO (Either DomainId DomainId)
-rerankPopularity conn domname = do
+rerankPopularity
+    :: Connection
+    -> URI
+    -> Text
+    -> IO (Either DomainId DomainId, RobotDirectives)
+rerankPopularity conn uri domname = do
+  directives <- fetchRobotDirectives uri
   erank <- getGlobalRank' domname
   let rank = join $ hush erank
 
@@ -53,7 +53,9 @@ rerankPopularity conn domname = do
         { dom_domain = lit domname
         , dom_rank   = lit $ fmap fromIntegral rank
         }
-  pure $ bimap (const x) (const x) erank
+  pure
+    $ (, directives)
+    $ bimap (const x) (const x) erank
 
 
 upsertDomain :: Domain Expr -> Insert [DomainId]
@@ -71,15 +73,4 @@ upsertDomain dom = Insert
         }
     , returning = Projection dom_id
     }
-
-
-dropSubdomain :: String -> String
-dropSubdomain
-  = T.unpack
-  . T.intercalate "."
-  . reverse
-  . take 2
-  . reverse
-  . T.split (== '.')
-  . T.pack
 

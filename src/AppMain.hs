@@ -8,6 +8,7 @@ import qualified Search
 import qualified Spider
 import qualified Tools.BackfillDistance
 import qualified Tools.BackfillPopularity
+import qualified Tools.BackfillRobotDirectives
 import qualified Tools.BatchTitles
 import qualified Tools.ImportPopularity
 import qualified Tools.Purge
@@ -23,6 +24,7 @@ data Command
   | RebuildTitlesC
   | ImportPopularityC FilePath
   | BackfillPopularityC
+  | BackfillRobotRulesC
   deriving (Eq, Ord, Show)
 
 
@@ -51,6 +53,9 @@ sub = subparser $ mconcat
       ]
   , command "backfill-popularity" $ info (pure BackfillPopularityC) $ mconcat
       [ progDesc "Backfill website popularity from the alexa api"
+      ]
+  , command "backfill-robot-rules" $ info (pure BackfillRobotRulesC) $ mconcat
+      [ progDesc "Backfill robots.txt rules"
       ]
   ]
 
@@ -96,4 +101,5 @@ main = do
      ImportPopularityC csv -> Tools.ImportPopularity.main csv
      BackfillPopularityC   -> Tools.BackfillPopularity.main
      RebuildTitlesC        -> Tools.BatchTitles.main
+     BackfillRobotRulesC   -> Tools.BackfillRobotDirectives.main
 

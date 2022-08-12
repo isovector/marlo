@@ -61,6 +61,7 @@ dependencies:
 - streaming-cassava
 - streaming
 - streaming-with
+- robots-txt
 
 ghc-options:
 - -Wall

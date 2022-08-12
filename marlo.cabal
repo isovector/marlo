@@ -47,6 +47,8 @@ library
       Domains
       Integration.Alexa
       Keywords
+      Marlo.Manager
+      Marlo.Robots
       Rel8.Arrays
       Rel8.Headers
       Rel8.Machinery
@@ -63,6 +65,7 @@ library
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
+      Tools.BackfillRobotDirectives
       Tools.BatchTitles
       Tools.ImportPopularity
       Tools.Purge
@@ -157,6 +160,7 @@ library
     , parser-combinators
     , pretty-show
     , rel8
+    , robots-txt
     , scalpel
     , servant-client
     , servant-lucid
@@ -264,6 +268,7 @@ executable marlo
     , parser-combinators
     , pretty-show
     , rel8
+    , robots-txt
     , scalpel
     , servant-client
     , servant-lucid
@@ -375,6 +380,7 @@ test-suite marlo-tests
     , parser-combinators
     , pretty-show
     , rel8
+    , robots-txt
     , scalpel
     , servant-client
     , servant-lucid

@@ -7,8 +7,6 @@ import           Control.Monad (forever, void)
 import           DB
 import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable (for_, toList)
 import           Data.Functor.Contravariant ((>$<))
 import           Data.Int (Int32, Int16, Int64)
@@ -21,10 +19,9 @@ import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Traversable (for)
 import           Domains (getDomain)
+import           Marlo.Manager (marloManager)
+import           Marlo.Robots
 import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
-import qualified Network.HTTP.Client as HTTP
-import qualified Network.HTTP.Client.TLS as HTTP
-import           Network.HTTP.Types (hContentType)
 import           Network.URI (parseURI, URI)
 import           Prelude hiding (max)
 import qualified Rel8 as R8 hiding (filter, bool)
@@ -35,7 +32,7 @@ import           Rel8.Machinery
 import           Signals
 import qualified Types
 import           Types hiding (d_headers)
-import           Utils (runRanker, unsafeURI, random)
+import           Utils (runRanker, unsafeURI, random, downloadBody)
 
 
 markExplored :: DocumentState -> Document Identity -> Update ()
@@ -56,8 +53,8 @@ docIdFor uri = do
 
 
 
-getDocId :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Document Identity)
-getDocId conn depth dist uri = do
+getDoc :: Connection -> Int32 -> [Maybe Int16] -> URI -> IO (Document Identity)
+getDoc conn depth dist uri = do
     Right dids <- doSelect conn $ docIdFor uri
     case dids of
       [did] -> pure did
@@ -190,7 +187,7 @@ titleSegs
 
 buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
 buildEdges conn disc ls = do
-  ldocs' <- (traverse . traverse) (getDocId conn (d_depth disc) (d_distance disc)) ls
+  ldocs' <- (traverse . traverse) (getDoc conn (d_depth disc) (d_distance disc)) ls
   let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
 
   for ldocs $ \l -> do
@@ -235,11 +232,18 @@ spiderMain mexclude = do
 
 index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
 index conn depth dist uri down = do
-  disc <- getDocId conn depth dist uri
-  mgr <- HTTP.getGlobalManager
-  case (d_mime down == "text/html" && isAcceptableLink uri) of
+  (dom, directives) <- getDomain conn uri
+  disc <- getDoc conn depth dist uri
+
+  let can_index = checkRobotsDirectives directives (CanIndex uri)
+
+  case ( d_mime down == "text/html"
+      && isAcceptableLink uri
+      && can_index
+       ) of
+
     True -> do
-      let env = Env uri mgr conn
+      let env = Env uri marloManager conn
       Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
       void $ buildEdges conn disc ls
 
@@ -255,6 +259,7 @@ index conn depth dist uri down = do
             { d_state = lit Explored
             , d_title = lit t
             , d_raw = lit raw
+            , d_domain = lit $ Just dom
             }
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
@@ -263,17 +268,21 @@ index conn depth dist uri down = do
         { d_state = Explored
         , d_title = t
         , d_raw = raw
+        , d_domain = Just dom
         }
-    False -> do
-      void $ doUpdate conn $ markExplored Pruned disc
+
+    False ->
+      void
+        $ doUpdate conn
+        $ flip markExplored disc
+        $ bool Pruned DisallowedByRobots can_index
 
 
 indexFromDB :: Connection -> Document Identity -> IO ()
 indexFromDB conn disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
-  mgr <- HTTP.getGlobalManager
   case (isAcceptableLink uri) of
-    True -> indexCore conn (Env uri mgr conn) disc
+    True -> indexCore conn (Env uri marloManager conn) disc
     False -> do
       void $ doUpdate conn $ markExplored Pruned disc
 
@@ -281,7 +290,7 @@ indexFromDB conn disc = do
 indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
-  dom_id <- getDomain conn uri
+  (dom_id, _) <- getDomain conn uri
   Just (titl, pc, has_ads, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
       (,,,)
@@ -289,7 +298,13 @@ indexCore conn env disc = do
         <*> rankContent
         <*> hasGoogleAds
         <*> rankStats
-  let stats = stats' { ps_cookies = isJust $ lookupHeader HdrSetCookie $ prd_headers $ d_raw disc }
+  let stats = stats'
+        { ps_cookies
+            = isJust
+            $ lookupHeader HdrSetCookie
+            $ prd_headers
+            $ d_raw disc
+        }
 
   buildTitleSegs conn (d_docId disc) titl
 
@@ -309,32 +324,15 @@ indexCore conn env disc = do
   pure ()
 
 
-mimeToContentType :: ByteString -> ByteString
-mimeToContentType = BS.takeWhile (/= ';')
-
-
-downloadBody :: String -> IO (Download Maybe ByteString)
-downloadBody url = do
-  manager <- HTTP.getGlobalManager
-  resp <- flip HTTP.httpLbs manager =<< HTTP.parseRequest url
-  let mime = fmap mimeToContentType
-            $ lookup hContentType
-            $ HTTP.responseHeaders resp
-  pure
-    $ Download mime (HTTP.responseHeaders resp)
-    $ BSL.toStrict $ HTTP.responseBody resp
-
-
 debugRankerInDb :: Text -> Ranker a -> IO (Text, Maybe a)
 debugRankerInDb uri r = do
   Right conn <- connect
-  mgr <- HTTP.getGlobalManager
   Right [d] <-
     doSelect conn $ limit 1 $ do
       d <- each documentSchema
       where_ $ (like (lit $ "%" <> uri <> "%") $ d_uri d) &&. d_state d ==. lit Explored
       pure d
-  let env = Env (unsafeURI $ T.unpack $ d_uri d) mgr conn
+  let env = Env (unsafeURI $ T.unpack $ d_uri d) marloManager conn
   fmap (d_uri d, ) $
     runRanker env (decodeUtf8 $ prd_data $ d_raw d) r
 

@@ -15,7 +15,7 @@ import qualified Data.Text as T
 import           Domains (rerankPopularity)
 import           Prelude hiding (null)
 import           Rel8
-import           Utils (random)
+import           Utils (random, unsafeURI)
 
 
 main :: IO ()
@@ -49,9 +49,10 @@ main = do
         pure dom
 
     putStrLn $ T.unpack $ "checking popularity for " <> dom_domain dom
-    rerankPopularity conn (dom_domain dom) >>= \case
-       Left _ -> putStrLn "errored! did we hit a captcha?"
-       Right _ -> loop
+    let uri = unsafeURI $ T.unpack $ dom_domain dom
+    rerankPopularity conn uri (dom_domain dom) >>= \case
+       (Left _, _) -> putStrLn "errored! did we hit a captcha?"
+       (Right _, _) -> loop
 
 
 substring :: Expr Text -> Expr Int16 -> Expr Text

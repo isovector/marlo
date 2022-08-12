@@ -181,3 +181,13 @@ Negate a query, requiring it to not hold.
 Any query can be wrapped in parentheses. Useful when working with the `OR` and
 `-` operators.
 
+
+## For Webmasters
+
+The marlo spider runs with user-agent `marlo/1.0
+(+https://marlo.sandymaguire.me)` if you'd like to issue directives to it in
+`robots.txt`.
+
+It currently obeys `Allow` and `Disallow` stanzas --- please do file a bug if
+you feel it's misbehaving by not following other directives.
+

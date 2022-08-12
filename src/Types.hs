@@ -116,6 +116,7 @@ data DocumentState
   | Errored
   | Unacceptable
   | NoContent
+  | DisallowedByRobots
   deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
   deriving (DBType, DBEq) via ReadShow DocumentState
 
@@ -129,4 +130,20 @@ data LimitStrategy
 newtype PageNumber = PageNumber
   { getPageNumber :: Word
   } deriving newtype (Eq, Ord, Show, Num, Enum, Bounded, ToHttpApiData, FromHttpApiData)
+
+
+data RobotDirectives = RobotDirectives
+  { rb_allow :: [Text]
+  , rb_disallow :: [Text]
+  }
+  deriving stock (Eq, Ord, Show, Read, Generic)
+  deriving (DBType, DBEq) via ReadShow RobotDirectives
+
+instance Semigroup RobotDirectives where
+  (RobotDirectives txts txts') <> (RobotDirectives txts2 txts3)
+    = RobotDirectives
+        {rb_allow = txts <> txts2, rb_disallow = txts' <> txts3}
+
+instance Monoid RobotDirectives where
+  mempty = RobotDirectives {rb_allow = mempty, rb_disallow = mempty}
 

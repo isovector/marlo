@@ -5,6 +5,9 @@ module Utils where
 import           Control.Applicative ((<|>))
 import           Control.Arrow (first)
 import           Control.Monad.Reader
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Functor.Contravariant ((>$))
 import           Data.Maybe (fromJust)
 import           Data.Set (Set)
@@ -13,6 +16,9 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Time (getCurrentTime, NominalDiffTime)
 import           Data.Time.Clock (diffUTCTime)
+import           Marlo.Manager (marloManager)
+import qualified Network.HTTP.Client as HTTP
+import           Network.HTTP.Types (hContentType)
 import           Network.URI
 import           Rel8 (limit, offset, Order, nullaryFunction, asc)
 import           Text.HTML.Scalpel
@@ -105,4 +111,19 @@ commafy
   . T.chunksOf 3
   . T.reverse
   . T.pack
+
+
+downloadBody :: String -> IO (Download Maybe ByteString)
+downloadBody url = do
+  resp <- flip HTTP.httpLbs marloManager =<< HTTP.parseRequest url
+  let mime = fmap mimeToContentType
+            $ lookup hContentType
+            $ HTTP.responseHeaders resp
+  pure
+    $ Download mime (HTTP.responseHeaders resp)
+    $ BSL.toStrict $ HTTP.responseBody resp
+
+
+mimeToContentType :: ByteString -> ByteString
+mimeToContentType = BS.takeWhile (/= ';')
 
