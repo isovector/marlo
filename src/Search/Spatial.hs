@@ -11,7 +11,7 @@ import           Control.Exception
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
 import           Data.Bool (bool)
-import           Data.Foldable (traverse_, asum)
+import           Data.Foldable (traverse_)
 import           Data.Function (fix)
 import           Data.List (sortOn)
 import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, isJust)
@@ -73,7 +73,7 @@ instance SearchMethod 'Spatial where
 
 
 correctTitle :: SearchResult Identity -> Text
-correctTitle = trimTo 40 "..." . chopTitle . sr_title
+correctTitle = trimTo 37 "..." . sr_title
 
 measureText :: Text -> V2 Int
 measureText s = V2 (T.length s + 1) 1
@@ -88,10 +88,7 @@ makeRect sr = Rect
   , r_data = sr { sr_title = title' }
   }
   where
-    title'
-      = trimTo 40 "..."
-      $ chopTitle
-      $ sr_title sr
+    title' = sr_title sr
 
 
 trimTo :: Int -> Text -> Text -> Text
@@ -100,22 +97,6 @@ trimTo sz rest t
   = T.take sz t <> rest
   | otherwise = t
 
-
-chopTitle :: Text -> Text
-chopTitle t = fromMaybe t $ asum
-  [ onlyIfDifferent (dropTail [ '|', '-', '·', '\8211' ]) t
-  , onlyIfDifferent (dropHead [ ':' ]) t
-  ]
-  where
-    dropTail, dropHead :: [Char] -> Text -> Text
-    dropTail els
-      = T.intercalate ""
-      . init
-      . T.split (flip elem els)
-    dropHead els
-      = T.intercalate ""
-      . drop 1
-      . T.split (flip elem els)
 
 
 onlyIfDifferent :: Eq a => (a -> a) -> a -> Maybe a
