@@ -8,9 +8,10 @@ import qualified Search
 import qualified Spider
 import qualified Tools.BackfillDistance
 import qualified Tools.BackfillPopularity
+import qualified Tools.BatchTitles
+import qualified Tools.ImportPopularity
 import qualified Tools.Purge
 import qualified Tools.Reindex
-import qualified Tools.ImportPopularity
 
 
 data Command
@@ -19,6 +20,7 @@ data Command
   | PurgeC
   | ReindexC
   | BackfillDistanceC
+  | RebuildTitlesC
   | ImportPopularityC FilePath
   | BackfillPopularityC
   deriving (Eq, Ord, Show)
@@ -37,6 +39,9 @@ sub = subparser $ mconcat
       ]
   , command "reindex" $ info (pure ReindexC) $ mconcat
       [ progDesc "Reindex every explored site"
+      ]
+  , command "batch-titles" $ info (pure RebuildTitlesC) $ mconcat
+      [ progDesc "Recompute best titles for each page"
       ]
   , command "backfill-distance" $ info (pure BackfillDistanceC) $ mconcat
       [ progDesc "Rerun the root-distance algorithm"
@@ -90,4 +95,5 @@ main = do
      BackfillDistanceC     -> Tools.BackfillDistance.main
      ImportPopularityC csv -> Tools.ImportPopularity.main csv
      BackfillPopularityC   -> Tools.BackfillPopularity.main
+     RebuildTitlesC        -> Tools.BatchTitles.main
 

@@ -63,6 +63,7 @@ library
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
+      Tools.BatchTitles
       Tools.ImportPopularity
       Tools.Purge
       Tools.Reindex
