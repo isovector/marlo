@@ -199,7 +199,7 @@ isWiki auth site =
 forbidSites :: [String]
 forbidSites =
   [ "airbnb.com"
-  [ "aliexpress.com"
+  , "aliexpress.com"
   , "amazon.ca"
   , "amazon.co.uk"
   , "amazon.com"
