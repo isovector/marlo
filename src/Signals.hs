@@ -479,9 +479,15 @@ isSpiritualPolution :: Ranker Bool
 isSpiritualPolution = fmap or $ sequenceA $
   [ isNews
   , hasGoogleAds
-  , hasModal
-  , hasSticky
+  , hasPaywall
   ]
+
+hasPaywall :: Ranker Bool
+hasPaywall = do
+  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+  pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
+    [ "isAccessibleForFree"
+    ]
 
 
 isNews :: Ranker Bool
