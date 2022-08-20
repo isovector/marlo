@@ -172,6 +172,7 @@ isAcceptableLink uri
           , ".gz"
           , ".py"
           , ".xls"
+          , ".json"
           , ".xlsl"
           , ".ppt"
           , ".ipyn"

@@ -244,14 +244,15 @@ index conn depth dist uri down = do
 
     True -> do
       let env = Env uri marloManager conn
+      putStrLn "ranking"
       Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
-      void $ buildEdges conn disc ls
 
       let raw =
             PageRawData
               { prd_data = d_body down
               , prd_headers = fmap headersToHeaders $ Types.d_headers down
               }
+      putStrLn "setting explored"
       Right _ <- doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()
@@ -264,12 +265,14 @@ index conn depth dist uri down = do
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
         }
+      putStrLn "doing core index"
       indexCore conn env $ disc
         { d_state = Explored
         , d_title = t
         , d_raw = raw
         , d_domain = Just dom
         }
+      void $ buildEdges conn disc ls
 
     False ->
       void
@@ -306,9 +309,11 @@ indexCore conn env disc = do
             $ d_raw disc
         }
 
+  putStrLn "title segs"
   unless is_pollution $
     buildTitleSegs conn (d_docId disc) titl
 
+  putStrLn "filling stats"
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  doUpdate conn $ Update
     { target = documentSchema
