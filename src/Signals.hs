@@ -475,8 +475,8 @@ textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScrap
     recurseOn tag = chroot (tag `atDepth` 0) $ textWithoutScripts
 
 
-isSpiritualPolution :: Ranker Bool
-isSpiritualPolution = fmap or $ sequenceA $
+isSpiritualPollution :: Ranker Bool
+isSpiritualPollution = fmap or $ sequenceA $
   [ isNews
   , hasGoogleAds
   , hasPaywall

@@ -7,7 +7,7 @@ import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Marlo.Manager (marloManager)
 import           Rel8
-import           Signals (forbidPaths, forbidSites, isSpiritualPolution)
+import           Signals (forbidPaths, forbidSites, isSpiritualPollution)
 import           Types
 import           Utils (runRanker, unsafeURI, withDocuments)
 
@@ -33,13 +33,13 @@ main = do
   putStrLn $ "deleted " <> show n <> " rows by uri"
 
   withDocuments conn (\d -> d_state d ==. lit Explored) $ \doc -> do
-    is_polution <-
+    is_pollution <-
       runRanker
         (Env (unsafeURI $ T.unpack $ d_uri doc) marloManager conn)
         (decodeUtf8 $ prd_data $ d_raw doc)
-        isSpiritualPolution
-    when (fromMaybe False is_polution) $ do
-      putStrLn $ T.unpack $ "poluted: " <> d_uri doc
+        isSpiritualPollution
+    when (fromMaybe False is_pollution) $ do
+      putStrLn $ T.unpack $ "polluted: " <> d_uri doc
       void $ doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()

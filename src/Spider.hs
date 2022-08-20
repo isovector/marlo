@@ -291,12 +291,12 @@ indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   (dom_id, _) <- getDomain conn uri
-  Just (titl, pc, is_polution, stats') <-
+  Just (titl, pc, is_pollution, stats') <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
       (,,,)
         <$> title
         <*> rankContent
-        <*> isSpiritualPolution
+        <*> isSpiritualPollution
         <*> rankStats
   let stats = stats'
         { ps_cookies
@@ -306,7 +306,7 @@ indexCore conn env disc = do
             $ d_raw disc
         }
 
-  unless is_polution $
+  unless is_pollution $
     buildTitleSegs conn (d_docId disc) titl
 
   -- TODO(sandy): bug??? headers aren't being set
@@ -316,7 +316,7 @@ indexCore conn env disc = do
     , set = \ _ dis -> dis
         { d_domain = lit $ Just dom_id
         , d_page = lit pc
-        , d_state    = lit $ bool Explored Unacceptable is_polution
+        , d_state    = lit $ bool Explored Unacceptable is_pollution
         , d_stats    = lit stats
         }
     , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
