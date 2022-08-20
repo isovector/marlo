@@ -5,9 +5,11 @@ module Utils where
 import           Control.Applicative ((<|>))
 import           Control.Arrow (first)
 import           Control.Monad.Reader
+import           DB
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$))
 import           Data.Maybe (fromJust)
 import           Data.Set (Set)
@@ -20,7 +22,7 @@ import           Marlo.Manager (marloManager)
 import qualified Network.HTTP.Client as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI
-import           Rel8 (limit, offset, Order, nullaryFunction, asc)
+import           Rel8
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
@@ -126,4 +128,23 @@ downloadBody url = do
 
 mimeToContentType :: ByteString -> ByteString
 mimeToContentType = BS.takeWhile (/= ';')
+
+
+withDocuments
+    :: Connection
+    -> (Document Expr -> Expr Bool)
+    -> (Document Result -> IO b)
+    -> IO ()
+withDocuments conn sel m = do
+  Right docs <- doSelect conn $ do
+    d <- each documentSchema
+    where_ $ sel d
+    pure $ d_docId d
+  for_ docs $ \did -> do
+    Right [doc] <-
+      doSelect conn $ do
+        d <- each documentSchema
+        where_ $ d_docId d ==. lit did
+        pure d
+    m doc
 

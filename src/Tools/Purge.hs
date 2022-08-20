@@ -2,7 +2,6 @@ module Tools.Purge where
 
 import           Control.Monad (void, when)
 import           DB
-import           Data.Foldable (for_)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -10,7 +9,7 @@ import           Marlo.Manager (marloManager)
 import           Rel8
 import           Signals (forbidPaths, forbidSites, isSpiritualPolution)
 import           Types
-import           Utils (runRanker, unsafeURI)
+import           Utils (runRanker, unsafeURI, withDocuments)
 
 
 main :: IO ()
@@ -33,17 +32,7 @@ main = do
     }
   putStrLn $ "deleted " <> show n <> " rows by uri"
 
-  Right docs <- doSelect conn $ do
-    d <- each documentSchema
-    where_ $ d_state d ==. lit Explored
-    pure $ d_docId d
-  for_ docs $ \did -> do
-    Right [doc] <-
-      doSelect conn $ do
-        d <- each documentSchema
-        where_ $ d_docId d ==. lit did
-        pure d
-    print $ d_uri doc
+  withDocuments conn (\d -> d_state d ==. lit Explored) $ \doc -> do
     is_polution <-
       runRanker
         (Env (unsafeURI $ T.unpack $ d_uri doc) marloManager conn)
@@ -58,7 +47,4 @@ main = do
         , updateWhere = \_ d -> d_docId d ==. lit (d_docId doc)
         , returning = pure ()
         }
-
-
-  pure ()
 
