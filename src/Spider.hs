@@ -249,7 +249,7 @@ index conn depth dist uri down = do
 
     True -> do
       let env = Env uri marloManager conn
-      putStrLn "ranking"
+      putStrLn $ "ranking " <> show uri
       Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
 
       let raw =
@@ -279,11 +279,13 @@ index conn depth dist uri down = do
         }
       void $ buildEdges conn disc ls
 
-    False ->
-      void
-        $ doUpdate conn
-        $ flip markExplored disc
-        $ bool Pruned DisallowedByRobots can_index
+    False -> do
+      putStrLn $ "FAILED " <> show uri
+      Right _
+        <- doUpdate conn
+          $ flip markExplored disc
+          $ bool Pruned DisallowedByRobots can_index
+      pure ()
 
 
 indexFromDB :: Connection -> Document Identity -> IO ()
