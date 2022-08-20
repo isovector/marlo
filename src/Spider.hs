@@ -218,9 +218,7 @@ spiderMain mexclude = do
             putStrLn $ "fetching " <> T.unpack url
             catch
               (do
-                putStrLn $ "trying to download" <> T.unpack url
                 down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
-                putStrLn $ "downloaded" <> T.unpack url
                 index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do
@@ -234,14 +232,11 @@ spiderMain mexclude = do
 
 index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
 index conn depth dist uri down = do
-  putStrLn $ "getting domain " <> show uri
   (dom, directives) <- getDomain conn uri
-  putStrLn $ "getting doc " <> show uri
   disc <- getDoc conn depth dist uri
 
   let can_index = checkRobotsDirectives directives (CanIndex uri)
 
-  putStrLn $ "checking doc " <> show uri
   case ( d_mime down == "text/html"
       && isAcceptableLink uri
       && can_index
@@ -249,7 +244,6 @@ index conn depth dist uri down = do
 
     True -> do
       let env = Env uri marloManager conn
-      putStrLn $ "ranking " <> show uri
       Just (ls, t) <- runRanker env (decodeUtf8 $ d_body down) $ (,) <$> links <*> title
 
       let raw =
@@ -257,7 +251,6 @@ index conn depth dist uri down = do
               { prd_data = d_body down
               , prd_headers = fmap headersToHeaders $ Types.d_headers down
               }
-      putStrLn "setting explored"
       Right _ <- doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()
@@ -270,7 +263,6 @@ index conn depth dist uri down = do
         , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
         , returning = pure ()
         }
-      putStrLn "doing core index"
       indexCore conn env $ disc
         { d_state = Explored
         , d_title = t
@@ -280,11 +272,10 @@ index conn depth dist uri down = do
       void $ buildEdges conn disc ls
 
     False -> do
-      putStrLn $ "FAILED " <> show uri
       Right _
         <- doUpdate conn
           $ flip markExplored disc
-          $ bool Pruned DisallowedByRobots can_index
+          $ bool DisallowedByRobots Pruned can_index
       pure ()
 
 
