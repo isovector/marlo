@@ -218,7 +218,9 @@ spiderMain mexclude = do
             putStrLn $ "fetching " <> T.unpack url
             catch
               (do
+                putStrLn $ "trying to download" <> T.unpack url
                 down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
+                putStrLn $ "downloaded" <> T.unpack url
                 index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do
