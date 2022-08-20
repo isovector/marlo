@@ -2,6 +2,7 @@ module Data.SchemaOrg where
 
 import Data.Aeson
 import Data.Foldable (asum)
+import Data.Text (Text)
 
 
 newtype IsAccessibleForFree = IsAccessibleForFree
@@ -15,5 +16,19 @@ instance FromJSON IsAccessibleForFree where
       [ IsAccessibleForFree <$>  obj .: "isAccessibleForFree"
       , obj .: "hasPart"
       , pure $ IsAccessibleForFree True
+      ]
+
+
+
+newtype MetadataType = MetadataType
+  { getMetadataType :: Text
+  }
+  deriving (Eq, Ord, Show)
+
+
+instance FromJSON MetadataType where
+  parseJSON = withObject "" $ \obj ->
+    asum
+      [ MetadataType <$>  obj .: "@type"
       ]
 

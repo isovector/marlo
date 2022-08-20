@@ -481,7 +481,7 @@ textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScrap
 
 isSpiritualPollution :: Ranker Bool
 isSpiritualPollution = fmap or $ sequenceA $
-  [ isNews
+  [ canBeFilteredOutBySchemaType
   , hasGoogleAds
   , hasPaywall
   ]
@@ -495,20 +495,20 @@ hasPaywall = do
       Just (IsAccessibleForFree b) -> not b
 
 
-isNews :: Ranker Bool
-isNews = do
+canBeFilteredOutBySchemaType :: Ranker Bool
+canBeFilteredOutBySchemaType = do
   uri <- asks $ e_uri
-
   -- HACK: Substack stupidly tags itself as a news article
   let is_substack = maybe False (isInfixOf "substack.com" . uriRegName) $ uriAuthority uri
 
-  case is_substack of
-    True -> pure False
-    False -> do
-      ds <- texts $ "script" @: ["type" @= "application/ld+json"]
-      pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
-        [ "NewsArticle"
-        ]
+  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+  pure $ flip any ds $ \d ->
+    case fmap getMetadataType $ decode $ fromStrict $ encodeUtf8 d of
+      Just "NewsArticle"    -> True && not is_substack
+      Just "Product"        -> True
+      Just "Offer"          -> True
+      Just "AggregateOffer" -> True
+      _                     -> False
 
 
 mainContent :: Ranker Text

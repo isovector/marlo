@@ -51,8 +51,9 @@ the phenomenon:
 
 Right now, marlo's pollution filter is extremely basic, but gets surprisingly
 good results --- it outright bans any page that identifies itself as a news
-article, any page that shows ads, and any page that is hidden behind a paywall.
-You'd be amazed at how much awful stuff this simple filter manages to avoid.
+article, any page that shows ads, any page that is trying to sell you something,
+and any page that is hidden behind a paywall. You'd be amazed at how much awful
+stuff this simple filter manages to avoid.
 
 
 
