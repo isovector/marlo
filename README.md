@@ -23,6 +23,39 @@ you don't actually know what an answer would look like. Thus, you want to be
 easily able to get a lay of the land and canvas opinions to help form yours.
 
 
+### Spiritual Pollution
+
+Marlo's index is based around the idea of avoiding spiritual pollution. What's
+that? [Elaine Ou](https://elaineou.com/2020/01/28/i-know-it-when-i-see-it/) on
+the phenomenon:
+
+> [An] example is porn. Republicans have, at various times, advocated for
+> banning pornography under the Communications Decency Act or by emphasizing its
+> ties to human trafficking. It never works because detractors retreat to the
+> Motte of free speech. China cuts to the chase and declares pornography a form
+> of spiritual pollution. Right?? No one ever concludes a porn video in high
+> spirits the way they do after watching Amelie or It’s a Wonderful Life. Just
+> the opposite, in fact.
+>
+> I’m not pro-censorship, I’m anti-pollution! All of a sudden, content
+> moderation becomes super easy. No more arguing about whether something is fake
+> news or hate speech. If it pollutes the spirit, BAN! Clickbait? BANNED.
+> Outrage porn? BANNED. Breitbart.com? BANNED. Huffpost.com? BANNED.
+> NYtimes.com? BANNED.
+>
+> I passed through an airport last week, and every single TV screen was
+> displaying impeachment garbage on CNN. Would airport travelers tolerate it if
+> I showed up with a diesel-powered leafblower and proceeded to spew exhaust all
+> over the terminal? NO! So why should we tolerate CNN assaulting our mental
+> capacity in much the same way?
+
+Right now, marlo's pollution filter is extremely basic, but gets surprisingly
+good results --- it outright bans any page that identifies itself as a news
+article, any page that shows ads, and any page that is hidden behind a paywall.
+You'd be amazed at how much awful stuff this simple filter manages to avoid.
+
+
+
 ## Concept - Joins
 
 As a multifacted human, you have a wide variety of interests. You probably know
