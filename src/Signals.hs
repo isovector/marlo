@@ -292,6 +292,7 @@ forbidPaths =
   , "/rss"
   , "/feed"
   , "/download"
+  , "search-results"
   ]
 
 
@@ -472,6 +473,23 @@ textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScrap
     unknown   = recurseOn anySelector
 
     recurseOn tag = chroot (tag `atDepth` 0) $ textWithoutScripts
+
+
+isSpiritualPolution :: Ranker Bool
+isSpiritualPolution = fmap or $ sequenceA $
+  [ isNews
+  , hasGoogleAds
+  , hasModal
+  , hasSticky
+  ]
+
+
+isNews :: Ranker Bool
+isNews = do
+  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+  pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
+    [ "NewsArticle"
+    ]
 
 
 mainContent :: Ranker Text

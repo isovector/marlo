@@ -12,8 +12,8 @@ import Network.HTTP.Client (Manager)
 import Network.HTTP.Types.Header (ResponseHeaders)
 import Network.URI
 import Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
-import Text.HTML.Scalpel
 import Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
+import Text.HTML.Scalpel
 
 
 data Env = Env
