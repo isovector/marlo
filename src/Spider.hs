@@ -307,11 +307,9 @@ indexCore conn env disc = do
             $ d_raw disc
         }
 
-  putStrLn "title segs"
   unless is_pollution $
     buildTitleSegs conn (d_docId disc) titl
 
-  putStrLn "filling stats"
   -- TODO(sandy): bug??? headers aren't being set
   Right () <-  doUpdate conn $ Update
     { target = documentSchema
