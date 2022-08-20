@@ -25,21 +25,6 @@ CREATE TABLE IF NOT EXISTS discovery (
 CREATE INDEX depth_idx ON discovery (depth);
 
 ALTER TABLE discovery
-  ADD COLUMN domain int8 REFERENCES domains(id);
-
-ALTER TABLE discovery
-    ADD COLUMN distance int2[]
-    NOT NULL
-    DEFAULT CAST(ARRAY[null,null,null,null,null,null,null,null,null,null] AS int2[]);
-
-ALTER TABLE discovery ADD COLUMN js int4 NULL DEFAULT 0;
-ALTER TABLE discovery ADD COLUMN css int4 NULL DEFAULT 0;
-ALTER TABLE discovery ADD COLUMN tweets int2 NULL DEFAULT 0;
-ALTER TABLE discovery ADD COLUMN gifs int2 NULL DEFAULT 0;
-ALTER TABLE discovery ADD COLUMN cookies bool NULL DEFAULT false;
-ALTER TABLE discovery ADD COLUMN headers text[] NULL DEFAULT CAST(ARRAY[] AS text[]);
-
-ALTER TABLE discovery
     ADD COLUMN search tsvector
     GENERATED ALWAYS AS (setweight(to_tsvector('english', title), 'A')
                || ' ' || setweight(to_tsvector('english', headings), 'B')

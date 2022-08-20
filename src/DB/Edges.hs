@@ -11,16 +11,6 @@ CREATE TABLE IF NOT EXISTS edges (
 CREATE INDEX src_idx ON edges (src);
 CREATE INDEX dst_idx ON edges (dst);
 
-delete from edges where not exists (select * from discovery as d where d.doc_id = edges.src);
-ALTER TABLE edges ADD CONSTRAINT fk_src FOREIGN KEY (src) REFERENCES discovery(doc_id) ON DELETE CASCADE;
-
-delete from edges where not exists (select * from discovery as d where d.doc_id = edges.dst);
-ALTER TABLE edges ADD CONSTRAINT fk_dst FOREIGN KEY (dst) REFERENCES discovery(doc_id) ON DELETE CASCADE;
-
-
--- CASCADE PRUNE AFTER EDGES ARE DELETED
-select from discovery where not exists (select * from edges as e where e.dst = discovery.doc_id) and depth > 0;
-
 -}
 
 module DB.Edges where
