@@ -218,7 +218,9 @@ spiderMain mexclude = do
             putStrLn $ "fetching " <> T.unpack url
             catch
               (do
+                putStrLn $ "trying to download" <> T.unpack url
                 down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
+                putStrLn $ "downloaded" <> T.unpack url
                 index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do
@@ -232,11 +234,14 @@ spiderMain mexclude = do
 
 index :: Connection -> Int32 -> [Maybe Int16] -> URI -> Download Identity ByteString -> IO ()
 index conn depth dist uri down = do
+  putStrLn $ "getting domain " <> show uri
   (dom, directives) <- getDomain conn uri
+  putStrLn $ "getting doc " <> show uri
   disc <- getDoc conn depth dist uri
 
   let can_index = checkRobotsDirectives directives (CanIndex uri)
 
+  putStrLn $ "checking doc " <> show uri
   case ( d_mime down == "text/html"
       && isAcceptableLink uri
       && can_index
