@@ -6,16 +6,20 @@ import           Assets (getAssetSizes)
 import           Control.Applicative (optional, empty, liftA2, many, (<|>))
 import           Control.Monad.Reader
 import           DB
+import           Data.Aeson (decode)
+import           Data.ByteString.Lazy (fromStrict)
 import           Data.Char (toLower, isAlpha, isDigit)
 import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isInfixOf, genericLength)
 import           Data.Maybe (mapMaybe, fromMaybe)
+import           Data.SchemaOrg
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
+import           Data.Text.Encoding (encodeUtf8)
 import           Data.Traversable (for)
 import           Keywords
 import           Network.URI
@@ -485,17 +489,26 @@ isSpiritualPollution = fmap or $ sequenceA $
 hasPaywall :: Ranker Bool
 hasPaywall = do
   ds <- texts $ "script" @: ["type" @= "application/ld+json"]
-  pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
-    [ "isAccessibleForFree"
-    ]
+  pure $ flip any ds $ \d ->
+    case decode $ fromStrict $ encodeUtf8 d of
+      Nothing -> False
+      Just (IsAccessibleForFree b) -> not b
 
 
 isNews :: Ranker Bool
 isNews = do
-  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
-  pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
-    [ "NewsArticle"
-    ]
+  uri <- asks $ e_uri
+
+  -- HACK: Substack stupidly tags itself as a news article
+  let is_substack = maybe False (isInfixOf "substack.com" . uriRegName) $ uriAuthority uri
+
+  case is_substack of
+    True -> pure False
+    False -> do
+      ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+      pure $ flip any ds $ \d -> any (flip T.isInfixOf d)
+        [ "NewsArticle"
+        ]
 
 
 mainContent :: Ranker Text
