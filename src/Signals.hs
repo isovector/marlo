@@ -498,13 +498,14 @@ hasPaywall = do
 canBeFilteredOutBySchemaType :: Ranker Bool
 canBeFilteredOutBySchemaType = do
   uri <- asks $ e_uri
-  -- HACK: Substack stupidly tags itself as a news article
+  -- HACK: Substack and medium stupidly tag themselves as a news article
   let is_substack = maybe False (isInfixOf "substack.com" . uriRegName) $ uriAuthority uri
+  let is_medium = maybe False (isInfixOf "medium.com" . uriRegName) $ uriAuthority uri
 
   ds <- texts $ "script" @: ["type" @= "application/ld+json"]
   pure $ flip any ds $ \d ->
     case fmap getMetadataType $ decode $ fromStrict $ encodeUtf8 d of
-      Just "NewsArticle"    -> True && not is_substack
+      Just "NewsArticle"    -> True && not is_substack && not is_medium
       Just "Product"        -> True
       Just "Offer"          -> True
       Just "AggregateOffer" -> True
