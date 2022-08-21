@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Loop Ring</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,400i,500,500i,700,700i,900,900i" />
+  <link rel="stylesheet" href="reset.css">
+  <link rel="stylesheet" href="article.css">
+
+<script data-goatcounter="https://graycot.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+</head>
+<body>
+    <div class="page-wrapper">
+      <nav><a href="/index.html">Home</a></nav>
+        <h1>Web Ring</h1>
+          <h2>What is a webring?</h2>
+            <p>A webring (or web ring) is a collection of websites linked together in a circular structure, and usually organized around a specific theme, often educational or social. They were popular in the 1990s and early 2000s, particularly among amateur websites. </p>
+            <p>To be a part of the webring, each site has a common navigation bar. It contains links to the previous and next site. By selecting next (or previous) repeatedly, the user will eventually reach the site they started at. This is the origin of the term webring. The select-through route around the ring is usually supplemented by a central site with links to all member sites; this prevents the ring from breaking completely if a member site goes offline. The advantage of a webring is that if the user is interested in the topic on one website, they can quickly connect to another website on the same topic. Webrings usually have a moderator who decides which pages to include in the webring. After approval, webmasters add their pages to the ring by 'linking in' to the ring; this requires adding the necessary HTML or JavaScript widget to their site.</p>
+            <aside>Explaination was ripped from <a href="https://en.wikipedia.org/wiki/Webring" target="_blank">Wikipedia</a></aside>
+    </div>
+    <hr>
+    <div class="page-wrapper">
+       <h1>Loop Ring</h1>
+          <h2>Loop Ring History and Manifesto:</h2>
+          <p>Loop Ring is a webring project started by <a href="https://graystea.neocities.org/">Gray</a> with the purpose of building a community and connecting with netizens across the world. 
+            Everyone is welcome to join the Loop Ring as long as their website is genuine and sincere. We seek members who Design, Create, Educate, and Express themselves. If you think that you fall into any of those categories, you are welcome here. </p>
+          <h3><strong>Sites will not be allowed to participate if they contain any of the following:</strong></h3>
+          <ul>
+            <li>Bullying, Harassment, Sexism, Homophobia/Transphobia, Racism, or Hate speech.</li>
+            <li>Antisocial / Disturbing behavior</li>
+            <li>Unmarked NSFW content</li>
+            <li>Paid advertisements</li>
+            <li>Malicious code</li>
+            <li><strong class="underline">Only</strong> a portfolio.</li>
+          </ul>
+          <h2>How to join:</h2>
+            <h3>1: Let us know that you are interested!</h3>
+              <p> Contact  <span class="highlight">Gray</span> on the <a href="https://discord.com/invite/JM34yvMaFP" target="_blank">discord server</a> and send a message in #web-ring. Alternatively, you can add yourself to the webring by making a <a href="https://github.com/Graycot/GraycotHome/blob/master/WebRing/sites.js">pull request on github</a>.</p>
+            <h3>2: Add the webring code to your site.</h3>
+              <p>There are two ways to add the webring to your website. 
+                <ol>
+                  <li>Add the Javascript script to your site. </li>
+                  <li>Add the HTML anchor tags to your site. </li> 
+                </ol>
+                   
+                <p>The Javascript &lt;script&gt;&lt;/script&gt; loads and runs the code from https://graycot.com/webring/loop-ring.js. This creates the widget you see below:</p>
+                <div style="margin: 0 0 0.6rem 0;" id="LoopRing"><script src="https://graycot.com/webring/loop-ring.js" type="module"></script></div>
+                <br>
+                <aside>The Javascript widget may take a quarter second to appear when loaded.</aside>
+                <br>
+                <p>The HTML tags direct the user to https://graycot.com/webring/loop-redirect.html which then redirects the user to the next / previous website in the ring. You can see an example of the unstyled anchor tags below:</p>        
+                <div style="display: inline-block; margin: 0 0 0.6rem 0;">
+                  <a id="anchor-example" href="https://graycot.com/webring/loop-redirect.html?action=prev"> < </a>
+                  <a id="anchor-example" href="https://graycot.com/webring/loop-redirect.html?action=list"> ... </a>
+                  <a id="anchor-example" href="https://graycot.com/webring/loop-redirect.html?action=home"> Loop Ring </a>
+                  <a id="anchor-example" href="https://graycot.com/webring/loop-redirect.html?action=rand"> ? </a>
+                  <a id="anchor-example" href="https://graycot.com/webring/loop-redirect.html?action=next"> > </a>
+                </div>
+                <br><br>
+                <aside>The HTML widget may delay users up to half a second when being redirected to or from your page.</aside>
+                <br>
+                <p>Copy & paste the JavaScript or HTML into the body of the webpage you want the loop ring to direct visitors.</p>
+                <aside>Note: Things may not work as intended if you include the webring code more than once on a HTML page.</aside>
+              <h4>1. JavaScript</h4>
+                <code>
+                  &lt;div id=&quot;LoopRing&quot;&gt;&lt;script src=&quot;https://graycot.com/webring/loop-ring.js&quot; type=&quot;module&quot;&gt;&lt;/script&gt;&lt;/div&gt;
+                </code>
+              <h4>2. HTML</h4>
+                <code>
+                  &lt;div class=&quot;LoopRingWrapper&quot;&gt;<br /> <br>
+                  &lt;a href=&quot;https://graycot.com/webring/loop-redirect.html?action=prev&quot;&gt; &lt; &lt;/a&gt;<br /> <br> 
+                  &lt;a href=&quot;https://graycot.com/webring/loop-redirect.html?action=list&quot;&gt; ... &lt;/a&gt;<br /> <br> 
+                  &lt;a href=&quot;https://graycot.com/webring/loop-redirect.html?action=home&quot;&gt; Loop Ring &lt;/a&gt;<br /> <br>
+                  &lt;a href=&quot;https://graycot.com/webring/loop-redirect.html?action=rand&quot;&gt; ? &lt;/a&gt;<br /> <br>
+                  &lt;a href=&quot;https://graycot.com/webring/loop-redirect.html?action=next&quot;&gt; &gt; &lt;/a&gt;<br /> <br>
+                &lt;/div&gt; <br>
+                </code>
+            <h3>3: CSS Style the webring</h3>
+                <h4>1. JavaScript</h4>
+                  <p>Here is the default styling of the webring.</p>
+                  <code>
+                    #LoopRingWrapper { <br>
+                      display: inline-block; <br>
+                      min-width: max-content; <br>
+                      margin: 0.2rem; <br>
+                      color: #e1e1e1; <br>
+                      border: 1px solid #e1e1e1; <br>
+                      padding: 0.1rem 0.4rem; <br>
+                      border-radius: 50px; <br>
+                      font-Size: 1.3rem; <br>
+                    } <br> <br>
+                    #LoopRingWrapper a:hover { <br>
+                      color: #b4b4b4; <br>
+                    } <br>
+                  </code>
+                  <p>You can OverRide the default CSS ruleset by including your own CSS. You must append ".OverRide" (case sensative) to the end of "#LoopRingWrapper". An example that would OverRide the default style would be:</p>
+                  <code>
+                    #LoopRingWrapper.OverRide { <br>
+                      display: inline-block; <br>
+                      min-width: max-content; <br>
+                      color: darkgreen; <br>
+                      border: 3px dotted rgb(102, 78, 45); <br>
+                      padding: 0.1rem 0.5rem; <br>
+                      border-radius: 10px; <br>
+                    } <br> <br>
+                    #LoopRingWrapper.OverRide a:hover { <br>
+                      color: lightgreen; <br>
+                    } <br>
+                  </code> 
+                <h4>2. HTML</h4>
+                <p> As for the HTML, there is no default styling built in. The links will take on whatever styling you have applied to your webpage. An example of how you could style the HTML would be: </p>
+                <code>
+                  #LoopRingWrapper { <br>
+                    display: inline-block; <br>
+                    min-width: max-content; <br>
+                    color: darkgreen; <br>
+                    border: 3px dotted rgb(102, 78, 45); <br>
+                    padding: 0.1rem 0.5rem; <br>
+                    border-radius: 10px; <br>
+                  } <br> <br>
+                  #LoopRingWrapper a:hover { <br>
+                    color: lightgreen; <br>
+                  } <br>
+                </code>
+                <aside>Note:   "display: inline-block;" and "min-width: max-content;" are recommended to avoid the webring being split up over multiple lines.</aside>
+  </div>
+  <hr>
+  <div class="page-wrapper">
+      <h1>Loop Ring Members</h1>
+        <div id="index">
+          <script async type="module">
+            import { sites } from "./sites.js";
+            const tag = document.getElementById('index');
+            const regex = /^https:\/\/|\/$/g; 
+            let list = ""; 
+            let i; 
+            for (i = 0; i < sites.length; i++) {list += `<li><a target="_blank" href='${sites[i]}'>${sites[i].replace(regex, "")}</a></li>`;}
+            tag.insertAdjacentHTML('afterbegin', `<h2 id="list">Member Count: ${i}</h2> <ol>${list}</ol>`);
+          </script>
+        </div>
+    </div>
+</body>
+</html>

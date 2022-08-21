@@ -22,7 +22,7 @@ import           Marlo.Manager (marloManager)
 import qualified Network.HTTP.Client as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI
-import           Rel8
+import           Rel8 hiding (filter)
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
@@ -147,4 +147,13 @@ withDocuments conn sel m = do
         where_ $ d_docId d ==. lit did
         pure d
     m doc
+
+
+titleSegs :: Text -> [Text]
+titleSegs
+  = filter (not . T.null)
+  . fmap T.strip
+  . concatMap (T.splitOn ". ")
+  . concatMap (T.splitOn " - ")
+  . T.split (flip elem [';', ':', '|', '·', '\8211' ])
 

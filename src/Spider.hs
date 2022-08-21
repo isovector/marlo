@@ -32,7 +32,7 @@ import           Rel8.Machinery
 import           Signals
 import qualified Types
 import           Types hiding (d_headers)
-import           Utils (runRanker, unsafeURI, random, downloadBody)
+import           Utils (runRanker, unsafeURI, random, downloadBody, titleSegs)
 
 
 markExplored :: DocumentState -> Document Identity -> Update ()
@@ -176,15 +176,6 @@ getOrInsert conn build what as = do
   pure $ vals <> more_vals
 
 
-titleSegs :: Text -> [Text]
-titleSegs
-  = filter (not . T.null)
-  . fmap T.strip
-  . concatMap (T.splitOn ". ")
-  . concatMap (T.splitOn " - ")
-  . T.split (flip elem [';', ':', '|', '·', '\8211' ])
-
-
 buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
 buildEdges conn disc ls = do
   ldocs' <- (traverse . traverse) (getDoc conn (d_depth disc) (d_distance disc)) ls
@@ -325,6 +316,14 @@ indexCore conn env disc = do
     }
   pure ()
 
+
+debugRankerOnline :: Text -> Ranker a -> IO (Text, Maybe a)
+debugRankerOnline (T.unpack -> uri) r = do
+  Right conn <- connect
+  z <- downloadBody uri
+  let env = Env (unsafeURI uri) marloManager conn
+  fmap (T.pack uri, ) $
+    runRanker env (decodeUtf8 $ d_body z) r
 
 debugRankerInDb :: Text -> Ranker a -> IO (Text, Maybe a)
 debugRankerInDb uri r = do

@@ -23,6 +23,7 @@ import           Data.Text.Encoding (encodeUtf8)
 import           Data.Traversable (for)
 import           Keywords
 import           Network.URI
+import           Signals.Listicle (isListicle)
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
@@ -431,7 +432,8 @@ hasSticky = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "s
 hasModal :: Ranker Bool
 hasModal = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "modal"
 -- div class="wppopups-whole"
-
+-- <div id="newsletter-signup-modal">
+-- <div role="dialog" aria-modal="true" id="newsletter-signup-modal-inner" tabindex="0" class="lv-modal newsletter-signup-modal lv-show" instance="popup" style="background-image: url(&quot;https://assetssc.leevalley.com:443/en-ca/-/media/images/01_homepage/feature-content-slider/09-2019/tools_joinery-project_01_fs.jpg?h=1111&amp;la=en-ca&amp;w=2880&amp;revision=6615dd6e-9bdc-4116-9ecc-b2e2dfd506b5&amp;modified=20190515203513&amp;hash=3FEF3022E01D02D167BF02376DEA6F527E5D5B7F&quot;);">
 
 textsWithoutScripts :: Selector -> Ranker [Text]
 textsWithoutScripts sel = chroot sel $ textWithoutScripts
@@ -491,6 +493,7 @@ isSpiritualPollution = fmap or $ sequenceA $
   [ canBeFilteredOutBySchemaType
   , hasGoogleAds
   , hasPaywall
+  , isListicle
   ]
 
 hasPaywall :: Ranker Bool

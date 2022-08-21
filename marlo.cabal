@@ -63,6 +63,7 @@ library
       Search.Spatial
       Search.Traditional
       Signals
+      Signals.Listicle
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
@@ -145,6 +146,8 @@ library
     , cassava
     , checkers
     , containers
+    , directory
+    , filepath
     , hasql
     , hspec
     , http-client
@@ -252,6 +255,8 @@ executable marlo
     , cassava
     , checkers
     , containers
+    , directory
+    , filepath
     , hasql
     , hspec
     , http-client
@@ -290,6 +295,7 @@ test-suite marlo-tests
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      ListicleSpec
       QuadAreaTreeSpec
       Paths_marlo
   hs-source-dirs:
@@ -364,6 +370,8 @@ test-suite marlo-tests
     , cassava
     , checkers
     , containers
+    , directory
+    , filepath
     , hasql
     , hspec
     , http-client

@@ -62,6 +62,8 @@ dependencies:
 - streaming
 - streaming-with
 - robots-txt
+- directory
+- filepath
 
 ghc-options:
 - -Wall
