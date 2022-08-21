@@ -38,7 +38,10 @@ isListicleFor ts = do
     , S.size (S.fromList diffs) <= min 2 (max 1 $ size - 2)
       -- that don't duplicate too many numbers
     , same_size <= 2
+      -- where each heading changes by at most one
     , abs (head diffs) == 1
+      -- and the numbers are probably not years
+    , round @_ @Int (minimum nums) <= 1600
     ]
 
 appendTrailingZero :: Text -> Text

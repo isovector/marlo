@@ -1,0 +1,9487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Evert's Dugout</title>
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed" />
+    <link rel="shortcut icon" href="/assets/img/flower-icon.png" />
+    <link rel="canonical" href="https://evertpot.com/" />
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1" />
+    <link rel="openid.server" href="https://indieauth.com/openid" />
+    <link rel="openid.delegate" href="https://evertpot.com/" />
+    <link rel="source" href="https://github.com/evert/evert.github.com/blob/master/index.html" />
+
+    <link rel="pingback" href="https://webmention.io/evertpot.com/xmlrpc" />
+    <link rel="webmention" href="https://webmention.io/evertpot.com/webmention" />
+
+    <meta property="og:title" content="Evert's Dugout" />
+    <meta property="og:type" content="article" />
+
+    <meta property="twitter:site" content="@evertp" />
+
+    <meta property="twitter:creator" content="@evertp" />
+
+    
+
+    
+
+    
+      <meta property="og:image" content="https://evertpot.com/assets/cover/flower.png" />
+      <meta property="twitter:image" content="https://evertpot.com/assets/cover/flower.png" />
+    
+
+    <link href="https://fonts.googleapis.com/css?family=PT+Serif:400,400i,700" rel="stylesheet" />
+
+
+    <style>
+        * {
+  box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'PT Serif', serif;
+    width: 100%;
+    background-color: #EEE;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-size: 120%;
+    color: black;
+}
+
+@media (max-width: 512px) {
+  body {
+    font-size: 100%;
+  }
+}
+
+ul,ol,p {
+    line-height: 1.75;
+}
+
+h1 {
+    text-align: left;
+    font-size: 1.9em;
+}
+
+h2 {
+    text-align: left;
+    font-size: 1.7em;
+}
+
+main {
+    width: 1000px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 5px 5px 10px 5px;
+    flex: 1;
+}
+
+main a {
+    color: #009;
+    transition-property: color;
+    transition-duration: 0.4s;
+    /** Long links may be arbitrarily broken */
+    word-wrap: break-word;
+}
+
+main a:hover {
+    color: #900;
+
+}
+
+main a:visited {
+    color: purple;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table th {
+    background: #e1e1e1;
+    text-align: left;
+}
+
+table th, table td {
+    border-style: solid;
+    border-width: 0 1px 0 1px;
+    border-color: #555;
+    padding: 2px 30px 2px 5px;
+}
+
+footer {
+    box-shadow: inset 0 7px 12px -7px #000;
+    font-family: sans-serif;
+    font-size: 0.8em;
+    width: 100%;
+    background: #30303B;
+    padding: 10px 0;
+    color: #DDD;
+    text-align: center;
+    background-repeat: no-repeat;
+    background-position: right bottom 5px;
+}
+
+footer a {
+    color: #DDD;
+    font-style: italic;
+    text-decoration: none;
+    transition-property: color;
+    transition-duration: 0.4s;
+}
+
+footer a:hover {
+    text-decoration: underline;
+    color: #FAA;
+    color: #CFC;
+}
+
+pre {
+    border-radius: 3px;
+    padding: 8px 8px 8px 8px;
+    background: #000;
+    line-height: 1;
+    color: #FFF;
+    overflow-x: auto;
+    font-family: "Monaco", monospace;
+}
+.flower {
+    background-image: url(/assets/img/flowerstatic.gif), url(/assets/img/flower200.gif);
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 70px;
+    width: 50px;
+    height: 64px;
+    min-width: 50px;
+    min-height: 64px;
+    margin: 0 auto;
+    flex: 0;
+    padding-bottom: 10px;
+}
+
+.flower:hover {
+	background-position: -70px 0, 0 0;
+}
+
+blockquote {
+
+    border-left: 15px solid #CCC;
+    margin: 0;
+    padding-left: 5px;
+
+}
+
+.hireme {
+    border: 1px dashed #aaa;
+    background: #ccc;
+    font-size: 80%;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+code {
+     padding: 2px;
+     margin: 0;
+     background-color: rgba(0,0,0,0.09);
+     border-radius: 2px;
+     border: 1px solid #888;
+}
+
+pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+}
+
+.evert-pic {
+    float: right;
+    padding: 0 10px 10px 0;
+}
+
+img.fill-width {
+    max-width: 100%;
+}
+
+figcaption {
+  font-size: 80%;
+}
+
+
+.http-series {
+  background: #DDD;
+  padding: 0px 20px 10px;
+  border: 2px dashed #000;
+  font-size: 80%;
+}
+
+.webmentions {
+  display: none;
+  padding-bottom: 40px;
+}
+
+.webmentions h2 {
+  font-size: 1.2em;
+  padding: 1px 5px 10px 0;
+  margin: 0;
+}
+
+.webmentions.visible {
+  display: block;
+}
+
+.webmentions ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.webmentions .facepile {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+
+.webmentions .facepile img {
+  width: 35px;
+  height: 35px;
+  object-fit: cover;
+  padding: 5px;
+  border-radius: 25px;
+}
+
+.webmentions ul.activity li {
+  display: flex;
+  align-items: center;
+  line-height: 20px;
+}
+
+/**
+ * Comments
+ */
+.comments {
+  padding-bottom: 40px;
+}
+.comments ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.comments ul ul {
+  padding-left: 50px;
+  clear: both;
+}
+
+.comment {
+  display: flex;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  border-bottom: 1px dotted #aaa;
+}
+
+.comment img {
+  width: 50px;
+  margin-right: 10px;
+  border-radius: 30px;
+}
+.comment p {
+  margin: 0 0 15px 0;
+}
+.comment .author {
+  font-weight: 700;
+}
+.comment time {
+  font-size: 90%;
+  color: #555;
+}
+
+.dead-link:after {
+  content: "Dead :(";
+  display: inline-block;
+  background-color: red;
+  color: white;
+  font-size: 80%;
+  font-weight: bold;
+  padding: 0 2px;
+  text-decoration: none;
+  margin-left: 3px;
+  border-radius: 3px;
+}
+
+body.bigPost main {
+  max-width: 100%;
+}
+
+body.bigPost h1 {
+  text-align: center;
+}
+
+
+body.map .flower {
+  display: none;
+}
+
+
+body.map main {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+body.map main #map {
+  flex: 1;
+  min-width: 100%;
+}
+
+.subscribe {
+  float: right;
+  background: #f26522;
+  color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin: 3px 3px 0 0;
+  font-family: helvetica, Arial, sans-serif;
+  font-size: 90%;
+}
+
+.subscribe a {
+  color: white;
+  text-decoration: none;
+}
+
+
+/** Fix twitter responsiveness **/
+.twitter-tweet {
+  max-width: 100% !important;
+  overflow-x: auto;
+}
+
+
+.draft-warning {
+  background: #C33;
+  color: white;
+  font-size: 120%;
+  text-align: center;
+}
+
+figure * {
+  margin: 0 auto;
+}
+
+figure figcaption {
+  text-align: center;
+}
+
+figure video, figure svg {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+figure figcaption {
+  font-size: 90%;
+  font-style: italic;
+}
+
+figure table {
+  box-shadow: 5px 5px 40px #0003;
+  margin-bottom: 10px;
+  font-family: serif;
+}
+
+figure table th {
+  background: #333;
+  color: white;
+}
+
+figure table tr:nth-child(odd) {
+  background: #fff;
+}
+
+figure table tr:nth-child(even) {
+  background: #ccc;
+}
+
+figure table td, figure table th {
+  border: 0;
+  padding: 8px;
+}
+
+.badgateway {
+  font-family: monospace;
+  padding: 0;
+  margin: 0;
+  font-size: 120%;
+  display: flex;
+  align-content: center;
+  align-items: center;
+}
+
+.badgateway p {
+  line-height: 1.25em;
+}
+
+.badgateway p.banner {
+  text-align: center;
+}
+
+
+.badgateway img {
+  max-width: 100%;
+  image-rendering: crisp-edges;
+}
+
+.badgateway div {
+  background: #000;
+  border: 1px solid #FF0;
+  color: #FF0;
+  width: 390px;
+  margin: 0 auto 10px auto;
+  box-shadow: 10px 10px 20px #330;
+  padding: 2px 10px 10px 10px;
+
+}
+
+
+@media screen and (min-width: 800px) {
+  .badgateway {
+    float: right;
+  }
+  .badgateway div {
+    max-width: 100%;
+    margin: 0 0 10px 0;
+  }
+}
+
+.badgateway a.btn {
+  background: #FF0;
+  color: black;
+}
+
+        .highlight .c { color: #75715e } /* Comment */
+.highlight .err { color: #960050; background-color: #1e0010 } /* Error */
+.highlight .k { color: #66d9ef } /* Keyword */
+.highlight .l { color: #ae81ff } /* Literal */
+.highlight .n { color: #f8f8f2 } /* Name */
+.highlight .o { color: #f92672 } /* Operator */
+.highlight .p { color: #f8f8f2 } /* Punctuation */
+.highlight .cm { color: #75715e } /* Comment.Multiline */
+.highlight .cp { color: #75715e } /* Comment.Preproc */
+.highlight .c1 { color: #75715e } /* Comment.Single */
+.highlight .cs { color: #75715e } /* Comment.Special */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .kc { color: #66d9ef } /* Keyword.Constant */
+.highlight .kd { color: #66d9ef } /* Keyword.Declaration */
+.highlight .kn { color: #f92672 } /* Keyword.Namespace */
+.highlight .kp { color: #66d9ef } /* Keyword.Pseudo */
+.highlight .kr { color: #66d9ef } /* Keyword.Reserved */
+.highlight .kt { color: #66d9ef } /* Keyword.Type */
+.highlight .ld { color: #e6db74 } /* Literal.Date */
+.highlight .m { color: #ae81ff } /* Literal.Number */
+.highlight .s { color: #e6db74 } /* Literal.String */
+.highlight .na { color: #a6e22e } /* Name.Attribute */
+.highlight .nb { color: #f8f8f2 } /* Name.Builtin */
+.highlight .nc { color: #a6e22e } /* Name.Class */
+.highlight .no { color: #66d9ef } /* Name.Constant */
+.highlight .nd { color: #a6e22e } /* Name.Decorator */
+.highlight .ni { color: #f8f8f2 } /* Name.Entity */
+.highlight .ne { color: #a6e22e } /* Name.Exception */
+.highlight .nf { color: #a6e22e } /* Name.Function */
+.highlight .nl { color: #f8f8f2 } /* Name.Label */
+.highlight .nn { color: #f8f8f2 } /* Name.Namespace */
+.highlight .nx { color: #a6e22e } /* Name.Other */
+.highlight .py { color: #f8f8f2 } /* Name.Property */
+.highlight .nt { color: #f92672 } /* Name.Tag */
+.highlight .nv { color: #f8f8f2 } /* Name.Variable */
+.highlight .ow { color: #f92672 } /* Operator.Word */
+.highlight .w { color: #f8f8f2 } /* Text.Whitespace */
+.highlight .mf { color: #ae81ff } /* Literal.Number.Float */
+.highlight .mh { color: #ae81ff } /* Literal.Number.Hex */
+.highlight .mi { color: #ae81ff } /* Literal.Number.Integer */
+.highlight .mo { color: #ae81ff } /* Literal.Number.Oct */
+.highlight .sb { color: #e6db74 } /* Literal.String.Backtick */
+.highlight .sc { color: #e6db74 } /* Literal.String.Char */
+.highlight .sd { color: #e6db74 } /* Literal.String.Doc */
+.highlight .s2 { color: #e6db74 } /* Literal.String.Double */
+.highlight .se { color: #ae81ff } /* Literal.String.Escape */
+.highlight .sh { color: #e6db74 } /* Literal.String.Heredoc */
+.highlight .si { color: #e6db74 } /* Literal.String.Interpol */
+.highlight .sx { color: #e6db74 } /* Literal.String.Other */
+.highlight .sr { color: #e6db74 } /* Literal.String.Regex */
+.highlight .s1 { color: #e6db74 } /* Literal.String.Single */
+.highlight .ss { color: #e6db74 } /* Literal.String.Symbol */
+.highlight .bp { color: #f8f8f2 } /* Name.Builtin.Pseudo */
+.highlight .vc { color: #f8f8f2 } /* Name.Variable.Class */
+.highlight .vg { color: #f8f8f2 } /* Name.Variable.Global */
+.highlight .vi { color: #f8f8f2 } /* Name.Variable.Instance */
+.highlight .il { color: #ae81ff } /* Literal.Number.Integer.Long */
+
+.highlight .gh { } /* Generic Heading & Diff Header */
+.highlight .gu { color: #75715e; } /* Generic.Subheading & Diff Unified/Comment? */
+.highlight .gd { color: #f92672; } /* Generic.Deleted & Diff Deleted */
+.highlight .gi { color: #a6e22e; } /* Generic.Inserted & Diff Inserted */
+
+    </style>
+
+    <script async src="/assets/js/webmentions.js"></script>
+
+</head>
+<body class="">
+
+   <main>
+     <h1>Evert's Dugout</h1>
+
+<div class="evert-pic">
+<img src="https://s.gravatar.com/avatar/9e9b4f80c65dc6076d74cd421084e4fc?s=200" width="200" height="200" alt="Picture of Evert" />
+
+</div>
+
+
+<p>
+My name is Evert Pot, and this is my blog!
+</p>
+
+<p><a href="/evert-gpg.txt">My GPG public key</a>.</p>
+
+<p>
+  I'm a <a href="https://github.com/evert">programmer</a>. I'm mostly focused
+  on building API's, HTTP-related applications and improving development
+  processes.
+</p>
+
+<p>
+  I run a web development agency in Toronto called
+  <a href="https://badgateway.net">Bad Gateway</a>.
+</p>
+
+<p>
+  In the past I worked at <a href="https://yelp.com/">Yelp</a>
+  on REST APIs, co-founded <a href="https://fruux.com/">fruux</a>.
+  I'm very interested in web standards and served on several
+  standards boards.
+</p>
+
+<p>
+  My full professional history is on my <a href="/resume.html">resume</a>.
+</p>
+
+<h2>On the web</h2>
+
+<ul>
+  <li>Twitter : <a href="https://twitter.com/evertp" rel="me">@evertp</a></li>
+  <li>Github : <a href="https://github.com/evert" rel="me">evert</a></li>
+  <li><a href="/subscribe">Subscribe to my blog</a></li>
+</ul>
+
+<h2>About this blog</h2>
+
+<p>This blog is built with <a href="https://jekyllrb.com/">Jekyll</a>, and hosted by
+<a href="https://pages.github.com/">Github Pages</a>. All the content and code is open source.</p>
+
+<p>Want to take a look, or suggest changes? Check out or fork the
+<a href="https://github.com/evert/evert.github.com">Github project</a>.</p>
+
+<h2>Blog archive</h2>
+
+<p>I've been writing blog-posts on and off since 2006. Below you'll find the full
+archive. Don't scroll too far though, quality degrades as you go backwards in time.
+</p>
+
+
+
+
+
+<h3>2022</h3>
+<ul>
+
+
+
+
+<li>
+  <time datetime="2022-08-13T18:12:29+00:00">
+    Aug 13
+  </time>
+  <a href="/syntactic-sugar/">On syntactic sugar</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2022-06-20T19:40:00+00:00">
+    Jun 20
+  </time>
+  <a href="/oauth2-javascript-client/">A new OAuth2 client for Javascript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2022-03-18T08:51:00+00:00">
+    Mar 18
+  </time>
+  <a href="/no-dst-is-bad/">Reasons why abolishing DST in the US will be worse for users and developers</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2022-03-04T22:20:00+00:00">
+    Mar 04
+  </time>
+  <a href="/log4j-faker-black-swan/">Log4j, Faker and Black Swan Events</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2022-01-29T19:14:00+00:00">
+    Jan 29
+  </time>
+  <a href="/get-request-bodies/">Request bodies in GET requests</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2022-01-06T04:08:28+00:00">
+    Jan 06
+  </time>
+  <a href="/hello-2022/">Hello 2022!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2021</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2021-05-29T20:56:54+00:00">
+    May 29
+  </time>
+  <a href="/15-years/">15 years of blogging</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2021-05-10T20:37:00+00:00">
+    May 10
+  </time>
+  <a href="/jwt-is-a-bad-default/">JWT should not be your default for sessions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2021-04-12T16:30:00+00:00">
+    Apr 12
+  </time>
+  <a href="/ketting-7-released/">Ketting 7 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2021-02-01T18:30:00+00:00">
+    Feb 01
+  </time>
+  <a href="/ketting-7-deprecation-warnings/">Ketting support for deprecation warnings</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2020</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2020-11-12T20:40:06+00:00">
+    Nov 12
+  </time>
+  <a href="/http-2-push-is-dead/">HTTP/2 Push is dead</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-09-09T20:30:00+00:00">
+    Sep 09
+  </time>
+  <a href="/ketting-6/">Ketting v6: Using Hypermedia APIs with React</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-08-06T05:43:00+00:00">
+    Aug 06
+  </time>
+  <a href="/build-a-promise-from-scratch/">Video: Building a Promise from scratch!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-05-28T09:41:38+00:00">
+    May 28
+  </time>
+  <a href="/ecmascript-4-the-missing-version/">ECMAScript 4: The missing version</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-04-15T16:00:00+00:00">
+    Apr 15
+  </time>
+  <a href="/generic-middleware/">A generic middleware pattern in Typescript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-03-19T16:45:49+00:00">
+    Mar 19
+  </time>
+  <a href="/no-cors/">Common no-cors misconceptions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-03-17T21:48:32+00:00">
+    Mar 17
+  </time>
+  <a href="/curveball-march-updates/">Curveball - March updates</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-02-27T16:17:00+00:00">
+    Feb 27
+  </time>
+  <a href="/curveball-typescript-framework-update/">Curveball - A typescript microframework</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-02-21T20:14:58+00:00">
+    Feb 21
+  </time>
+  <a href="/typescript-changes-code/">Typescript is changing how I write code</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-02-18T18:30:00+00:00">
+    Feb 18
+  </time>
+  <a href="/opaque-ts-types/">Implementing an opaque type in typescript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-02-11T23:01:32+00:00">
+    Feb 11
+  </time>
+  <a href="/visited-links/">Use a:visited in your CSS stylesheet</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2020-01-02T12:00:00+00:00">
+    Jan 02
+  </time>
+  <a href="/h2-parallelism/">Performance testing HTTP/1.1 vs HTTP/2 vs HTTP/2 + Server Push for REST APIs</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2019</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2019-11-29T11:20:00+00:00">
+    Nov 29
+  </time>
+  <a href="/json-links/">Reinventing the wheel when encoding links in JSON</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-11-22T12:00:00+00:00">
+    Nov 22
+  </time>
+  <a href="/ketting-5/">Ketting v5 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-10-28T23:06:14+00:00">
+    Oct 28
+  </time>
+  <a href="/await-fluent-interfaces/">Building awaitable and fluent interfaces in Javascript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-10-21T13:26:46+00:00">
+    Oct 21
+  </time>
+  <a href="/ketting-generics/">Better typing with Ketting</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-10-04T13:00:00+00:00">
+    Oct 04
+  </time>
+  <a href="/structured-headers-draft-13/">Structured headers NPM package: new version</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-10-02T20:36:00+00:00">
+    Oct 02
+  </time>
+  <a href="/authentication-rels/">Authentication relation types</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-10-01T16:00:00+00:00">
+    Oct 01
+  </time>
+  <a href="/typescript-definitions-for-hal/">Typescript definitions for HAL and Link Hints</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-09-18T15:00:00+00:00">
+    Sep 18
+  </time>
+  <a href="/http/the-end">The end of the HTTP series</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-09-10T15:00:00+00:00">
+    Sep 10
+  </time>
+  <a href="/http/511-network-authentication-required">511 Network Authentication Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-09-05T15:00:00+00:00">
+    Sep 05
+  </time>
+  <a href="/http/510-not-extended">510 Not Extended</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-08-30T18:30:00+00:00">
+    Aug 30
+  </time>
+  <a href="/http/508-loop-detected">508 Loop Detected</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-08-20T15:00:00+00:00">
+    Aug 20
+  </time>
+  <a href="/http/507-insufficient-storage">507 Insufficient Storage</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-08-13T15:00:00+00:00">
+    Aug 13
+  </time>
+  <a href="/http/506-variant-also-negotiates">506 Variant Also Negotiates</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-08-06T15:00:00+00:00">
+    Aug 06
+  </time>
+  <a href="/http/505-http-version-not-supported">505 HTTP Version Not Supported</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-07-30T15:00:00+00:00">
+    Jul 30
+  </time>
+  <a href="/http/504-gateway-timeout">504 Gateway Timeout</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-07-23T15:00:00+00:00">
+    Jul 23
+  </time>
+  <a href="/http/503-service-unavailable">503 Service Unavailable</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-07-16T15:00:00+00:00">
+    Jul 16
+  </time>
+  <a href="/http/502-bad-gateway">502 Bad Gateway</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-07-09T15:00:00+00:00">
+    Jul 09
+  </time>
+  <a href="/http/501-not-implemented">501 Not Implemented</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-07-02T15:00:00+00:00">
+    Jul 02
+  </time>
+  <a href="/http/500-internal-server-error">500 Internal Server Error</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-25T15:00:00+00:00">
+    Jun 25
+  </time>
+  <a href="/http/451-unavailable-for-legal-reasons">451 Unavailable For Legal Reasons</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-18T15:00:00+00:00">
+    Jun 18
+  </time>
+  <a href="/http/431-request-header-fields-too-large">431 Request Header Fields Too Large</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-17T21:14:00+00:00">
+    Jun 17
+  </time>
+  <a href="/blog-archive-in-space/">Blog archive in space</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-11T21:14:00+00:00">
+    Jun 11
+  </time>
+  <a href="/tabs-are-the-wrong-abstraction/">Browser tabs are probably the wrong metaphor</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-11T15:00:00+00:00">
+    Jun 11
+  </time>
+  <a href="/http/430-would-block">430 Would Block</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-06-04T15:00:00+00:00">
+    Jun 04
+  </time>
+  <a href="/http/429-too-many-requests">429 Too Many Requests</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-05-28T15:00:00+00:00">
+    May 28
+  </time>
+  <a href="/http/428-precondition-required">428 Precondition Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-05-27T16:00:00+00:00">
+    May 27
+  </time>
+  <a href="/bigint-firefox-money/">Firefox gets BigInt, and bigint-money gets 1.0 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-05-21T18:22:02+00:00">
+    May 21
+  </time>
+  <a href="/http/426-upgrade-required">426 Upgrade Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-05-14T15:00:00+00:00">
+    May 14
+  </time>
+  <a href="/http/425-too-early">425 Too Early</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-05-07T15:00:00+00:00">
+    May 07
+  </time>
+  <a href="/http/424-failed-dependency">424 Failed Dependency</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-04-30T15:00:00+00:00">
+    Apr 30
+  </time>
+  <a href="/http/423-locked">423 Locked</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-04-23T15:00:00+00:00">
+    Apr 23
+  </time>
+  <a href="/http/422-unprocessable-entity">422 Unprocessable Entity</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-04-16T15:00:00+00:00">
+    Apr 16
+  </time>
+  <a href="/http/421-misdirected-request">421 Misdirected Request</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-04-09T15:00:00+00:00">
+    Apr 09
+  </time>
+  <a href="/http/420-enhance-your-calm">420 Enhance your calm</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-04-02T15:00:00+00:00">
+    Apr 02
+  </time>
+  <a href="/http/418-im-a-teapot">418 I'm a teapot</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-28T15:24:53+00:00">
+    Mar 28
+  </time>
+  <a href="/no-reduce/">Using loops instead of higher order functions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-26T15:00:00+00:00">
+    Mar 26
+  </time>
+  <a href="/http/417-expectation-failed">417 Expectation Failed</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-19T15:00:00+00:00">
+    Mar 19
+  </time>
+  <a href="/http/416-range-not-satisfiable">416 Range Not Satisfiable</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-14T15:37:29+00:00">
+    Mar 14
+  </time>
+  <a href="/fetch-mw-oauth2/">An OAuth2 middleware for fetch()</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-12T15:00:00+00:00">
+    Mar 12
+  </time>
+  <a href="/http/415-unsupported-media-type">415 Unsupported Media Type</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-03-05T15:00:00+00:00">
+    Mar 05
+  </time>
+  <a href="/http/414-uri-too-long">414 URI Too Long</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-02-26T15:00:00+00:00">
+    Feb 26
+  </time>
+  <a href="/http/413-payload-too-large">413 Payload Too Large</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-02-19T15:00:00+00:00">
+    Feb 19
+  </time>
+  <a href="/http/412-precondition-failed">412 Precondition Failed</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-02-12T15:00:00+00:00">
+    Feb 12
+  </time>
+  <a href="/http/411-length-required">411 Length Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-02-05T15:00:00+00:00">
+    Feb 05
+  </time>
+  <a href="/http/410-gone">410 Gone</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-30T17:00:00+00:00">
+    Jan 30
+  </time>
+  <a href="/ketting-2-5/">Ketting 2.5 release.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-29T15:00:00+00:00">
+    Jan 29
+  </time>
+  <a href="/http/409-confict">409 Conflict</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-23T18:22:01+00:00">
+    Jan 23
+  </time>
+  <a href="/bigint-money-typscript-lib/">bigint-money: an NPM package for doing currency math</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-22T12:00:00+00:00">
+    Jan 22
+  </time>
+  <a href="/http/408-request-timeout">408 Request Timeout</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-15T15:00:00+00:00">
+    Jan 15
+  </time>
+  <a href="/http/407-proxy-authentication-required">407 Proxy Authentication Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-09T17:00:00+00:00">
+    Jan 09
+  </time>
+  <a href="/executing-a-mysql-query-in-nodejs/">MySQL examples in Node.js</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-08T15:00:00+00:00">
+    Jan 08
+  </time>
+  <a href="/http/406-not-acceptable">406 Not Acceptable</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2019-01-03T15:51:41+00:00">
+    Jan 03
+  </time>
+  <a href="/a-look-back-at-sf/">One year in San Francisco as a Software Engineer</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2018</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2018-12-18T15:00:00+00:00">
+    Dec 18
+  </time>
+  <a href="/http/405-method-not-allowed">405 Method Not Allowed</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-12-11T15:00:00+00:00">
+    Dec 11
+  </time>
+  <a href="/http/404-not-found">404 Not Found</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-12-06T19:24:57+00:00">
+    Dec 06
+  </time>
+  <a href="/currencies-floats/">Floats and money</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-12-04T15:00:00+00:00">
+    Dec 04
+  </time>
+  <a href="/http/403-forbidden">403 Forbidden</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-12-02T21:07:00+00:00">
+    Dec 02
+  </time>
+  <a href="/csv-123/">I made a thing: csv-1-2-3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-27T15:00:00+00:00">
+    Nov 27
+  </time>
+  <a href="/http/402-payment-required">402 Payment Required</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-20T15:00:00+00:00">
+    Nov 20
+  </time>
+  <a href="/http/401-unauthorized">401 Unauthorized</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-13T15:00:00+00:00">
+    Nov 13
+  </time>
+  <a href="/http/400-bad-request">400 Bad Request</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-10T18:52:29+00:00">
+    Nov 10
+  </time>
+  <a href="/google-trend-apis/">Google Trends for REST, GraphQL and RPC</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-07T15:00:00+00:00">
+    Nov 07
+  </time>
+  <a href="/http/which-redirect-status">Which redirect do I choose?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-11-06T15:00:00+00:00">
+    Nov 06
+  </time>
+  <a href="/http/308-permanent-redirect">308 Permanent Redirect</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-30T15:00:00+00:00">
+    Oct 30
+  </time>
+  <a href="/http/307-temporary-redirect">307 Temporary Redirect</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-23T15:00:00+00:00">
+    Oct 23
+  </time>
+  <a href="/http/306-switch-proxy">306 Switch Proxy</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-16T15:00:00+00:00">
+    Oct 16
+  </time>
+  <a href="/http/305-use-proxy">305 Use Proxy</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-11T16:00:00+00:00">
+    Oct 11
+  </time>
+  <a href="/ketting-2-3/">Ketting 2.3 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-09T15:00:00+00:00">
+    Oct 09
+  </time>
+  <a href="/http/304-not-modified">304 Not Modified</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-03T15:00:00+00:00">
+    Oct 03
+  </time>
+  <a href="/http-errors-package-for-typescript/">Http errors package for Typescript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-10-02T15:00:00+00:00">
+    Oct 02
+  </time>
+  <a href="/http/303-see-other">303 See Other</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-25T15:00:00+00:00">
+    Sep 25
+  </time>
+  <a href="/http/302-found">302 Found</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-18T15:00:00+00:00">
+    Sep 18
+  </time>
+  <a href="/http/301-moved-permanently">301 Moved Permanently</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-11T13:00:00+00:00">
+    Sep 11
+  </time>
+  <a href="/http/300-multiple-choices">300 Multiple Choices</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-06T14:00:00+00:00">
+    Sep 06
+  </time>
+  <a href="/curveball-ts-framework/">Curveball - a TypeScript micro-framework</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-04T11:00:00+00:00">
+    Sep 04
+  </time>
+  <a href="/http/226-im-used">226 IM Used</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-09-01T12:38:22+00:00">
+    Sep 01
+  </time>
+  <a href="/h2-push-for-apis/">HTTP/2 Push for APIs</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-29T15:32:22+00:00">
+    Aug 29
+  </time>
+  <a href="/javascript-let-const/">Use 'let' and 'const' instead of 'var'</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-28T15:00:00+00:00">
+    Aug 28
+  </time>
+  <a href="/http/208-already-reported">208 Already Reported</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-22T19:58:00+00:00">
+    Aug 22
+  </time>
+  <a href="/building-protocols-with-http/">Building protocols with HTTP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-21T14:00:00+00:00">
+    Aug 21
+  </time>
+  <a href="/http/207-multi-status">207 Multi-Status</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-14T10:00:00+00:00">
+    Aug 14
+  </time>
+  <a href="/http/206-partial-content">206 Partial Content</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-07T15:00:00+00:00">
+    Aug 07
+  </time>
+  <a href="/http/205-reset-content">205 Reset Content</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-08-03T19:45:00+00:00">
+    Aug 03
+  </time>
+  <a href="/firefox-rss/">Firefox removes RSS support</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-31T15:00:00+00:00">
+    Jul 31
+  </time>
+  <a href="/http/204-no-content">204 No Content</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-24T15:00:00+00:00">
+    Jul 24
+  </time>
+  <a href="/http/203-non-authoritative-information">203 Non-Authoritative Information</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-17T15:00:00+00:00">
+    Jul 17
+  </time>
+  <a href="/http/202-accepted">202 Accepted</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-16T16:00:00+00:00">
+    Jul 16
+  </time>
+  <a href="/bye-disqus-hello-webmention/">Bye Disqus, hello Webmention!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-10T15:00:00+00:00">
+    Jul 10
+  </time>
+  <a href="/http/201-created">201 Created</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-07-03T15:00:00+00:00">
+    Jul 03
+  </time>
+  <a href="/http/200-ok">200 OK</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-30T15:00:00+00:00">
+    Jun 30
+  </time>
+  <a href="/http/103-early-hints">103 Early Hints</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-29T15:00:00+00:00">
+    Jun 29
+  </time>
+  <a href="/http/102-processing">102 Processing</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-28T15:00:00+00:00">
+    Jun 28
+  </time>
+  <a href="/http/101-switching-protocols">101 Switching Protocols</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-27T15:05:00+00:00">
+    Jun 27
+  </time>
+  <a href="/http/100-continue/">100 Continue</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-27T15:00:00+00:00">
+    Jun 27
+  </time>
+  <a href="/http/">Series of posts on HTTP status codes</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-19T16:00:00+00:00">
+    Jun 19
+  </time>
+  <a href="/ketting-2-release/">Ketting 2.0 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-18T16:00:00+00:00">
+    Jun 18
+  </time>
+  <a href="/scheduling-github-pages-lamdbas/">Scheduling posts on Github pages with AWS lambda functions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-06-15T06:03:18+00:00">
+    Jun 15
+  </time>
+  <a href="/webdav-features-for-http/">WebDAV features that might be useful for HTTP services.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-03-27T07:09:05+00:00">
+    Mar 27
+  </time>
+  <a href="/structured-header-parser/">A HTTP structured-header parser for Javascript</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2018-03-26T06:58:57+00:00">
+    Mar 26
+  </time>
+  <a href="/ketting-1.0-release/">Ketting 1.0 release.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2017</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2017-04-21T18:26:57+00:00">
+    Apr 21
+  </time>
+  <a href="/working-for-yelp/">I work at Yelp now!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2017-04-16T21:51:00+00:00">
+    Apr 16
+  </time>
+  <a href="/sabredav-maintenance-update/">A small update about sabre/dav and baikal maintenance.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2017-04-03T14:19:25+00:00">
+    Apr 03
+  </time>
+  <a href="/rest-embedding-hal-http2/">The problems with embedding in REST today and how it might be solved with HTTP/2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2017-03-09T02:04:46+00:00">
+    Mar 09
+  </time>
+  <a href="/sabredav-eol/">After 10 years, I'm stopping my work on sabre/dav</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2016</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2016-12-15T02:42:38+00:00">
+    Dec 15
+  </time>
+  <a href="/working-with-hal-in-put/">Working with HAL in PUT requests</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-11-04T19:38:41+00:00">
+    Nov 04
+  </time>
+  <a href="/slides-for-sass-talk/">Slides for my Sass talk at True North PHP. #tnphp16</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-10-25T04:26:18+00:00">
+    Oct 25
+  </time>
+  <a href="/switching-to-amp-and-back-again/">Switching to Google AMP and back</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-10-19T23:14:17+00:00">
+    Oct 19
+  </time>
+  <a href="/syntax-highlighting-in-presentations/">Syntax highlighting in presentations</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-09-20T03:08:53+00:00">
+    Sep 20
+  </time>
+  <a href="/sabre-event-4/">sabre/event 4 released for PHP 7</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-09-14T15:58:43+00:00">
+    Sep 14
+  </time>
+  <a href="/go-for-php-programmers/">Go for PHP programmers</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-08-13T12:40:00+00:00">
+    Aug 13
+  </time>
+  <a href="/married/">Just married!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-07-26T17:47:47+00:00">
+    Jul 26
+  </time>
+  <a href="/rest-is-in-the-eye-of-the-beholder/">REST is in the eye of the beholder</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-06-14T21:27:49+00:00">
+    Jun 14
+  </time>
+  <a href="/PHP-Sucks/">PHP Sucks</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-05-28T20:27:46+00:00">
+    May 28
+  </time>
+  <a href="/blogging-for-10-years/">Blogging for 10 years!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-05-19T22:00:02+00:00">
+    May 19
+  </time>
+  <a href="/sabre-xml-repeating-elements/">sabre/xml and repeating elements</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-05-13T23:36:26+00:00">
+    May 13
+  </time>
+  <a href="/why-php-fig-matters/">Why PHP-FIG matters</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-04-28T08:56:19+00:00">
+    Apr 28
+  </time>
+  <a href="/writing-sql-for-postgres-mysql-sqlite/">Writing SQL that works on PostgreSQL, MySQL and SQLite</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-03-29T23:56:00+00:00">
+    Mar 29
+  </time>
+  <a href="/webdav-caldav-carddav-sharing/">WebDAV resource sharing: an overview</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-03-26T19:58:16+00:00">
+    Mar 26
+  </time>
+  <a href="/drop-public-not-var/">Drop 'public' not 'var'!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-03-23T00:49:42+00:00">
+    Mar 23
+  </time>
+  <a href="/npm-revoke-breaks-the-build/">Npm package author revokes his packages, breaking tons of builds</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-03-07T02:05:33+00:00">
+    Mar 07
+  </time>
+  <a href="/10-years-of-linkedin/">10 years on LinkedIn</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-02-16T03:22:53+00:00">
+    Feb 16
+  </time>
+  <a href="/phpunit-bin/">phpunit-bin - run phpunit from anywhere</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-01-14T23:06:17+00:00">
+    Jan 14
+  </time>
+  <a href="/strict-types-pollresults/">Strict typing in PHP 7 - poll results</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-01-13T23:01:34+00:00">
+    Jan 13
+  </time>
+  <a href="/strict-types-poll/">Poll: Will you be using strict typing with PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2016-01-02T04:58:27+00:00">
+    Jan 02
+  </time>
+  <a href="/looking-back-at-2015-with-markov-chains/">Looking back at 2015 using Markov chains</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2015</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2015-12-29T21:27:09+00:00">
+    Dec 29
+  </time>
+  <a href="/sabre-xml-value-objects/">Parsing Atom with sabre/xml</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-12-22T22:01:59+00:00">
+    Dec 22
+  </time>
+  <a href="/finding-a-better-registrar/">Finding a DNS registrar</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-12-14T08:33:25+00:00">
+    Dec 14
+  </time>
+  <a href="/php-code-in-2006-and-2016/">PHP code in 2006 and 2016</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-12-12T07:26:40+00:00">
+    Dec 12
+  </time>
+  <a href="/now-on-ssl-and-http2/">Now available via TLS and HTTP/2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-12-09T21:18:23+00:00">
+    Dec 09
+  </time>
+  <a href="/switching-to-linux/">Switching to Linux</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-11-08T03:46:55+00:00">
+    Nov 08
+  </time>
+  <a href="/my-slides-from-truenorth/">Promises & Generators: my slides from True North PHP 2015</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-10-02T13:40:23+00:00">
+    Oct 02
+  </time>
+  <a href="/going-freelance/">Going freelance</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-08-10T16:22:22+00:00">
+    Aug 10
+  </time>
+  <a href="/switching-to-generators/">Save memory by switching to generators</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-06-02T17:38:01+00:00">
+    Jun 02
+  </time>
+  <a href="/sabredav-3-released/">sabre/dav 3.0 released!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-05-19T06:52:16+00:00">
+    May 19
+  </time>
+  <a href="/psr-7-released/">PSR-7 released today</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-05-06T17:03:34+00:00">
+    May 06
+  </time>
+  <a href="/on-callables-and-closures/">PHP's callable typehint too loose?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-04-01T20:29:54+00:00">
+    Apr 01
+  </time>
+  <a href="/an-xml-library-you-may-not-hate/">An XML library for PHP you may not hate.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-03-04T02:22:50+00:00">
+    Mar 04
+  </time>
+  <a href="/psr-7-issues/">PSR-7 is imminent, and here's my issues with it.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-03-02T21:12:50+00:00">
+    Mar 02
+  </time>
+  <a href="/dropbox-post-api/">Dropbox starts using POST, and why this is poor API design.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-02-24T22:37:50+00:00">
+    Feb 24
+  </time>
+  <a href="/password-hash-ew/">The problem with password_hash()</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-02-19T22:49:48+00:00">
+    Feb 19
+  </time>
+  <a href="/http-2-finalized/">HTTP/2 finalized - a quick overview</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-02-03T04:58:08+00:00">
+    Feb 03
+  </time>
+  <a href="/whats-in-a-link/">What's a link?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2015-01-27T22:43:04+00:00">
+    Jan 27
+  </time>
+  <a href="/new-uri-library-for-php/">A new URI handling library for PHP.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2014</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2014-12-18T22:54:38+00:00">
+    Dec 18
+  </time>
+  <a href="/testing-composer-prefer-lowest/">Testing your composer dependencies with prefer-lowest</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-12-05T22:15:46+00:00">
+    Dec 05
+  </time>
+  <a href="/osx-tmux-vim-copy-paste-clipboard/">Making the clipboard work between iTerm2, tmux, vim and OS X.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-11-20T05:48:48+00:00">
+    Nov 20
+  </time>
+  <a href="/sabredav-21-released/">sabre/dav 2.1 released.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-10-15T19:03:49+00:00">
+    Oct 15
+  </time>
+  <a href="/google-carddav-issues/">Why Google's CardDAV server isn't.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-09-15T17:55:21+00:00">
+    Sep 15
+  </time>
+  <a href="/properted-properties-from-shared-ancestry/">Accessing protected properties from objects that share the same ancestry.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-06-24T05:56:03+00:00">
+    Jun 24
+  </time>
+  <a href="/promises-in-php/">Promises in PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-06-07T03:17:48+00:00">
+    Jun 07
+  </time>
+  <a href="/http-11-updated/">HTTP/1.1 just got a major update.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-05-22T17:27:07+00:00">
+    May 22
+  </time>
+  <a href="/sabredav-2-released/">sabre/dav 2.0 released.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-04-13T19:05:41+00:00">
+    Apr 13
+  </time>
+  <a href="/hawk-problems/">Hawk Autentication considered harmful.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-03-31T21:16:49+00:00">
+    Mar 31
+  </time>
+  <a href="/new-sabredav-website/">New sabre/dav website launched!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-03-30T22:27:16+00:00">
+    Mar 30
+  </time>
+  <a href="/php-5-5-10-timezone-changes/">PHP 5.5.10 timezone handling changes</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-02-21T15:43:05+00:00">
+    Feb 21
+  </time>
+  <a href="/composer-bug-fixed/">Composer's bug now fixed</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-02-20T18:12:48+00:00">
+    Feb 20
+  </time>
+  <a href="/composer-is-wide-open/">Composer is wide open with a massive security vulnerability</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-02-17T00:55:06+00:00">
+    Feb 17
+  </time>
+  <a href="/fpassthru-broken/">fpassthru broken on OS X</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-01-21T22:40:04+00:00">
+    Jan 21
+  </time>
+  <a href="/google-code-is-dead/">Google Code is dead.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-01-20T22:54:51+00:00">
+    Jan 20
+  </time>
+  <a href="/jcard-completed/">jCard is now a thing</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2014-01-15T01:58:27+00:00">
+    Jan 15
+  </time>
+  <a href="/sabre-http-2-released/">sabre/http 2.0 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2013</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2013-12-18T19:49:38+00:00">
+    Dec 18
+  </time>
+  <a href="/replacing-myopenid/">Replacing MyOpenID</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-12-05T06:52:14+00:00">
+    Dec 05
+  </time>
+  <a href="/mysql-bool-behavior-and-php/">MySQL 5.6 BOOL behavior when using PDO and prepared statements</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-11-23T02:12:04+00:00">
+    Nov 23
+  </time>
+  <a href="/modern-ie/">Free Internet Explorer VM's on modern.ie</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-11-19T22:21:22+00:00">
+    Nov 19
+  </time>
+  <a href="/if-you-care-about-privacy-dont-use-osx-mail/">If you care about privacy, don't use OS X mail</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-11-01T16:22:09+00:00">
+    Nov 01
+  </time>
+  <a href="/idempotence-in-http/">On idempotence in HTTP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-08-23T16:11:24+00:00">
+    Aug 23
+  </time>
+  <a href="/joining-calconnect/">Joining CalConnect</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-07-27T19:12:08+00:00">
+    Jul 27
+  </time>
+  <a href="/vobject31-released/">Sabre VObject 3.1 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-07-22T21:58:28+00:00">
+    Jul 22
+  </time>
+  <a href="/curl-redirect-requestbody/">Following redirects with Curl in PHP.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-07-19T14:12:23+00:00">
+    Jul 19
+  </time>
+  <a href="/sabre-event/">sabre-event, a simple event management library for PHP 5.4</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-06-25T20:13:14+00:00">
+    Jun 25
+  </time>
+  <a href="/osx-mavericks-php53/">OS X 10.9 will ship with PHP 5.3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-06-21T17:51:04+00:00">
+    Jun 21
+  </time>
+  <a href="/vobject3-released/">Sabre VObject 3 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-06-20T15:23:49+00:00">
+    Jun 20
+  </time>
+  <a href="/php-55-released/">PHP 5.5.0 released!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-05-10T15:57:12+00:00">
+    May 10
+  </time>
+  <a href="/escaping-in-vcards-and-icalendar/">Escaping in iCalendar and vCard</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-05-02T15:58:42+00:00">
+    May 02
+  </time>
+  <a href="/sabredav-acquired-by-fruux/">SabreDAV acquired by fruux</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2013-04-29T20:53:11+00:00">
+    Apr 29
+  </time>
+  <a href="/a-new-blog/">A new blog!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2012</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2012-12-16T16:53:22+00:00">
+    Dec 16
+  </time>
+  <a href="/switching-to-php-54-on-os-x/">Switching to PHP 5.4 on OS X</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-11-09T12:50:59+00:00">
+    Nov 09
+  </time>
+  <a href="/sabredav-18-released-with-namespaces/">SabreDAV 1.8 released (with namespaces!)</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-11-09T12:50:21+00:00">
+    Nov 09
+  </time>
+  <a href="/markdown-output-for-phpdocumentor2/">Markdown output for PHPDocumentor2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-10-06T12:47:38+00:00">
+    Oct 06
+  </time>
+  <a href="/sabredav-17-released/">SabreDAV 1.7 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-08-08T08:13:35+00:00">
+    Aug 08
+  </time>
+  <a href="/sabre-vobject/">New open source project: Sabre VObject</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-07-26T15:50:22+00:00">
+    Jul 26
+  </time>
+  <a href="/oauth-20-and-the-road-to-hell/">OAuth 2.0 and the Road to Hell</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-06-07T16:30:11+00:00">
+    Jun 07
+  </time>
+  <a href="/ie10-and-dnt-header-update/">IE10 and DNT-header update</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-06-02T13:49:47+00:00">
+    Jun 02
+  </time>
+  <a href="/ie10-will-enable-the-dnt-header-by-default-and-why-i-think-this-is-a-bad-thing/">IE10 will enable the DNT header by default, and why I think this is a bad thing.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-05-04T20:44:14+00:00">
+    May 04
+  </time>
+  <a href="/new-http-status-codes/">New HTTP status codes</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-03-21T13:44:50+00:00">
+    Mar 21
+  </time>
+  <a href="/new-full-time-gig-at-fruux/">New full-time gig at fruux</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-02-06T22:57:04+00:00">
+    Feb 06
+  </time>
+  <a href="/content-security-policy-update/">Content Security Policy update</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-01-25T14:03:52+00:00">
+    Jan 25
+  </time>
+  <a href="/silex-routing-issues/">Silex routing issues</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2012-01-21T18:10:08+00:00">
+    Jan 21
+  </time>
+  <a href="/rfc-search-provider/">RFC search provider</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2011</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2011-12-06T21:31:56+00:00">
+    Dec 06
+  </time>
+  <a href="/my-php-advent-article/">My PHP Advent article</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-11-29T15:55:58+00:00">
+    Nov 29
+  </time>
+  <a href="/phpincludes/">PHP Includes file generator</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-10-10T15:13:50+00:00">
+    Oct 10
+  </time>
+  <a href="/moved-sabredav-to-github/">Moved SabreDAV to Github</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-10-07T11:53:39+00:00">
+    Oct 07
+  </time>
+  <a href="/timezone-database-closed-down/">Timezone database closed down</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-09-29T14:57:15+00:00">
+    Sep 29
+  </time>
+  <a href="/iconv_substr-vs-mbstring_substr/">iconv_substr vs mbstring_substr</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-08-30T02:01:25+00:00">
+    Aug 30
+  </time>
+  <a href="/fake-googlecom-ssl-certificate-in-the-wild/">Fake *.google.com SSL certificate in the wild</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-08-12T14:08:57+00:00">
+    Aug 12
+  </time>
+  <a href="/sabredav-15-released-with-carddav-support/">SabreDAV 1.5 released with CardDAV support</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-05-25T21:53:11+00:00">
+    May 25
+  </time>
+  <a href="/blogging-for-5-years/">Blogging for 5 years</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-04-26T10:05:10+00:00">
+    Apr 26
+  </time>
+  <a href="/numeric-string-comparison-in-php/">Numeric string comparison in PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-04-18T20:20:37+00:00">
+    Apr 18
+  </time>
+  <a href="/escaping-mysql-strings-with-no-connection-available/">Escaping MySQL strings with no connection available</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-04-06T21:12:26+00:00">
+    Apr 06
+  </time>
+  <a href="/throwing-in-the-towel-with-sabreamf-and-dropbox-php-lib/">Throwing in the towel with SabreAMF and Dropbox PHP lib</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-03-16T11:59:04+00:00">
+    Mar 16
+  </time>
+  <a href="/speaking-at-the-phpbenelux-march-meetup/">Speaking at the PHPBenelux march meetup</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-02-16T13:47:35+00:00">
+    Feb 16
+  </time>
+  <a href="/mozilla-documentation-center/">Mozilla Documentation Center</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-02-15T16:50:07+00:00">
+    Feb 15
+  </time>
+  <a href="/speaking-at-dpc-2011/">Speaking at DPC 2011</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-02-14T13:00:00+00:00">
+    Feb 14
+  </time>
+  <a href="/sabredav-140-beta-released/">SabreDAV 1.4.0-beta released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-01-31T22:17:16+00:00">
+    Jan 31
+  </time>
+  <a href="/taking-advantage-of-php-namespaces-with-older-code/">Taking advantage of PHP namespaces with older code</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-01-27T12:02:44+00:00">
+    Jan 27
+  </time>
+  <a href="/going-to-phpbenelux/">Going to PHPBenelux</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2011-01-11T18:14:51+00:00">
+    Jan 11
+  </time>
+  <a href="/my-gripe-with-prototype/">My gripe with Prototype</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2010</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2010-11-23T20:58:18+00:00">
+    Nov 23
+  </time>
+  <a href="/icalendar-vcard-parser-for-php/">iCalendar / vCard parser for PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-10-30T14:50:54+00:00">
+    Oct 30
+  </time>
+  <a href="/slowdeath-a-simple-denial-of-service-attack-for-most-php-based-servers/">slowdeath - a simple denial of service attack for most PHP-based servers</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-10-21T13:13:20+00:00">
+    Oct 21
+  </time>
+  <a href="/internationalized-domain-names-are-you-ready/">Internationalized domain names, are you ready?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-10-14T20:44:19+00:00">
+    Oct 14
+  </time>
+  <a href="/sabredav-130-released/">SabreDAV 1.3.0 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-10-12T19:28:34+00:00">
+    Oct 12
+  </time>
+  <a href="/new-ubuntu-font/">Ubuntu has a new font</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-09-25T12:00:00+00:00">
+    Sep 25
+  </time>
+  <a href="/killing-a-dead-ssh-connection/">Killing a dead ssh connection</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-09-22T13:16:38+00:00">
+    Sep 22
+  </time>
+  <a href="/evercookie-the-cookie-that-just-wont-die/">Evercookie: the cookie that just won't die</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-08-09T10:13:36+00:00">
+    Aug 09
+  </time>
+  <a href="/content-security-policy-introduction/">Content Security Policy introduction</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-08-03T20:37:04+00:00">
+    Aug 03
+  </time>
+  <a href="/new-job-at-ibuildings-1/">New job at IBuildings</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-07-13T20:54:59+00:00">
+    Jul 13
+  </time>
+  <a href="/storing-encrypted-session-information-in-a-cookie/">Storing encrypted session information in a cookie</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-07-12T14:08:35+00:00">
+    Jul 12
+  </time>
+  <a href="/what-happened-to-http-authentication/">What happened to HTTP authentication?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-07-09T17:19:59+00:00">
+    Jul 09
+  </time>
+  <a href="/guidelines-for-generating-xml/">Guidelines for generating XML</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-05-25T14:58:43+00:00">
+    May 25
+  </time>
+  <a href="/blogging-for-4-years/">Blogging for 4 years</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-05-24T16:08:42+00:00">
+    May 24
+  </time>
+  <a href="/sabredav-12-released-with-caldav-support/">SabreDAV 1.2 released (with CalDAV support)</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-05-17T15:33:52+00:00">
+    May 17
+  </time>
+  <a href="/when-to-escape-your-data/">When to escape your data</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-05-12T07:55:30+00:00">
+    May 12
+  </time>
+  <a href="/goodbye-old-firefox-profile/">Goodbye old Firefox profile</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-05-10T13:25:41+00:00">
+    May 10
+  </time>
+  <a href="/dropbox-client-library-for-php/">Dropbox client library for PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-04-23T18:22:50+00:00">
+    Apr 23
+  </time>
+  <a href="/mbstring-function-overloading-dont-use-it/">Mbstring Function Overloading Dont Use It</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-04-20T16:30:28+00:00">
+    Apr 20
+  </time>
+  <a href="/filesystem-encoding-and-php/">Filesystem encoding and PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-04-13T13:38:58+00:00">
+    Apr 13
+  </time>
+  <a href="/html5-on2-vp8-h264-ogg-theora/">HTML5 video: On2 VP8, H.264 and Ogg Theora</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-04-13T09:37:33+00:00">
+    Apr 13
+  </time>
+  <a href="/new-habari-based-blog/">New habari-based blog</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-03-29T21:23:13+00:00">
+    Mar 29
+  </time>
+  <a href="/271/">basename() is locale-aware</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-03-19T15:18:36+00:00">
+    Mar 19
+  </time>
+  <a href="/270/">SabreDAV 1.0.9 released &amp; CalDAV news</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-03-18T14:25:49+00:00">
+    Mar 18
+  </time>
+  <a href="/269/">&lt;input type=&quot;email&quot;&gt; and Firefox Contacts Add-on</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-02-25T16:11:59+00:00">
+    Feb 25
+  </time>
+  <a href="/268/">Jumping ship! From Subversion To Mercurial</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-02-02T15:50:58+00:00">
+    Feb 02
+  </time>
+  <a href="/267/">CalDAV server for PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-30T18:50:29+00:00">
+    Jan 30
+  </time>
+  <a href="/266/">Published in PHP|Architect</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-29T17:45:32+00:00">
+    Jan 29
+  </time>
+  <a href="/265/">Unicode nearing 50% of the web</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-12T13:06:08+00:00">
+    Jan 12
+  </time>
+  <a href="/264/">A case for table-based design</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-11T14:16:40+00:00">
+    Jan 11
+  </time>
+  <a href="/263/">SabreDAV 1.0.4 released</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-08T12:44:22+00:00">
+    Jan 08
+  </time>
+  <a href="/262/">New open PEAR channels</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2010-01-07T17:14:05+00:00">
+    Jan 07
+  </time>
+  <a href="/261/">javascript's escape and encodeURI vs. PHP $_POST</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2009</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2009-12-23T13:35:24+00:00">
+    Dec 23
+  </time>
+  <a href="/260/">OS/X WebDAV and Chunked Transfer Encoding</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-12-16T16:45:46+00:00">
+    Dec 16
+  </time>
+  <a href="/259/">South Korea's 'real-name verification law'</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-12-11T16:47:04+00:00">
+    Dec 11
+  </time>
+  <a href="/258/">Switching from Google to Bing</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-12-09T13:05:03+00:00">
+    Dec 09
+  </time>
+  <a href="/257/">Game of life with checkboxes</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-11-03T04:45:02+00:00">
+    Nov 03
+  </time>
+  <a href="/256/">SabreDAV reaches 1.0</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-10-13T21:46:47+00:00">
+    Oct 13
+  </time>
+  <a href="/255/">Comments are back!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-10-13T05:49:01+00:00">
+    Oct 13
+  </time>
+  <a href="/254/">Deleted all comments by accident</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-09-16T00:41:51+00:00">
+    Sep 16
+  </time>
+  <a href="/253/">Upgrading to Snow Leopard adventures</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-09-15T01:49:25+00:00">
+    Sep 15
+  </time>
+  <a href="/251/">OS/X internet sharing defaults to 192.168.2.* range.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-09-14T04:35:48+00:00">
+    Sep 14
+  </time>
+  <a href="/250/">CalDAV - it's hard!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-09-10T23:38:05+00:00">
+    Sep 10
+  </time>
+  <a href="/249/">SabreDAV 0.12</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-09-02T22:25:45+00:00">
+    Sep 02
+  </time>
+  <a href="/248/">Converting ICalendar to XML </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-08-14T14:34:39+00:00">
+    Aug 14
+  </time>
+  <a href="/247/">Is OpenID becoming over-engineered? </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-07-21T12:02:22+00:00">
+    Jul 21
+  </time>
+  <a href="/246/">SabreDAV 0.9</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-07-11T02:24:00+00:00">
+    Jul 11
+  </time>
+  <a href="/245/">Flash ExternalInterface - Debug checklist</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-06-28T06:29:24+00:00">
+    Jun 28
+  </time>
+  <a href="/244/">SabreAMF 1.3 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-06-24T00:11:34+00:00">
+    Jun 24
+  </time>
+  <a href="/243/">Goto in PHP 5.3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-06-21T21:15:14+00:00">
+    Jun 21
+  </time>
+  <a href="/240/">Changing jobs</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-06-19T04:59:53+00:00">
+    Jun 19
+  </time>
+  <a href="/242/">PHP feature request: 'Throwable' interface</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-06-09T11:24:35+00:00">
+    Jun 09
+  </time>
+  <a href="/241/">Macbook LCD screen repair project</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-05-31T09:42:00+00:00">
+    May 31
+  </time>
+  <a href="/239/">SabreDAV 0.8</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-05-27T04:40:36+00:00">
+    May 27
+  </time>
+  <a href="/238/">Blogging for 3 years</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-05-10T12:26:50+00:00">
+    May 10
+  </time>
+  <a href="/237/">Baseball Chronicles</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-04-20T22:28:39+00:00">
+    Apr 20
+  </time>
+  <a href="/236/">Oracle to buy Sun</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-04-12T05:48:45+00:00">
+    Apr 12
+  </time>
+  <a href="/235/">Frame busting and clickjacking prevention</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-04-12T01:58:47+00:00">
+    Apr 12
+  </time>
+  <a href="/234/">rev=&quot;canonical&quot; and url shortening</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-04-05T03:04:48+00:00">
+    Apr 05
+  </time>
+  <a href="/233/">I bring you: floep</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-30T04:33:55+00:00">
+    Mar 30
+  </time>
+  <a href="/232/">SabreDAV 0.7</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-22T02:43:42+00:00">
+    Mar 22
+  </time>
+  <a href="/231/">Indexing geo-data 3: In practice </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-20T04:51:06+00:00">
+    Mar 20
+  </time>
+  <a href="/230/">Indexing geo-data 2 : simple benchmark</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-19T02:38:15+00:00">
+    Mar 19
+  </time>
+  <a href="/229/">Indexing geo-data</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-05T11:11:44+00:00">
+    Mar 05
+  </time>
+  <a href="/228/">Dangers of mutual dependencies</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-03-02T06:29:40+00:00">
+    Mar 02
+  </time>
+  <a href="/227/">WebDAV-related RFC's</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-02-27T12:54:17+00:00">
+    Feb 27
+  </time>
+  <a href="/226/">Rogers takes over my browser</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-02-17T10:02:28+00:00">
+    Feb 17
+  </time>
+  <a href="/225/">SabreDAV 0.6</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-02-14T02:19:20+00:00">
+    Feb 14
+  </time>
+  <a href="/224/">Search engines to support 'canonical urls', or: how to reinvent the wheel</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-02-12T11:44:34+00:00">
+    Feb 12
+  </time>
+  <a href="/223/">HTTP Basic and Digest authentication with PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-30T12:18:55+00:00">
+    Jan 30
+  </time>
+  <a href="/222/">Creating streams from strings in PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-25T09:23:07+00:00">
+    Jan 25
+  </time>
+  <a href="/221/">Apache speed and reverse proxies</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-22T06:46:58+00:00">
+    Jan 22
+  </time>
+  <a href="/220/">A case against pagers</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-21T12:46:29+00:00">
+    Jan 21
+  </time>
+  <a href="/219/">PHPUnit: A second look</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-14T14:44:38+00:00">
+    Jan 14
+  </time>
+  <a href="/218/">SabreDAV 0.5</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-12T11:01:25+00:00">
+    Jan 12
+  </time>
+  <a href="/217/">BBC drops microformats from programmes section.</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2009-01-08T02:21:27+00:00">
+    Jan 08
+  </time>
+  <a href="/216/">Devshed article about SQL Injection (or why security related articles should only be written by experienced people)</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2008</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2008-12-14T04:42:24+00:00">
+    Dec 14
+  </time>
+  <a href="/215/">Geo standards on the web</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-12-14T00:57:08+00:00">
+    Dec 14
+  </time>
+  <a href="/214/">Gps trackers - any advice?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-12-03T02:56:35+00:00">
+    Dec 03
+  </time>
+  <a href="/213/">Forking and MySQL connections</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-12-02T03:51:40+00:00">
+    Dec 02
+  </time>
+  <a href="/212/">MP4 fast-start woes</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-11-28T05:19:56+00:00">
+    Nov 28
+  </time>
+  <a href="/211/">Google Tech Talk about patents</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-11-28T04:19:44+00:00">
+    Nov 28
+  </time>
+  <a href="/210/">Zend Framework 1.7 features AMF support</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-11-20T04:29:48+00:00">
+    Nov 20
+  </time>
+  <a href="/209/">I'm programmer of the year!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-11-06T07:13:43+00:00">
+    Nov 06
+  </time>
+  <a href="/208/">SabreDAV 0.4</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-10-26T04:28:45+00:00">
+    Oct 26
+  </time>
+  <a href="/207/">Sony Headphone Drama</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-10-25T22:55:00+00:00">
+    Oct 25
+  </time>
+  <a href="/206/">New on this blog: degraded experience for IE6</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-10-17T09:51:31+00:00">
+    Oct 17
+  </time>
+  <a href="/205/">Flash Upload changes in Flash Player 10</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-10-07T11:04:18+00:00">
+    Oct 07
+  </time>
+  <a href="/204/">Solar Framework's master-slave db adapter </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-09-14T04:29:55+00:00">
+    Sep 14
+  </time>
+  <a href="/203/">SabreAMF 1.2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-09-10T04:03:02+00:00">
+    Sep 10
+  </time>
+  <a href="/202/">Quick MySQL tip: add comments</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-09-09T03:22:35+00:00">
+    Sep 09
+  </time>
+  <a href="/201/">Lighttpd + PHP fastcgi woes </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-08-19T05:38:04+00:00">
+    Aug 19
+  </time>
+  <a href="/200/">Integrating with Zend's OpenID</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-08-03T02:33:08+00:00">
+    Aug 03
+  </time>
+  <a href="/199/">Upcoming features in PHP 5.3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-08-01T02:54:48+00:00">
+    Aug 01
+  </time>
+  <a href="/198/">Subversion 1.5 for debian Etch </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-07-31T05:09:35+00:00">
+    Jul 31
+  </time>
+  <a href="/197/">Preventing XSS in Javascript strings </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-07-29T03:06:21+00:00">
+    Jul 29
+  </time>
+  <a href="/196/">Converting line-endings with ViM</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-07-04T00:59:35+00:00">
+    Jul 04
+  </time>
+  <a href="/195/">Google and Yahoo start indexing SWF's</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-07-03T02:21:23+00:00">
+    Jul 03
+  </time>
+  <a href="/194/">IE8 comprehensive protection</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-06-29T07:36:47+00:00">
+    Jun 29
+  </time>
+  <a href="/193/">SabreDAV 0.3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-06-17T01:27:45+00:00">
+    Jun 17
+  </time>
+  <a href="/192/">Macbook LCD screen broken =(</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-06-09T21:52:12+00:00">
+    Jun 09
+  </time>
+  <a href="/191/">CNMA 08 Finalist</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-06-06T04:56:43+00:00">
+    Jun 06
+  </time>
+  <a href="/190/">Site Security Policy</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-06-06T03:30:00+00:00">
+    Jun 06
+  </time>
+  <a href="/189/">Getting around &quot;su : must be run from a terminal&quot;</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-05-27T12:14:43+00:00">
+    May 27
+  </time>
+  <a href="/188/">SabreDAV 0.2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-05-27T00:29:46+00:00">
+    May 27
+  </time>
+  <a href="/187/">Blogging for 2 years</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-05-02T04:23:43+00:00">
+    May 02
+  </time>
+  <a href="/186/">Flash opens up</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-04-05T04:54:35+00:00">
+    Apr 05
+  </time>
+  <a href="/185/">SabreDAV 0.1</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-04-02T21:19:22+00:00">
+    Apr 02
+  </time>
+  <a href="/184/">CDATA in xml.. bad idea?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-29T05:18:31+00:00">
+    Mar 29
+  </time>
+  <a href="/183/">Usability, design 101</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-15T06:30:40+00:00">
+    Mar 15
+  </time>
+  <a href="/182/">WebDAV updates</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-06T02:31:40+00:00">
+    Mar 06
+  </time>
+  <a href="/181/">Silverlight 2 beta1 &amp; IIS new video features</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-06T02:10:55+00:00">
+    Mar 06
+  </time>
+  <a href="/180/">First glance on IE8</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-06T01:55:06+00:00">
+    Mar 06
+  </time>
+  <a href="/179/">Ray Ozzie's keynote</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-03-04T13:42:42+00:00">
+    Mar 04
+  </time>
+  <a href="/178/">Off to Vegas - Mix 08</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-02-15T12:06:01+00:00">
+    Feb 15
+  </time>
+  <a href="/177/">Traversing directories</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-02-15T11:36:56+00:00">
+    Feb 15
+  </time>
+  <a href="/176/">SabreAMF 1.1 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-02-08T13:27:02+00:00">
+    Feb 08
+  </time>
+  <a href="/175/">Strange call from Red Hat</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-02-01T23:12:39+00:00">
+    Feb 01
+  </time>
+  <a href="/174/">SabreAMF now on gentoo portage</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-01-12T00:58:47+00:00">
+    Jan 12
+  </time>
+  <a href="/173/">MySQL Stored Procedure in PHP gotcha</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-01-11T10:48:12+00:00">
+    Jan 11
+  </time>
+  <a href="/172/">MySQL crashes on triggers + insert delayed</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-01-11T04:58:03+00:00">
+    Jan 11
+  </time>
+  <a href="/171/">Mime types.. when will people learn?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2008-01-02T04:15:30+00:00">
+    Jan 02
+  </time>
+  <a href="/170/">Introduction to using SabreAMF with Flex</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2007</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2007-12-13T16:05:21+00:00">
+    Dec 13
+  </time>
+  <a href="/169/">Adobe publishes AMF3 spec</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-12-13T08:37:59+00:00">
+    Dec 13
+  </time>
+  <a href="/168/">PHP WebDAV integration library</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-12-12T06:49:22+00:00">
+    Dec 12
+  </time>
+  <a href="/167/">Implementing WebDAV with PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-12-11T13:42:55+00:00">
+    Dec 11
+  </time>
+  <a href="/166/">SabreAMF 1.0 release</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-12-07T03:22:46+00:00">
+    Dec 07
+  </time>
+  <a href="/165/">Open Source and copyright infringement</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-27T04:14:21+00:00">
+    Nov 27
+  </time>
+  <a href="/164/">PHP Quicksearch in firefox</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-27T00:48:10+00:00">
+    Nov 27
+  </time>
+  <a href="/163/">SabreAMF 1.0-beta4</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-08T01:33:56+00:00">
+    Nov 08
+  </time>
+  <a href="/162/">SabreAMF 1.0-beta3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-06T07:16:39+00:00">
+    Nov 06
+  </time>
+  <a href="/161/">Flash Uploader on Mac not triggering onComplete event</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-06T00:56:51+00:00">
+    Nov 06
+  </time>
+  <a href="/160/">PHP shutdown sequence</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-11-02T03:42:41+00:00">
+    Nov 02
+  </time>
+  <a href="/159/">MemCached and MySQL UDFs</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-31T04:35:50+00:00">
+    Oct 31
+  </time>
+  <a href="/158/">OS/X terminal settings for linux programmers</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-30T12:27:59+00:00">
+    Oct 30
+  </time>
+  <a href="/157/">Leopard first impressions and problems</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-23T01:59:46+00:00">
+    Oct 23
+  </time>
+  <a href="/156/">HTML Purifier rocks!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-22T20:55:04+00:00">
+    Oct 22
+  </time>
+  <a href="/155/">SabreAMF documentation</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-22T04:53:18+00:00">
+    Oct 22
+  </time>
+  <a href="/154/">SabreAMF 1.0-beta2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-21T06:57:55+00:00">
+    Oct 21
+  </time>
+  <a href="/153/">SabreAMF 1.0-beta</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-10-21T02:46:51+00:00">
+    Oct 21
+  </time>
+  <a href="/152/">PHP's DateTime object and unix times..</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-09-24T03:52:38+00:00">
+    Sep 24
+  </time>
+  <a href="/151/">My Firefox extensions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-09-08T02:28:49+00:00">
+    Sep 08
+  </time>
+  <a href="/150/">FFMpeg to support Nellymoser within the month?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-21T23:04:44+00:00">
+    Aug 21
+  </time>
+  <a href="/149/">Flash to support H.264</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-16T04:33:40+00:00">
+    Aug 16
+  </time>
+  <a href="/148/">PHP: Arrays vs. Objects</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-14T22:44:55+00:00">
+    Aug 14
+  </time>
+  <a href="/147/">PHP and circular dependencies</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-12T08:11:19+00:00">
+    Aug 12
+  </time>
+  <a href="/146/">Future of SabreAMF</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-12T07:46:09+00:00">
+    Aug 12
+  </time>
+  <a href="/145/">PHPRPC and PHP frameworks</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-08-07T10:47:17+00:00">
+    Aug 07
+  </time>
+  <a href="/144/">PHP-RPC update 4</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-07-20T00:15:22+00:00">
+    Jul 20
+  </time>
+  <a href="/143/">FLVTool2 broken</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-07-19T22:12:35+00:00">
+    Jul 19
+  </time>
+  <a href="/142/">Firefox gets httpOnly cookies</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-07-16T11:18:56+00:00">
+    Jul 16
+  </time>
+  <a href="/141/">PHP-RPC update 3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-07-10T03:03:08+00:00">
+    Jul 10
+  </time>
+  <a href="/140/">FiTC 2007 presentation video</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-07-06T01:01:24+00:00">
+    Jul 06
+  </time>
+  <a href="/139/">PHP namespaces</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-29T05:53:07+00:00">
+    Jun 29
+  </time>
+  <a href="/138/">PHP serializer 0.2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-26T11:49:17+00:00">
+    Jun 26
+  </time>
+  <a href="/137/">The curse of major versions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-19T13:28:21+00:00">
+    Jun 19
+  </time>
+  <a href="/136/">PHP serializer in userland code</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-19T02:26:03+00:00">
+    Jun 19
+  </time>
+  <a href="/135/">ext3: too many links!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-15T06:16:56+00:00">
+    Jun 15
+  </time>
+  <a href="/134/">CSS &quot;projection&quot; media type</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-06-14T23:33:34+00:00">
+    Jun 14
+  </time>
+  <a href="/133/">PHP-RPC</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-26T11:04:58+00:00">
+    May 26
+  </time>
+  <a href="/132/">Blogging for 1 year</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-13T06:07:41+00:00">
+    May 13
+  </time>
+  <a href="/130/">Running cli editor from php</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-10T22:40:10+00:00">
+    May 10
+  </time>
+  <a href="/129/">Site back up!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-09T08:14:29+00:00">
+    May 09
+  </time>
+  <a href="/128/">PHPUnit3 : first impressions</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-04T01:23:03+00:00">
+    May 04
+  </time>
+  <a href="/127/">MySQL recap and future storage engines </a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-05-03T05:53:56+00:00">
+    May 03
+  </time>
+  <a href="/126/">PHP try..catch syntax weirdness</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-04-26T22:34:21+00:00">
+    Apr 26
+  </time>
+  <a href="/125/">FiTC 2007 rocked!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-04-20T22:53:35+00:00">
+    Apr 20
+  </time>
+  <a href="/124/">Welcome CP/M user!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-03-26T04:53:25+00:00">
+    Mar 26
+  </time>
+  <a href="/123/">Flash8's ExternalInterface and Internet Explorer</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-03-26T04:29:02+00:00">
+    Mar 26
+  </time>
+  <a href="/122/">SabreAMF 0.7</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-03-16T07:07:03+00:00">
+    Mar 16
+  </time>
+  <a href="/121/">I got a chumby!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-03-02T01:29:36+00:00">
+    Mar 02
+  </time>
+  <a href="/120/">Presentation links</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-02-27T14:23:03+00:00">
+    Feb 27
+  </time>
+  <a href="/119/">Speaking at FlashinTO v59.0</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-02-24T08:18:04+00:00">
+    Feb 24
+  </time>
+  <a href="/118/">Multi-file upload using SWFUpload</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-02-22T04:37:53+00:00">
+    Feb 22
+  </time>
+  <a href="/117/">Sharing sessions between html and flash</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-02-07T02:03:21+00:00">
+    Feb 07
+  </time>
+  <a href="/116/">I'll be speaking at Flash in the Can 2007</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-02-06T05:58:54+00:00">
+    Feb 06
+  </time>
+  <a href="/115/">Rotating an image, retaining the original size</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-01-23T00:50:50+00:00">
+    Jan 23
+  </time>
+  <a href="/114/">Keeping your home directory in subversion</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-01-18T23:36:28+00:00">
+    Jan 18
+  </time>
+  <a href="/113/">Grepping in your subversion working copies</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-01-13T07:18:12+00:00">
+    Jan 13
+  </time>
+  <a href="/112/">I fixed home and end on OS/X terminal!</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-01-13T00:15:23+00:00">
+    Jan 13
+  </time>
+  <a href="/111/">SabreAMF 0.6 -> upgrade recommended</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2007-01-12T07:32:13+00:00">
+    Jan 12
+  </time>
+  <a href="/110/">What bug-reporting tool do you use?</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+<h3>2006</h3>
+<ul>
+
+
+
+
+
+<li>
+  <time datetime="2006-11-26T05:02:13+00:00">
+    Nov 26
+  </time>
+  <a href="/109/">SabreAMF 0.5</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-11-07T11:38:22+00:00">
+    Nov 07
+  </time>
+  <a href="/108/">SabreAMF featured on Adobe DevNet and 0.4 out</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-11-01T09:14:18+00:00">
+    Nov 01
+  </time>
+  <a href="/107/">Caching in PHP using the filesystem, APC and Memcached</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-10-07T02:39:27+00:00">
+    Oct 07
+  </time>
+  <a href="/106/">cron.daily scripts won't run</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-09-25T06:58:11+00:00">
+    Sep 25
+  </time>
+  <a href="/105/">Exploring OpenSearch</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-09-06T02:28:45+00:00">
+    Sep 06
+  </time>
+  <a href="/104/">SabreAMF 0.3 released + more info on class mappings</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-29T04:26:48+00:00">
+    Aug 29
+  </time>
+  <a href="/101/">Funky new look</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-28T00:15:37+00:00">
+    Aug 28
+  </time>
+  <a href="/102/">IE 7 RC1 acid2 test</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-18T03:29:48+00:00">
+    Aug 18
+  </time>
+  <a href="/100/">Creating a Gopher server with PHP and InetD</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-14T20:58:05+00:00">
+    Aug 14
+  </time>
+  <a href="/99/">Creating an OpenID client for PHP</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-10T17:10:05+00:00">
+    Aug 10
+  </time>
+  <a href="/97/">On HttpOnly, Firefox-specific XSS and this years major Livejournal XSS attack</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-08-10T03:41:03+00:00">
+    Aug 10
+  </time>
+  <a href="/98/">SabreAMF 0.2 is here</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-07-28T13:45:07+00:00">
+    Jul 28
+  </time>
+  <a href="/90/">Enabling firefox 2.0 microsummaries</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-07-25T08:34:05+00:00">
+    Jul 25
+  </time>
+  <a href="/89/">FFMpeg supports FLV 1.1</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-07-24T07:28:31+00:00">
+    Jul 24
+  </time>
+  <a href="/88/">Decoding AMF3</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-07-03T10:26:03+00:00">
+    Jul 03
+  </time>
+  <a href="/82/">Whats up for SabreAMF 0.2</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-25T02:08:15+00:00">
+    Jun 25
+  </time>
+  <a href="/79/">wmode=&quot;transparent&quot; in firefox</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-24T10:44:59+00:00">
+    Jun 24
+  </time>
+  <a href="/78/">Updated the meta-detector library (v0.2)</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-20T03:20:50+00:00">
+    Jun 20
+  </time>
+  <a href="/77/">Sourcecode for Meta detector</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-14T06:28:52+00:00">
+    Jun 14
+  </time>
+  <a href="/76/">Building Subversion from source on debian</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-11T03:38:27+00:00">
+    Jun 11
+  </time>
+  <a href="/75/">PHP Application Structure</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-11T02:15:30+00:00">
+    Jun 11
+  </time>
+  <a href="/74/">Added MetaWeblogAPI</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-03T22:00:35+00:00">
+    Jun 03
+  </time>
+  <a href="/72/">Coming soon.. Code section</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-06-01T05:58:49+00:00">
+    Jun 01
+  </time>
+  <a href="/71/">Auto detecting Blog Services</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-05-29T02:58:10+00:00">
+    May 29
+  </time>
+  <a href="/70/">Installing SabreAMF</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-05-28T22:09:33+00:00">
+    May 28
+  </time>
+  <a href="/69/">Added a tagcloud</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-05-28T05:33:38+00:00">
+    May 28
+  </time>
+  <a href="/68/">Added comment system</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+  <time datetime="2006-05-25T07:11:35+00:00">
+    May 25
+  </time>
+  <a href="/67/">A new blog</a>
+</li>
+
+
+
+
+
+
+
+</ul>
+
+
+   </main>
+   <div class="flower">
+   </div>
+
+   <footer>
+     Written by <a href="/">Evert Pot</a>. Find me on <a href="https://twitter.com/evertp">Twitter</a> or <a href="https://github.com/evert">Github</a>.
+   </footer>
+
+   <script>
+     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+     })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+     ga('create', 'UA-2848664-4', 'auto');
+     ga('send', 'pageview');
+
+   </script>
+
+</body>
+
+</html>
