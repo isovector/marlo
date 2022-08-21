@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Video Game Did I Play Yesterday?</title>
+    <!-- The style.css file allows you to change the look of your web pages.
+         If you include the next line in all your web pages, they will all share the same look.
+         This makes it easier to make new pages for your site. -->
+    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
+  </head>
+  <body>
+       <style>
+            :root {
+                /* These variables exist so you can make quick and simple style changes without much CSS knowledge */
+
+                /* applies to all areas */
+                --font-family: sans-serif;
+                --font-size: 14px;
+                --line-height: 1.3em;
+                --font-color: black;
+                --link-color: #22506A;
+                --link-text-decoration: none;
+
+                /* main content (between sidebars) */
+                --content-padding: 25px;
+                --content-bg-color: #8dd9cc;
+
+                /* header */
+                --header-height: 150px;
+                --header-background: url('https://miela583.neocities.org/header.jpeg');
+                --header-margin-bottom: 0px;
+
+                /* sidebar */
+                --sidebar-margin: 10px;
+                --sidebar-width: 150px;
+                --sidebar-padding: 15px;
+                --sidebar-bg-color: #8dd9cc;
+
+                /* footer */
+                --footer-height: 30px;
+                --footer-bg-color: #8dd9cc;
+
+                /* navbar */
+                --navitems-alignment: center;
+                --space-between-navitems: 20px;
+                --navbar-margin-bottom: 10px;
+                --nav-bg-color: #8dd9cc;
+
+                /* container */
+                --container-width: 800px;
+                --container-bg-color: #d98d9a;
+
+                /* controls the gap between the content and the footer */
+                --row-gap: 5px;
+
+                /* To add scrollbars to your sidebars, just make the height a px value and change overflow to 'auto' */
+
+                --sidebar-height: 100%;
+                --sidebar-overflow: hidden;
+                --background-color: #d98d9a;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: var(--background-color);
+                                background-image: url('https://miela583.neocities.org/sakura.png');
+                font-family: var(--font-family);
+                font-size: var(--font-size);
+                line-height: var(--line-height);
+                color: var(--font-color);
+            }
+
+            body a {
+                color: var(--link-color);
+                font-weight: bold;
+                text-decoration: var(--link-text-decoration);
+            }
+
+            #main-container {
+                max-width: var(--container-width);
+                margin: 0 auto;
+                background-color: var(--container-bg-color);
+                                background-image: url('https://miela583.neocities.org/sakura.png');
+            }
+
+            .flex {
+                display: flex;
+                margin-bottom: var(--row-gap);
+            }
+
+            .content-wrap {
+                margin-top: var(--content-margin-top);
+            }
+
+            #content-container {
+                width: 60%;
+                margin-bottom: var(--row-gap);
+                background-color: var(--content-bg-color);
+            }
+
+            #left-sidebar {
+                width: var(--sidebar-width);
+                margin-right: var(--sidebar-margin);
+                margin-bottom: var(--row-gap);
+                height: var(--sidebar-height);
+                overflow: var(--sidebar-overflow);
+                background-color: var(--sidebar-bg-color);
+            }
+
+            #right-sidebar {
+                width: var(--sidebar-width);
+                margin-left: var(--sidebar-margin);
+                margin-bottom: var(--row-gap);
+                height: var(--sidebar-height);
+                overflow: var(--sidebar-overflow);
+                background-color: var(--sidebar-bg-color);
+            }
+
+            #header-contained {
+                height: var(--header-height);
+                margin-bottom: var(--header-margin-bottom);
+                background-image: var(--header-background);
+                background-position: center center;
+            }
+
+            #footer {
+                height: var(--footer-height);
+                text-align: center;
+                color: var(--font-color);
+                background-color: var(--footer-bg-color);
+            }
+
+            #header-full {
+                display: none;
+                height: var(--header-height);
+                margin-bottom: var(--header-margin-bottom);
+                background-image: var(--header-background);
+                background-position: center center;
+            }
+
+            #navbar-contained {
+                margin-bottom: var(--row-gap)
+            }
+
+            #navbar-full {
+                display: none;
+            }
+
+            .nav {
+                margin-left: 0;
+                text-align: var(--navitems-alignment);
+                margin-top: 0;
+                margin-bottom: var(--navbar-margin-bottom);
+                padding-top: 1em;
+                padding-bottom: 1em;
+                background-color: var(--nav-bg-color);
+            }
+
+            .nav li {
+                display: inline-block;
+                padding-right: var(--space-between-navitems);
+            }
+
+            .wrapper {
+                padding: var(--content-padding);
+                padding-top: var(--sidebar-padding);
+            }
+
+            .sidebar-wrapper {
+                padding: var(--sidebar-padding);
+                height: var(--sidebar-height);
+                overflow: var(--sidebar-overflow);
+            }
+
+            .footer-wrapper {
+                padding: 5px;
+            }
+
+            /* To keep your site RESPONSIVE, make sure this variable matches the width for --container-width UNLESS --container-width is 100% - if it's 100%, you'll need to manually input a breakpoint. */
+            @media only screen and (max-width: 800px) {
+                .flex {
+                    flex-wrap: wrap;
+                }
+
+                #left-sidebar {
+                    width: 100%;
+                    display: block;
+                    order: 2;
+                    margin-right: 0;
+                    margin-bottom: 10px;
+                }
+
+                #right-sidebar {
+                    width: 100%;
+                    display: block;
+                    order: 3;
+                    margin-left: 0;
+                }
+
+                #content-container {
+                    width: 100%;
+                    display: block;
+                    order: 1;
+                    margin-bottom: 10px;
+                }
+
+            }
+        </style>
+        <div id="header-full"></div>
+        <div id="navbar-full">
+            <ul class="nav">
+                <li><a href="https://miela583.neocities.org/">Home</a></li>
+                <li><a href="https://miela583.neocities.org/postarchive.html">Post Archive</a></li>
+                <li><a href="https://miela583.neocities.org/game-list.html">Game Index</a></li>
+                <li><a href="https://miela583.neocities.org/game-pages/cleared-games.html">Cleared Games</a></li>
+                <li><a href="https://miela583.neocities.org/about.html">About</a></li>
+                <li><a href="#">Link</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </div>
+        <div id="main-container">
+            <div id="header-contained"></div>
+            <div id="navbar-contained">
+                <ul class="nav">
+                <li><a href="https://miela583.neocities.org/">Home</a></li>
+                <li><a href="https://miela583.neocities.org/postarchive.html">Post Archive</a></li>
+                <li><a href="https://miela583.neocities.org/game-list.html">Game Index</a></li>
+                <li><a href="https://miela583.neocities.org/game-pages/cleared-games.html">Cleared Games</a></li>                
+                <li><a href="https://miela583.neocities.org/about.html">About</a></li>
+                </ul>
+            </div>
+            <div class="content-wrap flex alignment">
+                <div id="left-sidebar" style="display: block;">
+                <br>
+                <li><a href="https://miela583.neocities.org/may2022.html">May 2022</a></li>
+                <li><a href="https://miela583.neocities.org/june2022.html">June 2022</a></li>
+                <li><a href="https://miela583.neocities.org/july2022.html">July 2022</a></li>
+                <li><a href="https://miela583.neocities.org/august2022.html">August 2022</a></li>
+                <br>
+                <li><a href="https://miela583.123guestbook.com/">Guestbook</a></li>
+                <br>
+                </div>
+                <div id="content-container" style="flex-grow: 1;">
+                    <div class="wrapper">
+                        <h1>What Video Game Did I Play Yesterday?</h1>
+                        <h3>June 2022</h3>
+                    <br>
+<h3>June 30th, 2022</h3>
+    <p>Last night, I spent several hours of swearing finishing the main story of <em>Sonic Forces</em>. I like games, but am not very good at them, so it occurred to me as I played that games should have a feature where, if you drop the f-bomb in the same insult enough times against a beloved children's character, it asks you if you're okay and want to keep trying, or go to bed before you have a heart attack. The final boss was pretty impressive, though, and I had fun overall, so I'm happy. I'm going to start in on some of the post game stuff tonight, which'll mostly be hours upon hours of magic animal dress up.</p> 
+        <img src="/08-sonicforces.jpeg">
+    <p>As always, I also cleared my daily missions in <em>Ensemble Stars</em> and tried to get a read on the cards I'd gathered. I looked, determined there were too many characters, and picked up no additional information. Tonight and tomorrow, I might see if I can make a run at clearing at least the story part of the event, but if I don't, I don't.</p> 
+        <img src="/012-ensemblestars.jpeg">
+        <br>
+<h3>June 29th, 2022</h3>
+    <p>My jello gummy bears last night were terrible. I learned from the experience, but regret my cockiness in the bygone era that yesterday has become, re-reading such youthful enthusiasm in today's harsh light.</p>
+    <p>Anyway, I didn't play anything out of the ordinary last night. I played more <em>Sonic Forces</em>, and think I'll beat the main campaign tonight.</p> 
+        <img src="/07-sonicforces.jpeg">
+    <p>I also cleared my daily missions and almost nothing more in <em>Ensemble Stars</em>.</p> 
+        <img src="/011-ensemblestars.jpeg">
+    <p>Video games are a good time to enjoy penalty free laziness.</p>
+        <br>
+<h3>June 28th, 2022</h3>
+    <p>It took me a while to get to posting tonight because I got some gummy bear molds and some agar powder, and I was makin' the hell out of some jello. I may actually post a photo here once I get enough colors made. It's not gaming content, but jello treats are a gift to the people.</p>
+    <p>Last night, I really turned a corner on <em>Sonic Forces</em>- I quite enjoy this game. It is dumb and not perfect, but I can run fast and unlock stuff endlessly. Stuff is stressful, I do not always need more from a game than this.</p> 
+        <img src="/06-sonicforces.jpeg">
+    <p>With <em>Ensemble Stars</em>, I did the daily goals and not much else. I respect that this game hands me enough unlockable stuff and level ups with short daily play sessions that it doesn't feel insurmountable. A low committment mobile game is fine.</p> 
+        <img src="/010-ensemblestars.jpeg">
+        <br>
+<h3>June 27th, 2022</h3>
+    <p>Yesterday involved a lot more old anime on the Roku live streaming channels and crafts than games, which was perfect for  Sunday.</p>
+    <p>I did play <em>Sonic Forces</em> for a while and wonder if I'm getting close to the end of the game or not? I've fought the final boss style character, Infinite, twice now, and did a boss battle against Metal Sonic last night. I still maintain that this game is getting easier as it goes, too. I don't really mind, it's fine, it is just a hard game to get a read on, even if it is basically fun to play.</p> 
+        <img src="/05-sonicforces.jpeg">
+    <p>Over in mobile gaming fluff land, I got extremely set on getting a full combo on a difficult song in <em>Ensemble Stars</em> and just played it over and over until I succeeded. I did the 100 character garbage gacha, which was mildly satisfying, and bought another trash can for their office. It was moderate feelings of accomplishment all around.</p> 
+        <img src="/009-ensemblestars.jpeg">
+        <br>
+<h3>June 26th, 2022</h3>
+    <p>I got <em>Sonic Adventure</em> back up and running yesterday! In order to get the sound back, I had to install the SADX Mod Installer, <a href="https://sadxmodinstaller.unreliable.network/">which is here if you need it</a>, overwriting the failed audio with the audio files from the Dreamcast version of the game. (I also, practically, installed a mod to add the Japan only DLC for holidays.) The mod installer did a few other things, too, adding in the unlockable Game Gear stuff from Game Cube, and, in a less fun bonus, adding camera control.</p>
+    <p>The camera in <em> Sonic Adventure</em> is bad to be sure, but I'm really prone to motion sickness in older 3D games. For whatever reason, the awful camera in this game doesn't really tend to trigger it, but with the mod on, it's pretty bad. If I keep my laptop as far away from me as possible, I think I'll still be able to finish it off one level at a time, but it's a disappointing trade-off.</p>
+    <p>Anyway, with the game back up and running, I played one of the Knuckles levels and did a boss fight alongside it.</p>
+        <img src="/13-sonic.jpg">
+    <p>Even though I have <em>Sonic Adventure</em> going again, I kept going with <em>Sonic Forces</em>. I feel, somewhat bafflingly, that the game is getting less challenging as it goes, rather than my just getting better at it. In some levels, I feel like it would be harder to get killed than not. Dressing up the avatar character is very cute, though, so I'm in it for the outfit pieces.</p> 
+        <img src="/04-sonicforces.jpeg">
+    <p>Of course, I kept going with my mobile game, too. I am almost incidentally grinding away at the event in <em>Ensemble Stars</em> as I play normally. I'm looking to finish unlocking the story for the current gacha cards, and I want to level up and get money to drown the chibi idols in the office in a sea of garbage cans. The game says I can have up to 99 of them, and I'm goin' for it. The event progresses with normal gameplay, though, so there's no real reason not to do it. Also, as I predicted, I've been able to level up enough to start scoring decently within just a week of play, which is fine.</p> 
+        <img src="/008-ensemblestars.jpeg">
+    <p>I might not play much today, since I'm enjoying an over-complicated crochet project and trying to finish a diamond painting of hauntingly low quality, but craft time is good, too. I'll at least check in on a couple of games.</p>
+        <br>
+<h3>June 25th, 2022</h3>
+    <p>I did my Saturday update this morning, adding an About page. It's not super useful, but now that it's there, I can decide what I want to do with it later.</p>
+    <p>Yesterday was not good, so I didn't really play anything. Today, powered by Ricola and leftover pizza, I will probably play more, but if I don't, I don't.</p>
+    <p>I did play some <em>Ensemble Stars</em> last night and scored more event points than I thought I would. I got some very nice login bonuses, too, and felt quite powerful in the gacha. My wi-fi wasn't cooperating, though, whether it was due to storms or my ISP, so I gave up pretty fast.</p> 
+        <img src="/007-ensemblestars.jpeg">
+        <br>
+<h3>June 24th, 2022</h3>
+    <p>Today sucks, just as a general vibe, so this is a minimalist post.</p>
+    <p>I played more <em>Sonic Forces</em> last night. Replaying levels, a lot of the setpieces get old fast. The shininess does not get old.</p>
+            <img src="/03-sonicforces.jpeg">
+    <p><em>Ensemble Stars</em> had an event start up last night. I will halfheartedly pursue some of the lower goals while filling my idol office with trash cans.</p> 
+        <img src="/006-ensemblestars.jpeg">
+        <br>
+<h3>June 23rd, 2022</h3>
+    <p>June is not my month! I was going to do a good post before work this morning, but ended up hacking with a sore throat and getting a COVID test instead. It's not as bad as what I had earlier in the month, even with the cough medicine they gave me to get through work making me ultra-sleepy, but still! My butt is so kicked lately.</p>
+    <p>Anyway, last night was pretty close to the night before. I knocked out a couple more levels of <em>Sonic Forces</em>, coming to the conclusion that the tone reads as weird to me because it's for kids that are really into the franchise, not judgy adults. That doesn't make it a great game, but if, when I was a grade schooler, there had been a game where you could design a Princess Toadstool lookalike and have her rescue the entire cast of the Mario games, I would have played it to death. It's cute.</p>
+            <img src="/02-sonic-forces.jpeg">
+    <p>After that, I had <em>Ensemble Stars</em> up and running properly again. I was thinking too hard about all the weird, slightly off Christian imagery in the game last night, which is very interesting rather than a negative. I was already feeling a little cruddy, though, so I failed to gather any evidence. Instead, here is a screenshot of the Idol Work mode, where you just kind of idly tap the screen a few times and get points. It's not the best, but I can definitely run it while I am leading the more productive points of my life for said points.</p> 
+        <img src="/005-ensemblestars.jpeg">
+        <br>
+<h3>June 22nd, 2022</h3>
+    <p>Last night, due to a pretty decent digital sale on PS4, I started playing <em>Sonic Forces</em>. It is not a replacement for <em>Sonic Adventure</em>, which I will try to fix over the weekend, but my expectations were so extremely low that I actually had a good time. The cutscenes were driving me up a wall, as I do not need so much chatter or angst from a Sonic game, but the character creator is cute and the game itself is, if not great, fine. So far, it seems like an okay 10 dollar game.</p>
+            <img src="/01-sonic-forces.jpeg">
+    <p><em>Ensemble Stars</em>, on the other hand, was either suffering from server issues or my sitting too far away from my weenie router last night. Either way, I got through the daily missions and am at the final step of the beginner's missions.</p> 
+        <img src="/004-ensemblestars.jpeg">
+        <br>
+<h3>June 21st, 2022</h3>
+    <p>I still couldn't fix <em>Sonic Adventure</em> last night. I think I can fix it by modding it, but this is not a deal that is going to change my opinion that PC gaming is higher barrier than consoles. I really want to finish the game, though, so I'll keep tackling it.</p>
+    <p>On the actual gaming side of things, I went back to <em>Ensemble Stars</em> last night. For the event, it was asking me to unlock skills on character cards, which, of course, it lets you just pay to do if you don't want to grind for item drops in the actual game. It's very benevolent of the game, right? I am not at all opposed to completing an extremely repetitive task in exchange for getting my mind off the fact that I still have a job to show up to, so I'm not super bothered by this so much as it was an "oh, of course!" moment.</p> 
+        <img src="/003-ensemblestars.jpeg">
+        <br>
+<h3>June 20th, 2022</h3>
+    <p>Alas! <em>Sonic Adventure</em> has broken on my PC! The sound on it is totally gone. Browsing around for help, it seems like this is a semi-common issue for the Steam version, but none of the listed fixes helped me. I will keep trying to fix it, but I'm kind of disappointed. I want my games to be talkies!</p>
+    <p>Other than trying to get Sonic back up and running properly, I played <em>Ensemble Stars</em> for a while again, tackling the game's first event. It's a character levelling thing that serves as a pretty blatant system tutorial, but if the game wants to toss prizes at me, it can go for it. Plus, I like the <em>PriPara</em> style cyalume change coord it gives the idol- the more garish and shiny this nonense gets, the better. I finished the first round of the event and am into the additional levels of it now.</p> 
+        <img src="/002-ensemblestars.jpeg">
+        <br>
+<h3>June 19th, 2022</h3>
+    <p>I planned to play video games quite a bit yesterday, but I ended up running errands, finishing off a craft project, and watching a 3 hour long movie instead, which is equally good for a weekend. I have a couple more errands to run today, which, tragically, are going to end in me going out on a sunny summer day and getting delicious takeout. Alas, life is hell.</p>
+    <p>Last night, I picked up a new mobile music gacha game, which I'd been looking to do for a while. The daily energy limits keep a decent cap on how many hours I can waste, and I don't get very bent out of shape when I can't win rare cards, so it's a good setup for me.</p> 
+    <p>Before, I used to play <em>King of Prism</em> and <em>Uta Macross: Smartphone de Culture</em> a lot, but <em>King of Prism</em> ended and the <em>Macross</em> game is on its way out now, too. I played the first <em>Love Live: School Idol Festival</em> game years ago, too, when I was in grad school, but fell off of it when I actually had to, like, write my thesis. (To be fair, the game and the thesis seem have done me equal amounts of good when it comes to my daily life.) I've tried some of the K-pop ones floating around the Android store, too, <em>JYP Superstar</em> to the biggest extent, but they're not quite dumb enough for me.</p>
+    <p>Now that <em>Ensemble Stars!! Music</em>, which I'd given a shot on the JP servers before now, is out in English, I wanted to try that. It seems to be decent so far, as far as these things go. The translation is a little clunky, and my poor Galaxy Tab A cannot deal with the 3d models when the graphics are cranked all the way up, but it has the original voices and a "we'll take pity on you and just slap a JPEG behind the gameplay" graphics mode to cover for both those. More frustratingly, as seen in the screenshot below, it's the sort of game where, even with a full combo, not having the right cards still lands you a low score, but I will waste enough time to break that barrier very soon.</p>
+        <img src="/001-ensemblestars.jpeg">
+        <br>
+<h3>June 18th, 2022</h3>
+    
+    <p>My big Saturday update for this week is pretty small. I just got a guestbook added over to the side. I found the link to the guestbook host over on the Neocities page run by Aywren, a user who has an interesting blog and a really nice page for resources. I'm not sure what I'm doing, so a nice resources page is always appreciated. <a href="https://aywren.com/">You can check out Aywren's site by clicking on this very sentence! </a></p>
+    <p>As for gaming, last night, I started a fluffy, insubstantial game on my tablet, <em>Sonic at the Olympic Games</em>. Weird as it is to play an enthusiastic tie in for the Tokyo 2020 Olympic games, which did not go off as scheduled, it's a very bizarre game overall. First of all, I just think it's cheating for Sonic to participate in foot races, even at the Olympic level. If I were a world-class athlete, I'd be so mad if I got to the Olympics and was at the starting line next to a fictional character famous for being fast.</p>
+    <p>The cartoon Olympics here also seem to have super lax entrance criteria and security. Not only is Sonic allowed to compete in and medal in every sport, but Metal Sonic, who is clearly not operating under normal athletic circumstances, is allowed to use the games for boss battles, which the Olympic committee then counts as medal events? I also don't think the games governing body should have allowed Dr. Robotnik to use the Olympics to determine the rule of Tokyo, either. That's not normal stuff.</p>
+    <p>Anyway, the game is fine. I like minigames when I'm sleepy.</p>
+        <img src="/01-sonic-olympic.jpeg">
+    <br>
+<h3>June 17th, 2022</h3>
+    
+    <p>I both worked mildly late and bought groceries last night, a tragic combination that could only end in my being rendered completely unable to play games with any sort of forward momentum. Therefore, I turned on <em>Sonic Adventure</em> and had peaceful game time in the Chao Garden. All games need to have fully featured pet raising modes, simply because I would like that very much.</p>
+        <img src="/12-sonic.jpeg">
+    <br>
+ <h3>June 16th, 2022</h3>
+    
+    <p>Yesterday was just more <em>Sonic Adventure</em>- it was way too hot, so I only got through one level before I got too motion sick to keep going. I respect that when you play as Gamma, one of the striking transit workers thinks you're a government thug sent to bust up their strike, though. The whole labor dispute subplot in this game is great.</p>
+        <img src="/11-sonic.jpeg">
+    <br>
+<h3>June 15th, 2022</h3>
+    
+    <p>I got back to playing <em>Sonic Adventure</em> last night and it was very satisfying! Last night's play session, on the Sonic path, had all the things that kids love in a game! I got to go to an office building, and the transit workers' strike was peacefully resolved. It was delightful.</p>
+        <img src="/10-sonic.jpeg">
+        <br>
+    <p>That's a bit snarky, but it was actually really fun. I got to this level last night where I was in a volcano for the second half, and it was really enjoyable to play, and the highway level was fun, too. This game has a lot of dramatic setpieces where you're basically unkillable, but they're cool and fun, which is as good as anything. The pointless parts of this game, like the linear level progression being over-explained away by daily life in the city, or the parts where you just run down the side of a building towards and can't die no matter how many walls you slam into, are the best parts of it. I hit a few of those last night, so I was happy.</p>
+    <br>
+                    
+<h3>June 14th, 2022</h3>
+    
+    <p>Last night ended up being more stuff than I would have liked, so I missed out on my noble gaming plans again. Instead, I grabbed my Genesis Mini and played <em>Eternal Champions</em>. I give this a shot every couple of years, despite the fact that I do not actually like <em>Eternal Champions</em>. It feels clunky, I can never get a grip on the movesets, and, picky though it is, it drives me nuts that you can't get back to the main menu easily in single player mode. The dithering on the sprites and backgrounds looks really cool, though, giving it a different look than a lot of fighting games. I want to like it more than I do. However, I don't, and I'm going to go back to ignoring this game for a while.</p>
+        <img src="/01-eternal-champions.jpeg">
+    <br>
+    
+<h3>June 13th, 2022</h3>
+    
+    <p>I was still not feeling great last night, so though I'd had different intentions, I ended up just making sure I had everything set up so I could switch out my mini consoles easily. That led to some very spotty gaming on my standard Famicom Mini, first with <em>Ninja Gaiden</em>. I haven't messed with this game much before, but I'll probably come back to it. It seemed very cool from the first couple of levels. It just wasn't a game to tackle with a massive headache.</p>
+        <img src="/01-ninja-gaiden.jpeg">
+    <p>After that, I accidentally clicked on <em>Solomon's Key</em> while I was typing on my phone and played a level. It was not my speed last night.</p>
+            <img src="/01-solomons-key.jpeg">
+    <p>From there, I turned on <em>Yie Ar Kung-Fu</em>, which was my speed. Honestly, I think it's a little rude of so many other people in the fighting tournament to have weapons when my little guy clearly doesn't, but battle is a cruel thing. It was enjoyable, and I can see returning to it to hurl curse words at my TV again soon, but last night, I just ended up going to bed. The Famicom Mini isn't going anywhere, so that is fine.</p>
+            <img src="/01-yie-ar.jpeg">
+    <br>
+<h3>June 12th, 2022</h3>
+    
+    <p>I got really set on getting my Japanese PS1 up and running last night, and am not sure why. It is not a machine that has any problems, and it was out and ready to go, so I am blaming a mix of allergies and antibiotics making me weird for the whole thing. Once it was set up, though, I got out the <em>The Super Dimension Fortress Macross: Do You Remember Love</em> game to try it out.</p>
+    <p>I've had the game for a while, but I'm so bad at horizontal shooters that I'd been almost too worried about sucking at the game to actually try playing it. From the little I played last night, though, it was really cool! It had some really nifty effects to recreate some of the movie's space battle animation in sprite form- the missile trails in particular looked pretty impressive- and as well as I like Macross, I was really taken in by all of the music and voice clips. Plus, I liked how fuzzy and low res the anime clips looked on the PS1 disc.</p>
+    <p>It might be a while before I fully tackle this game, since it got played last night just to make sure my console was still running, but I'll look forward to really playing it! It made me, as a dork, very happy.</p>
+        <img src="/01-macross-dyrl.jpeg">
+    <p>Later in the night, I got back to <em>Sonic Adventure</em>. I'm still not totally back to my normal energy level, so I just did the first level for Big the Cat. It was fine. It's maybe a little much that you lose a life when the fishing line breaks, but I don't know how giant talking cats feel about this stuff. Maybe it's really a lot for him to deal with.</p>
+            <img src="/09-sonic.jpeg">
+
+  <br>
+<h3>June 11th, 2022</h3>
+    
+    <p>It's Saturday, so I tried to do a decent update on this site today! I started a fairly basic <a href="https://miela583.neocities.org/game-list.html">Game Index</a> page, figuring it would be easier to do it now while there's not too much I've typed about than it will be a month from now. So far, I'm not completely satisfied with it, but I'll think about what I can do and come back to it later.</p>
+    <p>Last night, though, I cleared <em>Dragon Quest</em>! I didn't think I was going to beat the final boss last night, but the final dungeon was a lot more straightforward than I expected. I just kind of went in, wandered around, found the boss, and defeated them by an extremely slim margin.</p>
+    <p>I kept expecting that the game would have more tricks up its sleeve than it actually did, which isn't a bad thing. It was nice to sit back and wander through an early, basic, and charming RPG on a week where I wasn't feeling so well. It drove me kind of crazy that the Switch port had choppy scrolling, since a modern machine should be able to handle a mobile version of a Famicom game, but even that wasn't enough to ruin the game. <em>Dragon Quest</em> was nice.</p>
+        <img src="/05-dq1.jpeg">
+  <br>
+<h3>June 10th, 2022</h3>
+    
+    <p>I definitely kicked butt playing <em>Dragon Quest</em> last night! I'd been worried that I was missing some sort of big hint in the previous towns about where the Golem I needed to fight might be, but found in a place that made complete sense during the course of normal gameplay. I sometimes expect that older games are going to be way more cryptic than they actually happen to be.</p>
+    <p>From there, everything fell into place. I got the last key item I needed, levelled up a few times and got the high cost equipment I needed, and am ready to go to the Dragonlord's castle the next time I play. I might get this game cleared this weekend.</p>
+        <img src="/04-dq1.jpeg">
+  <br>
+<h3>June 9th, 2022</h3>
+    
+    <p>I was still extremely sleepy last night, so I basically found one key item, leveled up once, and quit playing <em>Dragon Quest</em> last night. I know exactly where I need to go next, but if I just end up levelling up again tonight, that is fine, too. Progress is progress.</p>
+        <img src="/03-dq1.jpeg">
+  <br>
+                    
+                                                   <h3>June 8th, 2022</h3>
+    
+    <p>I stayed awake, but the Switch port of <em>Dragon Quest</em> did not run better in docked mode. It was still a decent and relaxing way to pass some very sleepy time, though. I rescued the princess, leveled up, and have a vague idea of where I need to go next. I think I'm close to the end already, but since I knew it was a short game, that's not so shocking. I'll probably at least level grind a bit more tonight.</p>
+        <img src="/02-dq1.jpeg">
+  <br>
+  
+<h3>June 7th, 2022</h3>
+    
+    <p>I mostly slept again yesterday, so today's goal is to stay awake and get on a normal schedule so I can go back to work tomorrow. It's somewhat challenging!</p>
+    <p>Before my real bedtime last night, though, I played the Switch port of the first <em>Dragon Quest</em> for a little bit. It is a low cost port of a very old game, which I understand, but it runs really badly. The choppy scrolling on the overworld was driving me crazy. It's still plenty pleasant and low stress, but this game is old enough that making it work on a modern console should be a breeze. Oh, well. I'll probably keep going over some hot tea today. Maybe I'll see if it can run any better in docked mode.</p>
+        <img src="/01-dq1.jpeg">
+  <br>
+                                           <h3>June 6th, 2022</h3>
+    
+    <p>I haven't been feeling very good, so mostly, I've been asleep since yesterday afternoon. I went to the doctor today, though, so hopefully I will be peppy enough to push game buttons again soon! Anyway, yesterday morning, I played the Neo Geo Pocket Color version of <em>The Last Blade</em> on my Switch a bit more. It's cute, and I'm making headway figuring out that the scrolls you can collect actually have some sort of purpose. It's a neat game. </p>
+        <img src="/02-lastblade-ngpc.jpeg">
+  <br>
+ <h3>June 5th, 2022</h3>
+    
+    <p>Like I said I was going to, I went in yesterday afternoon and beat the final boss for the Tails route in <em>Sonic Adventure</em>. After struggling with it playing late, it took a grand total of 6 minutes to take care of when I was wide awake. I was very surprised how short the side story was, though! This game might not be as long as I though it was going to be.</p>
+        <img src="/07-sonic.jpeg">
+
+    <p>When it got late, I dug through some of my itch.io bundles and pulled out a game called <em>Adventure for a Bit</em> that you can <a href="https://justcamh.itch.io/adventure-for-a-bit">download here</a>. It seems like a very nice and charming game so far, where you help an AI get confidence while it makes you pretty and pastel procedurally generated landscapes. I've had some trouble getting stuck in pits and corners in the worlds the game makes you, but the little scenes between each world are so cute! It's very relaxing, too. I don't know how much is left, but I'm looking forward to finishing it.</p>
+    <img src="/01-adventurebit.jpeg">
+    <p>After that, I went back to <em>Sonic Adventure</em> for a few minutes, but Twinkle Park sucks and I went to bed.</p>
+    <img src="/08-sonic.jpeg">
+  <br>
+                       <h3>June 4th, 2022</h3>
+    
+    <p>First and foremost, I got a lot of updates made to the site today! I finally added a background, which I think makes it look a lot nicer, and got some navigation set up to view older posts more easily. I still have a lot of stuff I want to implement, but I'll play with it as I go. Part of why I'm doing this is to remember what I learned of HTML in high school and pick up CSS, too, so there's nothing wrong with learning as I go.</p>
+    <p>On the game front, last night was more <em>Sonic Adventure</em>. I wasn't sure how progress was gated in this game, so I thought maybe none of the side characters could go past where Sonic was in the story. That turned out to not be the case at all, so I buzzed through the Tails levels until I hit what I think is the final boss of that section. After that, I kind of quit for the night. Even an easy final boss is a challenge when you're half asleep. I'll try it again today, though!</p>
+    <img src="/06-sonic.jpeg">
+  <br>
+                                            <h3>June 3rd, 2022</h3>
+    
+    <p>I was extremely tired last night, so I ended up playing <em>Wario's Woods</em> on Nintendo Switch Online to enjoy both playing a video game and being half asleep at the same time. Considering how sleepy I was, I did pretty well. I hadn't played this for years, so I didn't get a good grasp on all the ways you can move the pieces for about 20 levels. Still, I got to round 26 before I got Toad crushed to death in a tree, which felt decent. Puzzle games are nice.</p>
+    <img src="/01-warioswoods.jpeg">
+  <br>
+                      
+                      <h3>June 2nd, 2022</h3>
+    
+    <p>Last night was more <em>Sonic Adventure</em>. I didn't get very far, aside from doing a mildly irritating rail shooter level in the biplane and replaying a couple levels to get some of the B grade emblems. The casino level kept dumping me in the garbage and I got a little frustrated, but that left me with plenty of innocent wildlife to use as feed in the Chao Garden. The pinball tables are fun, though. It was hard to be too salty about it.</p>
+    <img src="/05-sonic.jpeg">
+  <br>
+                    
+  <h3>June 1st, 2022</h3>
+    
+    <p>Sitting down to do this today, I feel like my concept of time has been destroyed. I feel like it's been so much longer than two days ago that I was playing <em>The Last Blade</em>! That's okay, though. It's June now! I'll have to get an archive page for May's posts set up this weekend</p> 
+    <p>Anyway, last night I played more <em>Sonic Adventure</em>. It was fantastic. I carried a statue of an NPC around and caused traffic problems, and then I dropped Knuckles in a glitch void trying to turn a corner in Station Square and he died. I really enjoyed myself.</p>
+    <img src="/04-sonic.jpeg">
+    <p>It was fun to start the Knuckles levels, though. I've never been this far in this game before, and going around and finding the emeralds is relaxing.</p>
+  <br>
+  
+  <br><br>
+    <b><a href="https://miela583.neocities.org/postarchive.html">View More Posts >></a></b>
+    <br>
+    <b><a href="https://miela583.neocities.org/game-list.html">View the Game Index >></a></b>
+
+    <br><br></div>
+                </div>
+                <div id="right-sidebar" style="display: none;">
+                    <div class="sidebar-wrapper">Right Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+                        tempor incididunt ut labore et dolore magna aliqua. Venenatis tellus in metus vulputate eu scelerisque. Duis
+                        at tellus at urna condimentum mattis pellentesque id. Mauris sit amet massa vitae tortor condimentum lacinia
+                        quis vel. Sit amet est placerat in egestas erat imperdiet sed euismod. Erat nam at lectus urna duis
+                        convallis convallis tellus id. Cursus eget nunc scelerisque viverra mauris in aliquam sem fringilla. Urna et
+                        pharetra pharetra massa massa ultricies mi.
+                    </div>
+                </div>
+            </div>
+            <div id="footer">
+               <div class="footer-wrapper">A Lovely Website From miela583, Founded in May 2022- Layout from <a href="https://learn.sadgrl.online">learn.sadgrl.online</a>; Background from <a href="https://www.toptal.com/designers/subtlepatterns/sakura/">Toptal.com</a></div>
+            </div>
+        </div>
+        <img src="/neocities.png">
+    
+  </body>
+</html>
