@@ -23,10 +23,11 @@ gatherSearch
     :: forall v
      . SearchMethod v
     => Connection
+    -> WindowSize
     -> Search Text
     -> Maybe PageNumber
     -> IO (PageNumber, (NominalDiffTime, (Int64, SearchMethodResult v)))
-gatherSearch conn q mpage = do
+gatherSearch conn ws q mpage = do
   let page = fromMaybe 1 mpage
       pagenum = subtract 1 $ Prelude.max 1 $ maybe 1 getPageNumber mpage
   fmap (page,) $ timeItT $ do
@@ -40,7 +41,7 @@ gatherSearch conn q mpage = do
 
     let cnt = maybe 0 fst $ listToMaybe prepped
         docs = fmap snd prepped
-    res <- accumResults @v conn q docs
+    res <- accumResults @v conn ws q docs
     pure (cnt, res)
 
 
@@ -48,11 +49,12 @@ doSearch
     :: forall v
      . SearchMethod v
     => Connection
+    -> WindowSize
     -> Search Text
     -> Maybe PageNumber
     -> Handler (L.Html ())
-doSearch conn q mpage = do
-  (page, (dur, (cnt, res))) <- liftIO $ gatherSearch @v conn q mpage
+doSearch conn ws q mpage = do
+  (page, (dur, (cnt, res))) <- liftIO $ gatherSearch @v conn ws q mpage
   pure $ searchPage @v q dur page cnt res
 
 
@@ -64,6 +66,6 @@ debugSearch
     -> IO ()
 debugSearch q pn = do
   Right conn <- connect
-  (_, (_, (_, res))) <- liftIO $ gatherSearch @v conn q $ Just pn
+  (_, (_, (_, res))) <- liftIO $ gatherSearch @v conn (WindowSize 200 0) q $ Just pn
   debugResults @v res
 

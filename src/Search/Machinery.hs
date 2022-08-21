@@ -2,11 +2,11 @@
 
 module Search.Machinery where
 
-import Types
-import Data.Kind (Type, Constraint)
 import DB
+import Data.Kind (Type, Constraint)
 import Data.Text (Text)
 import Lucid (Html)
+import Types
 
 
 data SSearchVariety (v :: SearchVariety) where
@@ -57,6 +57,7 @@ class Demote v => SearchMethod (v :: SearchVariety) where
   limitStrategy :: LimitStrategy
   accumResults
       :: Connection
+      -> WindowSize
       -> Search Text
       -> [SearchResult Identity]
       -> IO (SearchMethodResult v)

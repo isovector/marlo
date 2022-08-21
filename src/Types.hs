@@ -1,19 +1,21 @@
 module Types where
 
-import Control.Monad.Reader
-import Data.ByteString (ByteString)
-import Data.Functor.Identity
-import Data.Int (Int64)
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import GHC.Generics (Generic)
-import Hasql.Connection (Connection)
-import Network.HTTP.Client (Manager)
-import Network.HTTP.Types.Header (ResponseHeaders)
-import Network.URI
-import Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
-import Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
-import Text.HTML.Scalpel
+import           Control.Monad.Reader
+import           Data.ByteString (ByteString)
+import           Data.Functor.Identity
+import           Data.Int (Int64)
+import           Data.Maybe (fromMaybe)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           GHC.Generics (Generic)
+import           Hasql.Connection (Connection)
+import           Network.HTTP.Client (Manager)
+import           Network.HTTP.Types.Header (ResponseHeaders)
+import           Network.URI
+import           Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
+import           Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
+import           Text.HTML.Scalpel
+import           Text.Read (readMaybe)
 
 
 data Env = Env
@@ -146,4 +148,29 @@ instance Semigroup RobotDirectives where
 
 instance Monoid RobotDirectives where
   mempty = RobotDirectives {rb_allow = mempty, rb_disallow = mempty}
+
+
+data WindowSize = WindowSize Int Int
+  deriving (Eq, Ord, Show)
+
+instance FromHttpApiData WindowSize where
+  parseQueryParam
+    = note "No size"
+    . (parseWindowSize =<<)
+    . fmap T.tail
+    . lookup "size"
+    . fmap (T.break (== '=') . T.strip)
+    . T.split (== ';')
+
+parseWindowSize :: Text -> Maybe WindowSize
+parseWindowSize t = do
+  let (tw, th) = T.break (== ',') $ T.strip t
+  w <- readMaybe $ T.unpack tw
+  h <- readMaybe $ T.unpack $ T.tail th
+  pure $ WindowSize w h
+
+
+note :: e -> Maybe a -> Either e a
+note e Nothing = Left e
+note _ (Just a) = Right a
 

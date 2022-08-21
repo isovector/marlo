@@ -430,6 +430,7 @@ hasSticky = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "s
 
 hasModal :: Ranker Bool
 hasModal = fmap (not . null) $ chroots "div" $ withClass "div" $ T.isInfixOf "modal"
+-- div class="wppopups-whole"
 
 
 textsWithoutScripts :: Selector -> Ranker [Text]

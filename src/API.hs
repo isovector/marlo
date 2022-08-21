@@ -22,6 +22,7 @@ type API =
 
 type SearchEndpoint =
   "search"
+    :> Header "Cookie" WindowSize
     :> QueryParam "v" SearchVariety
     :> QueryParam "q" (Search Text)
     :> QueryParam "p" PageNumber

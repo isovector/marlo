@@ -50,9 +50,9 @@ instance SearchMethod 'Spatial where
   -- type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
   type SearchMethodResult 'Spatial = QuadTree (First (SearchResult Identity))
   limitStrategy = Limit 500
-  accumResults _ _
+  accumResults _ ws _
     = evaluate
-    . newLayoutAlgorithm
+    . newLayoutAlgorithm ws
     . fmap (\sr -> sr { sr_title = correctTitle sr })
 
   -- accumResults _ _ docs = do
@@ -67,8 +67,9 @@ instance SearchMethod 'Spatial where
     . mapMaybe (traverse getFirst)
     . tile
     -- . fmap (fmap r_data)
-  debugResults =
-    putStrLn . showTree (maybe ' ' (const 'X') . getFirst)
+  debugResults
+    = putStrLn
+    . showTree (maybe ' ' (const 'X') . getFirst)
     -- $ toEnum . (+33) . view _x . r_size )
 
 
@@ -114,6 +115,9 @@ uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
          pure $ Just t
        True -> pure Nothing
 
+xSize :: Num a => a
+xSize = 11
+
 
 spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
 spaceResult (Region x y _ _, d) = do
@@ -127,7 +131,7 @@ spaceResult (Region x y _ _, d) = do
             , T.pack $ show $ 250 + y * 18
             , "; "
             , "left: "
-            , T.pack $ show $ 50 + x * 11
+            , T.pack $ show $ 50 + x * xSize
             ]
         ] $ do
       let uri = unsafeURI $ T.unpack $ sr_uri d
@@ -215,15 +219,16 @@ nonzeroDiff v1 v2 = do
 
 
 newLayoutAlgorithm
-    :: [SearchResult Identity]
+    :: WindowSize
+    -> [SearchResult Identity]
     -> QuadTree (First (SearchResult Identity))
-newLayoutAlgorithm res = do
+newLayoutAlgorithm (WindowSize sw _) res = do
   let n        = length res
       placed0  = fmap (id &&& plop) res
       midpoint = sum (fmap snd placed0) / fromIntegral n
       ordered  = sortOn (quadrance . snd) $ fmap (second $ subtract midpoint) placed0
       sz       = (^) @Int @Int 2 14
-      tree0    = makeTree (Region (-sz) (-sz) (sz * 2) (sz * 2))
+      tree0    = makeTree (Region 0 0 (div sw xSize) (sz * 2))
       tree     = foldr (uncurry place') tree0 ordered
   renormalize (\(Region _ _ w h) -> Region 0 0 w h)
     $ tighten (isJust . getFirst)

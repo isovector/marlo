@@ -8,52 +8,18 @@
 
 body {
   background: var(--mango);
+  align-items: center;
   display: flex;
   justify-content: center;
-  align-items: center;
-}
-
-.logo-box {
-  position: relative;
-}
-
-h1 {
-  padding: 0;
-  font-size: 12em;
-  color: var(--rosso-corsa);
-  font-family: 'Morganite Black Italic';
-  font-weight: normal;
-  top: -0.54em;
-  margin: 0;
-  position: absolute;
-  bottom: 0;
-  right: 0.05em;
-  z-index: 10;
-
-}
-
-h1::after {
-  content: "lo";
-  color: var(--prussian-blue);
 }
 
 #query {
   font-size: 16pt;
   max-width: 40em;
   width: 90vw;
-  padding: 0.5em;
-  background-color: var(--baby-powder);
-  color: var(--prussian-blue);
-  z-index: 0;
-}
-
-@font-face {
-  font-family: 'Morganite Black Italic';
-  font-style: normal;
-  font-weight: normal;
-  src: local('Morganite Black Italic'), url('Morganite-BlackItalic.woff') format('woff');
 }
 
 .metrics {
   text-align: center;
 }
+

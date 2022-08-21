@@ -33,6 +33,7 @@ library
       Data.QuadAreaTree
       Data.QuadAreaTree.Geometry
       Data.QuadAreaTree.Internal
+      Data.SchemaOrg
       DB
       DB.Asset
       DB.Document

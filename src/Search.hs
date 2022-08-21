@@ -36,10 +36,12 @@ home conn = do
   pure $
     L.html_ $ do
       L.head_ $ do
+        L.link_ [L.rel_ "stylesheet", L.href_ "common.css" ]
         L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
+        L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
         L.title_ "marlo: search, for humans"
       L.body_ $ L.div_ $ do
-        searchBar Traditional Nothing
+        searchBar Spatial Nothing
         L.div_ [L.class_ "metrics"] $ do
           L.span_ $ mconcat
             [ "Indexed: "
@@ -51,17 +53,18 @@ home conn = do
 
 search
     :: Connection
+    -> Maybe WindowSize
     -> Maybe SearchVariety
     -> Maybe (Search Text)
     -> Maybe PageNumber
     -> Handler (L.Html ())
-search _ _ Nothing _ = pure $ "Give me some keywords, punk!"
-search conn v (Just q) mpage =
+search _ _ _ Nothing _ = pure $ "Give me some keywords, punk!"
+search conn ws v (Just q) mpage = do
   case toSing $ fromMaybe Traditional v of
     SomeSearchVariety (s :: SSearchVariety v) ->
       case dict1 @SearchMethod s of
         Dict1 ->
-          doSearch @v conn q mpage
+          doSearch @v conn (fromMaybe (WindowSize 1920 0) ws) q mpage
 
 
 ------------------------------------------------------------------------------
