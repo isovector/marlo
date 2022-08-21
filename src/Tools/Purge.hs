@@ -40,11 +40,12 @@ main = do
         isSpiritualPollution
     when (fromMaybe False is_pollution) $ do
       putStrLn $ T.unpack $ "polluted: " <> d_uri doc
-      void $ doUpdate conn $ Update
+      Right _ <- doUpdate conn $ Update
         { target = documentSchema
         , from = pure ()
         , set = \_ d -> d { d_state = lit Unacceptable }
         , updateWhere = \_ d -> d_docId d ==. lit (d_docId doc)
         , returning = pure ()
         }
+      pure ()
 
