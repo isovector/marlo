@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   doc_id int8 PRIMARY KEY,
   domain int8 REFERENCES domains(id),
   uri TEXT UNIQUE NOT NULL,
-  state VARCHAR(10) NOT NULL,
+  state VARCHAR(16) NOT NULL,
   depth int4 NOT NULL,
   distance int2[] NOT NULL,
   data bytea NOT NULL,
