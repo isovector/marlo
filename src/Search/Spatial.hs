@@ -6,16 +6,22 @@
 
 module Search.Spatial () where
 
-import           Control.Arrow ((&&&), second)
+import qualified Data.Map as M
+import Data.Map (Map)
+import           Control.Arrow ((&&&), first, second)
 import           Control.Exception
+import           Control.Lens (view, (<&>))
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
 import           Data.Bool (bool)
 import           Data.Foldable (traverse_)
 import           Data.Function (fix)
 import           Data.List (sortOn)
+import           Data.Map (Map)
+import qualified Data.Map as M
 import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, isJust)
 import           Data.Monoid
+import           Data.Ord (Down(Down))
 import           Data.QuadAreaTree
 import qualified Data.Set as S
 import           Data.Text (Text)
@@ -47,44 +53,80 @@ import           Utils (unsafeURI)
 
 
 instance SearchMethod 'Spatial where
-  -- type SearchMethodResult 'Spatial = QuadTree (Maybe (Rect (SearchResult Identity)))
-  type SearchMethodResult 'Spatial = QuadTree (First (SearchResult Identity))
+  type SearchMethodResult 'Spatial = QuadTree (Maybe (SearchResult Identity))
   limitStrategy = Limit 500
   accumResults _ ws _
     = evaluate
-    . newLayoutAlgorithm ws
+    -- . newLayoutAlgorithm ws
+    -- . fmap fst
+    . uncurry pizzaDoughLayout
+    . sortByCenterOffset
+    . (\es -> fmap (fmap $ toScreenCoords ws $ length es) es)
+    . normalizeScores
+    . fmap (id &&& score)
     . fmap (\sr -> sr { sr_title = correctTitle sr })
 
-  -- accumResults _ _ docs = do
-  --   let best = maximum $ fmap sr_ranking docs
-  --   let rs = fmap makeRect
-  --          $ fmap (\x -> x { sr_ranking = best - sr_ranking x })
-  --          $ filter (not . T.null . T.strip . sr_title) docs
-  --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
   showResults
     = traverse_ spaceResult
     . uniqueTiles
-    . mapMaybe (traverse getFirst)
+    . mapMaybe (traverse id)
     . tile
-    -- . fmap (fmap r_data)
   debugResults
     = putStrLn
-    . showTree (maybe ' ' (const 'X') . getFirst)
-    -- $ toEnum . (+33) . view _x . r_size )
+    . showTree (maybe ' ' (const 'X'))
+
+pizzaDoughLayout :: V2 Float -> [(SearchResult Identity, V2 Float)] -> QuadTree (Maybe (SearchResult Identity))
+pizzaDoughLayout = error "not implemented"
+
+toScreenCoords :: WindowSize -> Int -> V2 Int -> V2 Float
+toScreenCoords (WindowSize w h) n (V2 x y) =
+  V2 (fromIntegral x / fromIntegral n * fromIntegral w)
+     (fromIntegral y)
+
+
+normalizeScores :: (Ord a, Ord b) => [(a, V2 b)] -> [(a, V2 Int)]
+normalizeScores sc = do
+  let
+      f = M.fromList
+        . fmap (first fst)
+        . flip zip [id @Int 0 ..]
+      orderedx  = f $ sortOn (view _x . snd) sc
+      orderedy  = f $ sortOn (Down . view _y . snd) sc
+      getx a = orderedx M.! a
+      gety a = orderedy M.! a
+  fmap fst sc <&> \a -> (a,) $ V2 getx gety <*> pure a
+
+
+sortByCenterOffset :: (Ord b, Fractional b) => [(a, V2 b)] -> (V2 b, [(a, V2 b)])
+sortByCenterOffset placed = do
+  let
+      n = length placed
+      midpoint  = sum (fmap snd placed) / fromIntegral n
+  (midpoint,)
+    $ sortOn (quadrance . snd)
+    $ fmap (second $ subtract midpoint)
+    $ placed
 
 
 correctTitle :: SearchResult Identity -> Text
 correctTitle = trimTo 37 "..." . sr_title
+
 
 measureText :: Text -> V2 Int
 measureText s = V2 (T.length s + 1) 1
 -- plus one for the icon
 
 
+score :: SearchResult Identity -> V2 Float
+score sr =
+  V2 (log $ log $ max 1 $ fromIntegral $ fromMaybe 1e6 $ sr_popularity sr)
+     (sr_ranking sr * 10)
+
+
+
 makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
 makeRect sr = Rect
-  { r_pos = V2 (log $ log $ max 1 $ fromIntegral $ fromMaybe 1e6 $ sr_popularity sr)
-               (sr_ranking sr * 10)
+  { r_pos = score sr
   , r_size = measureText title'
   , r_data = sr { sr_title = title' }
   }
@@ -115,8 +157,17 @@ uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
          pure $ Just t
        True -> pure Nothing
 
+
 xSize :: Num a => a
 xSize = 11
+
+
+ySize :: Num a => a
+ySize = 18
+
+
+favSize :: Num a => V2 a
+favSize = pure 12
 
 
 spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
@@ -128,17 +179,18 @@ spaceResult (Region x y _ _, d) = do
         , L.style_ $ mconcat
             [ "position: absolute;"
             , "top: "
-            , T.pack $ show $ 250 + y * 18
+            , T.pack $ show $ 250 + y * ySize
             , "; "
             , "left: "
-            , T.pack $ show $ 50 + x * xSize
+            , T.pack $ show $ x
+            , "%"
             ]
         ] $ do
       let uri = unsafeURI $ T.unpack $ sr_uri d
       L.img_
         [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
-        , L.width_  "12"
-        , L.height_ "12"
+        , L.width_  (T.pack $ show $ view _x $ favSize @Int)
+        , L.height_ (T.pack $ show $ view _y $ favSize @Int)
         ]
       L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
 
@@ -165,19 +217,6 @@ uncenter :: V2 Int -> V2 Float -> V2 Float
 uncenter sz center = center - fmap fromIntegral sz / 2
 
 
-place :: Eq a => Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
-place r0 q0
-  | not $ inBounds q0 $ rectToRegion r0 = q0
-  | otherwise = go (0 :: Int) r0 q0
-  where
-    go 15 _ qt = qt
-    go n r qt =
-      case getFirst $ hitTest id (rectToRegion r) qt of
-        Nothing -> fillRect r qt
-        Just re ->
-          go (n + 1) (offsetBy r re) qt
-
-
 rectToRegion :: Rect a -> Region
 rectToRegion Rect{r_pos = fmap round -> V2 x y, r_size = V2 w h } = Region x y w h
 
@@ -186,50 +225,35 @@ fillRect :: Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
 fillRect r = fill (pure r) $ rectToRegion r
 
 
-------------------------------------------------------------------------------
--- | Get the length of a vector from the center point  to the end of the size
--- envelope
-extent :: V2 Float -> V2 Int -> Float
-extent dir (fmap fromIntegral -> V2 w h) =
-  norm $ V2 (dot dir $ V2 (w / 2) 0) (dot dir $ V2 0 (h * 2))
-
-
-offsetBy :: Rect a -> Rect a -> Rect a
-offsetBy want collide =
-  let dir = nonzeroDiff (rectCenter want)  (rectCenter collide)
-      get_ext = extent dir . r_size
-      new_center = rectCenter want + dir ^* ((get_ext want + get_ext collide))
-      res = want { r_pos = uncenter (r_size want) new_center }
-   in -- trace (show ("offsetting ", r_pos want, " to ", r_pos res, dir ))
-      res
-
-unzero :: V2 Float -> V2 Float
-unzero v | quadrance v < 0.1  = V2 0.707 0.707
-unzero v = v
-
-nonzeroDiff :: V2 Float -> V2 Float -> V2 Float
-nonzeroDiff v1 v2 = do
-  let dir = normalize $ v1 - v2
-  case quadrance dir < 0.1 of
-    True -> normalize v1
-    False -> dir
-
-
-------------------------------------------------------------------------------
-
-
 newLayoutAlgorithm
     :: WindowSize
     -> [SearchResult Identity]
     -> QuadTree (First (SearchResult Identity))
 newLayoutAlgorithm (WindowSize sw _) res = do
-  let n        = length res
-      placed0  = fmap (id &&& plop) res
-      midpoint = sum (fmap snd placed0) / fromIntegral n
-      ordered  = sortOn (quadrance . snd) $ fmap (second $ subtract midpoint) placed0
-      sz       = (^) @Int @Int 2 14
-      tree0    = makeTree (Region 0 0 (div sw xSize) (sz * 2))
-      tree     = foldr (uncurry place') tree0 ordered
+  let n         = length res
+      placed0   = fmap (id &&& plop) res
+      midpoint  = sum (fmap snd placed0) / fromIntegral n
+      ordered   = sortOn (quadrance . snd) $ fmap (second $ subtract midpoint) placed0
+      orderedx  = M.fromList
+                $ fmap (first $ sr_id . fst)
+                $ flip zip [0..]
+                $ sortOn (view _x . snd) placed0
+      orderedy  = M.fromList
+                $ fmap (first $ sr_id . fst)
+                $ flip zip [0..]
+                $ sortOn (Down . view _y . snd) placed0
+      sz        = (^) @Int @Int 2 14
+      tree0     = makeTree (Region (-sz) 0 (sz * 2) (sz * 2))
+      total     = length placed0
+      reordered =
+        placed0 <&> \(sr, _) ->
+          ( sr
+          , V2 ((* fromIntegral sw) . (/ fromIntegral total))
+               id <*>
+              (fmap (fromIntegral @_ @Float)(V2 (orderedx M.!)
+                                                (orderedy M.!) <*> pure (sr_id sr)))
+          )
+      tree      = foldr (uncurry place') tree0 reordered
   renormalize (\(Region _ _ w h) -> Region 0 0 w h)
     $ tighten (isJust . getFirst)
     $ fmap (fmap snd)
@@ -250,18 +274,9 @@ place' sr p0 q = do
       True ->
         case getFirst $ hitTest id r q of
           Just (hit, _) -> do
-            let p' = r_pos $ offsetBy (regionToRect p r) $ uncurry regionToRect hit
-            go $ p' + signum p'
+            let p' = p + V2 0 1
+            go $ p'
           Nothing -> fill (First $ Just ((p, r), sr)) r q
-
-
-regionToRect :: V2 Float -> Region -> Rect ()
-regionToRect v2 (Region _ _ w h) = Rect
-    { r_pos = v2
-    , r_size = V2 w h
-    , r_data = ()
-    }
-
 
 
 plop :: SearchResult Identity -> V2 Float

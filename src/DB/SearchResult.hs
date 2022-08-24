@@ -22,5 +22,6 @@ data SearchResult f = SearchResult
   deriving anyclass Rel8able
 
 deriving instance Eq (SearchResult Identity)
+deriving instance Ord (SearchResult Identity)
 deriving instance Show (SearchResult Identity)
 

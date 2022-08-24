@@ -19,4 +19,5 @@ data PageStats f = PageStats
 
 deriving instance Show (PageStats Identity)
 deriving instance Eq (PageStats Identity)
+deriving instance Ord (PageStats Identity)
 
