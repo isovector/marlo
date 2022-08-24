@@ -298,6 +298,7 @@ forbidPaths =
   , "/blob/"
   , "/vod/"
   , "/watch/"
+  , "/trending/"
   , "/politics/20"
   , "archive"
   , "/rss"
@@ -423,7 +424,10 @@ romanPage = do
 hasGoogleAds :: Ranker Bool
 hasGoogleAds = fmap or $ chroots "script" $ do
   src <- attr "src" "script"
-  pure $ T.isInfixOf "adsbygoogle" src
+  pure $ or
+    [ T.isInfixOf "adsbygoogle" src
+    , T.isInfixOf "pubads()" src
+    ]
 
 
 hasSticky :: Ranker Bool
