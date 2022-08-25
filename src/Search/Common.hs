@@ -17,6 +17,7 @@ import           Servant.Server.Generic ()
 import           Text.Printf (printf)
 import           Types
 import           Utils (commafy)
+import Servant (toQueryParam)
 
 
 searchPage
@@ -66,8 +67,8 @@ searchBar v t =
         | t == Nothing
         ]
       L.select_ [ L.name_ "v" ] $ do
-        L.option_ (selected Traditional [ L.value_ "traditional" ]) "traditional"
-        L.option_ (selected Spatial     [ L.value_ "spatial" ])     "spatial"
+        L.option_ (selected Traditional [ L.value_ $ toQueryParam Traditional ]) "traditional"
+        L.option_ (selected Spatial     [ L.value_ $ toQueryParam Spatial ])     "spatial"
   where
     selected v' z
       | v == v' = L.selected_ "selected" : z
