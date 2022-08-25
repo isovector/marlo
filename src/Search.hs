@@ -22,6 +22,7 @@ import           Servant.Server.Generic ()
 import           Types
 import           Utils (commafy)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
+import ReverseSearch (reverseSearch)
 
 
 home :: Connection -> Handler (L.Html ())
@@ -36,8 +37,8 @@ home conn = do
   pure $
     L.html_ $ do
       L.head_ $ do
-        L.link_ [L.rel_ "stylesheet", L.href_ "common.css" ]
-        L.link_ [L.rel_ "stylesheet", L.href_ "style.css" ]
+        L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
+        L.link_ [L.rel_ "stylesheet", L.href_ "/style.css" ]
         L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
         L.title_ "marlo: search, for humans"
       L.body_ $ L.div_ $ do
@@ -71,6 +72,7 @@ search conn ws v (Just q) mpage = do
 
 server :: Connection -> Server API
 server conn = home conn
+         :<|> reverseSearch conn
          :<|> search conn
          :<|> serveDirectoryWith (defaultWebAppSettings "static") { ssMaxAge = NoMaxAge }
 

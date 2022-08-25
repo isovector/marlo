@@ -37,8 +37,8 @@ searchPage q dur page cnt res = do
         , " (" <> fromString (show cnt)
         , ")"
         ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "common.css" ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
+      L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
+      L.link_ [L.rel_ "stylesheet", L.href_ "/results.css" ]
       L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
     L.body_ $ do
       L.div_ [L.class_ "box"] $ do

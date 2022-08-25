@@ -54,6 +54,7 @@ library
       Rel8.Headers
       Rel8.Machinery
       Rel8.TextSearch
+      ReverseSearch
       Search
       Search.Common
       Search.Compiler
@@ -140,6 +141,7 @@ library
     , QuadTree
     , QuickCheck
     , aeson
+    , algebraic-graphs
     , async
     , base >=4.7 && <5
     , bytestring
@@ -249,6 +251,7 @@ executable marlo
     , QuadTree
     , QuickCheck
     , aeson
+    , algebraic-graphs
     , async
     , base >=4.7 && <5
     , bytestring
@@ -364,6 +367,7 @@ test-suite marlo-tests
     , QuadTree
     , QuickCheck
     , aeson
+    , algebraic-graphs
     , async
     , base >=4.7 && <5
     , bytestring

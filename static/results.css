@@ -6,6 +6,10 @@
   margin-top: 1em;
 }
 
+li + li {
+  margin-top: 0;
+}
+
 body {
   padding: 1em;
   color: var(--prussian-blue);

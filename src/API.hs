@@ -16,6 +16,7 @@ import           Types
 
 type API =
        Get '[HTML] (L.Html ())
+  :<|> "reverse" :> CaptureAll "uri" Text :> Get '[HTML] (L.Html ())
   :<|> SearchEndpoint
   :<|> Raw
 
