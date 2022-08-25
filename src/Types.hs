@@ -72,13 +72,13 @@ data SearchVariety
   deriving (Eq, Ord, Show, Prelude.Enum, Bounded)
 
 instance ToHttpApiData SearchVariety where
-  toQueryParam Traditional = "traditional"
-  toQueryParam Spatial = "spatial"
+  toQueryParam Traditional = "trad"
+  toQueryParam Spatial     = "spatial"
 
 instance FromHttpApiData SearchVariety where
-  parseQueryParam "traditional" = Right Traditional
-  parseQueryParam "spatial"     = Right Spatial
-  parseQueryParam _             = Left "SearchVariety must be one of 'traditional' or 'spatial'"
+  parseQueryParam "trad"    = Right Traditional
+  parseQueryParam "spatial" = Right Spatial
+  parseQueryParam _         = Left "SearchVariety must be one of 'trad' or 'spatial'"
 
 
 newtype EdgeId = EdgeId
