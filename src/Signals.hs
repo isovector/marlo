@@ -259,6 +259,7 @@ forbidSites =
   , "t.co"
   , "tiktok.com"
   , "tinyurl.com"
+  , "tikkun.org"
   , "twitch.tv"
   , "tumblr.com"
   , "twitter.com"
