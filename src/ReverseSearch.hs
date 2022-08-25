@@ -18,6 +18,7 @@ import           Rel8.Arrays
 import           Search.Common
 import           Servant (Handler)
 import           Types
+import Data.Int (Int16)
 
 
 reverseSearch :: Connection -> [Text] -> Handler (L.Html ())
@@ -51,6 +52,10 @@ reverseSearch conn (T.intercalate "/" -> uri) = do
           graphToHtml [d_uri d] $ fmap d_uri gr
 
 
+isAncestor :: Expr [Maybe Int16] -> Expr [Maybe Int16] -> Expr Bool
+isAncestor a b = arrayAllTrue $ arrayZipWithLt a b
+
+
 reverseDeps :: (Document Expr -> Expr Bool) -> Query (Document Expr)
 reverseDeps which = do
   dst <- each documentSchema
@@ -59,7 +64,7 @@ reverseDeps which = do
   where_ $ e_dst e ==. d_docId dst
   src <- each documentSchema
   where_ $ e_src e ==. d_docId src
-  where_ $ arrayZipWithLeast (d_distance src) (d_distance dst) /=. d_distance dst
+  where_ $ isAncestor (d_distance src) (d_distance dst)
   pure src
 
 

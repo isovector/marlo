@@ -31,6 +31,13 @@ arrayInc = function "array_inc"
 arrayZipWithLeast :: Sql DBOrd a => Expr [a] -> Expr [a] -> Expr [a]
 arrayZipWithLeast = function "array_zip_with_least"
 
+arrayZipWithLt :: Sql DBOrd a => Expr [Maybe a] -> Expr [Maybe a] -> Expr [Maybe Bool]
+arrayZipWithLt = function "array_zip_with_lt"
+
+-- | Ignores nothings :|
+arrayAllTrue :: Expr [Maybe Bool] -> Expr Bool
+arrayAllTrue = function "array_all_true"
+
 sequenceExpr :: Sql DBType a => [Expr a] -> Expr [a]
 sequenceExpr = unsafeToExpr . ArrayExpr . fmap fromExpr
 
