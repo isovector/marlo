@@ -13,6 +13,29 @@ AS $$
 $$ LANGUAGE sql
 IMMUTABLE;
 
+CREATE FUNCTION array_zip_with_lt( arr_q anyarray, arr_e anyarray )
+RETURNS boolean[]
+AS $$
+  SELECT ARRAY(
+    SELECT a < b
+    FROM unnest(
+      arr_q, -- ex1
+      arr_e  -- ex2
+    ) AS t(a,b)
+  );
+$$ LANGUAGE sql
+IMMUTABLE;
+
+CREATE FUNCTION array_all_true( arr_q anyarray )
+RETURNS boolean
+AS $$
+    SELECT bool_and(a)
+    FROM unnest(
+      arr_q -- ex1
+    ) AS t(a);
+$$ LANGUAGE sql
+IMMUTABLE;
+
 
 CREATE FUNCTION array_inc( arr_q anyarray )
 RETURNS anyarray

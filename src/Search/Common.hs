@@ -17,6 +17,7 @@ import           Servant.Server.Generic ()
 import           Text.Printf (printf)
 import           Types
 import           Utils (commafy)
+import Servant (toQueryParam)
 
 
 searchPage
@@ -37,8 +38,8 @@ searchPage q dur page cnt res = do
         , " (" <> fromString (show cnt)
         , ")"
         ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "common.css" ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "results.css" ]
+      L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
+      L.link_ [L.rel_ "stylesheet", L.href_ "/results.css" ]
       L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
     L.body_ $ do
       L.div_ [L.class_ "box"] $ do
@@ -66,8 +67,8 @@ searchBar v t =
         | t == Nothing
         ]
       L.select_ [ L.name_ "v" ] $ do
-        L.option_ (selected Traditional [ L.value_ "traditional" ]) "traditional"
-        L.option_ (selected Spatial     [ L.value_ "spatial" ])     "spatial"
+        L.option_ (selected Traditional [ L.value_ $ toQueryParam Traditional ]) "traditional"
+        L.option_ (selected Spatial     [ L.value_ $ toQueryParam Spatial ])     "spatial"
   where
     selected v' z
       | v == v' = L.selected_ "selected" : z

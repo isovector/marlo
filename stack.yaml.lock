@@ -67,6 +67,13 @@ packages:
       sha256: bf28efd70115ca58a039f6fc20fea1494916257a8a325c74cdadd74e895513cb
   original:
     hackage: robots-txt-0.4.1.7@sha256:fc4308ea1076b8b868fa52f26aafbefc5281ed90a893515a37b1aeebffeab04e,1629
+- completed:
+    hackage: algebraic-graphs-0.7@sha256:d7703fb764ec14bbf7e2ee6296045d8bc1ddb9c1acdcd1841c6299cc6b5955fb,8618
+    pantry-tree:
+      size: 4347
+      sha256: 5caf69702b46f7be7744f357bc59bd56c0ae61a1addfcfc3b10b289629deb3db
+  original:
+    hackage: algebraic-graphs-0.7
 snapshots:
 - completed:
     size: 586286

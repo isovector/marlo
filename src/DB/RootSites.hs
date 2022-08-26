@@ -15,7 +15,7 @@ rootSites =
   , "https://neocities.org"       -- amateur
   , "http://zentasrobots.com"     -- diy
   , "https://seirdy.one"          -- search engines
-  -- , "https://coffeeadastra.com/"  -- coffee
+  , "https://coffeeadastra.com"   -- coffee
   ]
 
 

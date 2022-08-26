@@ -168,6 +168,7 @@ isAcceptableLink uri
           , ".csv"
           , ".cdf"
           , ".mkv"
+          , ".c"
           , ".txt"
           , ".bmp"
           , ".gz"
@@ -236,6 +237,7 @@ forbidSites =
   , "gutenberg.org"
   , "imgur.com"
   , "imdb.com"
+  , "buzzfeed.com"
   , "instagram.com"
   , "justpaste.it"
   , "last.fm"
@@ -248,6 +250,9 @@ forbidSites =
   , "pastebin.com"
   , "peacocktv.com"
   , "pintrest.com"
+  , "patreon.com"
+  , "amzn.com"
+  , "amzn.to"
   , "redbubble.com"
   , "reddit.com"
   , "scribd.com"
@@ -258,6 +263,9 @@ forbidSites =
   , "t.co"
   , "tiktok.com"
   , "tinyurl.com"
+  , "tikkun.org"
+  , "metacritic.com"
+  , "github.com"
   , "twitch.tv"
   , "tumblr.com"
   , "twitter.com"
@@ -281,6 +289,7 @@ forbidPaths =
   , "/categories/"
   , "/collections/"
   , "/topic/"
+  , "/topics/"
   , "/product/"
   , "/products/"
   , "/opinion/"
@@ -519,10 +528,16 @@ canBeFilteredOutBySchemaType = do
   ds <- texts $ "script" @: ["type" @= "application/ld+json"]
   pure $ flip any ds $ \d ->
     case fmap getMetadataType $ decode $ fromStrict $ encodeUtf8 d of
-      Just "NewsArticle"    -> True && not is_substack && not is_medium
-      Just "Product"        -> True
-      Just "Offer"          -> True
       Just "AggregateOffer" -> True
+      Just "AmpStory"       -> True
+      Just "Clip"           -> True
+      Just "Episode"        -> True
+      Just "Movie"          -> True
+      Just "NewsArticle"    -> True && not is_substack && not is_medium
+      Just "Offer"          -> True
+      Just "Product"        -> True
+      Just "TVSeason"       -> True
+      Just "TVSeries"       -> True
       _                     -> False
 
 
