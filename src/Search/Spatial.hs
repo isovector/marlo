@@ -6,8 +6,7 @@
 
 module Search.Spatial () where
 
-import qualified Data.Map as M
-import Data.Map (Map)
+import           Control.Applicative (liftA2, ZipList (ZipList), getZipList, liftA3)
 import           Control.Arrow ((&&&), first, second)
 import           Control.Exception
 import           Control.Lens (view, (<&>))
@@ -17,7 +16,6 @@ import           Data.Bool (bool)
 import           Data.Foldable (traverse_)
 import           Data.Function (fix)
 import           Data.List (sortOn)
-import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, isJust)
 import           Data.Monoid
@@ -57,14 +55,15 @@ instance SearchMethod 'Spatial where
   limitStrategy = Limit 500
   accumResults _ ws _
     = evaluate
+    . undefined
     -- . newLayoutAlgorithm ws
     -- . fmap fst
-    . uncurry pizzaDoughLayout
-    . sortByCenterOffset
-    . (\es -> fmap (fmap $ toScreenCoords ws $ length es) es)
-    . normalizeScores
-    . fmap (id &&& score)
-    . fmap (\sr -> sr { sr_title = correctTitle sr })
+    -- . uncurry pizzaDoughLayout
+    -- . sortByCenterOffset
+    -- . (\es -> fmap (fmap $ toScreenCoords ws $ length es) es)
+    -- . id -- normalizeScores
+    -- . fmap (id &&& score)
+    -- . fmap (\sr -> sr { sr_title = correctTitle sr })
 
   showResults
     = traverse_ spaceResult
@@ -74,6 +73,108 @@ instance SearchMethod 'Spatial where
   debugResults
     = putStrLn
     . showTree (maybe ' ' (const 'X'))
+
+
+rankByStratifiedAssets :: Integer -> Maybe Float
+rankByStratifiedAssets
+  = stratify (/) [100, 1024, 65535, 126000000]
+
+
+
+rankByJavascript :: [SearchResult Identity] -> [Maybe Float]
+rankByJavascript
+  = fmap
+  $ rankByStratifiedAssets
+  . fromIntegral
+  . ps_js
+  . sr_stats
+
+
+rankByCss :: [SearchResult Identity] -> [Maybe Float]
+rankByCss
+  = fmap
+  $ rankByStratifiedAssets
+  . fromIntegral
+  . ps_css
+  . sr_stats
+
+
+rankByPageSize :: [SearchResult Identity] -> [Maybe Float]
+rankByPageSize
+  = fmap
+  $ rankByStratifiedAssets
+  . fromIntegral
+  . (liftA2 (+) ps_css ps_js)
+  . sr_stats
+
+
+rankByRank :: [SearchResult Identity] -> [Maybe Float]
+rankByRank
+  = fmap Just
+  . globalUniformRanking
+  . fmap sr_ranking
+
+
+scoreParam
+  :: ([SearchResult Identity] -> [Maybe Float])
+  -> ([SearchResult Identity] -> [Maybe Float])
+  -> ([SearchResult Identity] -> [Maybe Float])
+  -> [SearchResult Identity]
+  -> [(SearchResult Identity, V3 Float)]
+scoreParam fx fy fz srs =
+  let xs = ZipList $ fx srs
+      ys = ZipList $ fy srs
+      zs = ZipList $ fz srs
+   in catMaybes
+    $ fmap sequenceA
+    $ zip srs
+    $ getZipList
+    $ liftA3 V3
+        <$> xs
+        <*> ys
+        <*> zs
+
+
+globalUniformRanking :: Ord a => [a] -> [Float]
+globalUniformRanking [_] = [1]
+globalUniformRanking sc = do
+  let
+      n = length sc
+      sz = 1 / fromIntegral (length sc - 1)
+      f = M.fromList
+      ordered
+        = f
+        $ flip zip [id @Int 0..]
+        $ fmap fst
+        $ sortOn snd
+        $ zip [id @Int 0 ..] sc
+      getx a = ordered M.! a
+  fmap ((* sz) . fromIntegral . getx) [0 .. n - 1]
+
+
+rankByPopularity :: [SearchResult Identity] -> [Maybe Float]
+rankByPopularity
+  = fmap
+  $ stratify (/) [1000, 50000, 1e7, 1e8]
+  . maybe 1e9 fromIntegral
+  . sr_popularity
+
+
+stratify :: (Float -> Float -> Float) -> [Integer] -> Integer -> Maybe Float
+stratify f ts' x = go 0 0 ts'
+  where
+    n :: Float
+    n = 1 / (fromIntegral $ length ts')
+
+    go  :: Float -> Integer -> [Integer] -> Maybe Float
+    go _ _ [] = Nothing
+    go z acc (t : ts)
+      | x < t =
+        let normalized = x - acc
+            range = t - acc
+         in Just $ f (fromIntegral normalized) (fromIntegral range) * n + z
+      | otherwise = go (z + n) t ts
+
 
 pizzaDoughLayout :: V2 Float -> [(SearchResult Identity, V2 Float)] -> QuadTree (Maybe (SearchResult Identity))
 pizzaDoughLayout = error "not implemented"
