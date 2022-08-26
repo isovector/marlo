@@ -260,6 +260,8 @@ forbidSites =
   , "tiktok.com"
   , "tinyurl.com"
   , "tikkun.org"
+  , "metacritic.com"
+  , "github.com"
   , "twitch.tv"
   , "tumblr.com"
   , "twitter.com"
