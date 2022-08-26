@@ -245,6 +245,7 @@ forbidSites =
   , "live.com"
   , "mediafire.com"
   , "mega.nz"
+  , "nitter.net"
   , "netflix.com"
   , "office.com"
   , "pastebin.com"
