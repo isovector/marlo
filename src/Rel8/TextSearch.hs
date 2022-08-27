@@ -52,7 +52,10 @@ instance DBType Tsquery where
     }
 
 headline :: Expr Text -> Expr Tsquery -> Expr Text
-headline = function "ts_headline"
+headline a b
+  = function "ts_headline" a b
+  $ lit
+  $ id @Text "ShortWord=2, MaxFragments=8, MaxWords=12, MinWords=5"
 
 match :: Expr Tsvector -> Expr Tsquery -> Expr Bool
 match = binaryOperator "@@"
