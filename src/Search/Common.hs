@@ -23,6 +23,11 @@ import           Types
 import           Utils (commafy)
 
 
+bracketHtml :: Monad m => Text -> Text -> Streaming (L.Html ()) m a -> Streaming (L.Html ()) m a
+bracketHtml start end =
+  bracket (L.toHtmlRaw start) (L.toHtmlRaw end)
+
+
 searchPage
     :: forall v
      . SearchMethod v
@@ -34,9 +39,8 @@ searchPage
     -> SearchMethodResult v
     -> SourceIO (L.Html ())
 searchPage conn q dur page cnt res = streamingToSourceT $ do
-  yield $ do
-    L.toHtmlRaw @Text "<html>"
-    L.html_ $ do
+  bracketHtml "<html>" "</html>" $ do
+    yield $ do
       L.head_ $ do
         L.title_ $ mconcat
           [ "marlo search - results for "
@@ -47,17 +51,17 @@ searchPage conn q dur page cnt res = streamingToSourceT $ do
         L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
         L.link_ [L.rel_ "stylesheet", L.href_ "/results.css" ]
         L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
-  yield $ do
-    L.toHtmlRaw @Text "<body>"
-    L.toHtmlRaw @Text "<div class='box'>"
-    searchBar (demote @v) $ Just q
-    L.toHtmlRaw @String
-      $ printf "%s results &mdash; search took %6.2fs seconds"
-          (commafy $ show cnt)
-          (realToFrac @_ @Double dur)
-  showResults @v conn res
-  yield $
-    pager q (limitStrategy @v) (demote @v) cnt page
+
+    bracketHtml "<body>" "</body>" $
+      bracketHtml "<div class='box'>" "</div>" $ do
+        yield $ do
+          searchBar (demote @v) $ Just q
+          L.toHtmlRaw @String
+            $ printf "%s results &mdash; search took %6.2fs seconds"
+                (commafy $ show cnt)
+                (realToFrac @_ @Double dur)
+        showResults @v conn res
+        yield $ pager q (limitStrategy @v) (demote @v) cnt page
 
 
 searchBar :: SearchVariety -> Maybe (Search Text) -> L.Html ()

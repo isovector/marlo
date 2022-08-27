@@ -22,6 +22,14 @@ streamingToSourceT s = SourceT $ \emit -> do
   emit Stop
 
 
+bracket :: Monad m => o -> o -> Streaming o m a -> Streaming o m a
+bracket start end m = do
+  yield start
+  a <- m
+  yield end
+  pure a
+
+
 yield :: Monad m => o -> Streaming o m ()
 yield o =
   Streaming ask >>= \case
