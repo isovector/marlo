@@ -7,6 +7,7 @@ import Data.Kind (Type, Constraint)
 import Data.Text (Text)
 import Lucid (Html)
 import Types
+import Servant.StreamingUtil (Streaming)
 
 
 data SSearchVariety (v :: SearchVariety) where
@@ -62,7 +63,7 @@ class Demote v => SearchMethod (v :: SearchVariety) where
       -> [SearchResult Identity]
       -> IO (SearchMethodResult v)
   showResults
-      :: SearchMethodResult v -> Html ()
+      :: Connection -> SearchMethodResult v -> Streaming (Html ()) IO ()
   debugResults
      :: SearchMethodResult v -> IO ()
 

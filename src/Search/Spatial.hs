@@ -28,6 +28,7 @@ import           Rel8 hiding (sum, filter, bool, evaluate, max, index)
 import           Search.DoSearch (debugSearch)
 import           Search.Machinery
 import           Servant.Server.Generic ()
+import           Servant.StreamingUtil (yield)
 import           Types
 import           Utils (unsafeURI)
 
@@ -61,8 +62,9 @@ instance SearchMethod 'Spatial where
   --          $ fmap (\x -> x { sr_ranking = best - sr_ranking x })
   --          $ filter (not . T.null . T.strip . sr_title) docs
   --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
-  showResults
-    = traverse_ spaceResult
+  showResults _
+    = yield
+    . traverse_ spaceResult
     . uniqueTiles
     . mapMaybe (traverse getFirst)
     . tile

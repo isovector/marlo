@@ -14,6 +14,7 @@ import           Rel8.TextSearch
 import           Search.Compiler
 import           Search.Machinery
 import           Servant.Server.Generic ()
+import           Servant.StreamingUtil
 import           Types
 
 
@@ -45,7 +46,7 @@ instance SearchMethod 'Traditional where
       Right [snip] <- doSelect conn $ getSnippet (sr_id doc) q'
       pure (doc, snip)
 
-  showResults = traverse_ (uncurry tradResult)
+  showResults _ = yield . traverse_ (uncurry tradResult)
 
   debugResults = traverse_ $ uncurry $ \r snip -> do
     putStrLn $ T.unpack $ sr_title r

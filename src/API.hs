@@ -27,7 +27,7 @@ type SearchEndpoint =
     :> QueryParam "v" SearchVariety
     :> QueryParam "q" (Search Text)
     :> QueryParam "p" PageNumber
-    :> Get '[HTML] (L.Html ())
+    :> StreamGet NewlineFraming HTML (SourceIO (L.Html ()))
 
 
 instance FromHttpApiData (Search Text) where

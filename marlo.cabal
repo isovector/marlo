@@ -63,6 +63,7 @@ library
       Search.Parser
       Search.Spatial
       Search.Traditional
+      Servant.StreamingUtil
       Signals
       Signals.Listicle
       Spider
@@ -168,6 +169,7 @@ library
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
@@ -279,6 +281,7 @@ executable marlo
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
@@ -395,6 +398,7 @@ test-suite marlo-tests
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
