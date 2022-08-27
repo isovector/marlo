@@ -77,14 +77,14 @@ instance SearchMethod 'Spatial where
         liftIO $ doSelect conn $ do
           d <- each documentSchema
           where_ $ in_ (d_docId d) $ fmap lit $ dids
-          getSnippet' d q'
+          fmap (d_docId d,) $ getSnippet' d q'
       case msnips of
         Left z -> do
           liftIO $ print z
           pure ()
         Right snips -> do
           yield $
-            for_ (zip dids snips) $ \(did, snip) -> do
+            for_ snips $ \(did, snip) -> do
               L.div_
                 [ L.id_ $ "snip" <> T.pack (show $ unDocId did)
                 , L.class_ "spacesnip"
