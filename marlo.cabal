@@ -150,6 +150,7 @@ library
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec
@@ -261,6 +262,7 @@ executable marlo
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec
@@ -378,6 +380,7 @@ test-suite marlo-tests
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec

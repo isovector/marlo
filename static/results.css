@@ -105,3 +105,16 @@ footer > * {
   text-decoration: none;
 }
 
+.spacesnip {
+  display: none;
+  position: absolute;
+  background: var(--baby-powder);
+  padding: 0.5em;
+  max-width: 40em;
+  border: 1px solid black;
+}
+
+.active-tooltip {
+  display: block !important;
+}
+

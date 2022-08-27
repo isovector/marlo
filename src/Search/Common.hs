@@ -60,7 +60,7 @@ searchPage conn q dur page cnt res = streamingToSourceT $ do
             $ printf "%s results &mdash; search took %6.2fs seconds"
                 (commafy $ show cnt)
                 (realToFrac @_ @Double dur)
-        showResults @v conn res
+        showResults @v conn q res
         yield $ pager q (limitStrategy @v) (demote @v) cnt page
 
 

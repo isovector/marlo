@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Search.Traditional () where
+module Search.Traditional (getSnippet') where
 
 import           DB
 import           Data.Foldable (traverse_)
@@ -23,6 +23,10 @@ getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
   d <- d_table <$> each documentSchema'
   where_ $ d_docId d ==. lit did
+  getSnippet' d q
+
+getSnippet' :: Document Expr -> Tsquery -> Query (Expr Text)
+getSnippet' d q = do
   let pc = d_page d
   pure
     $ headline
@@ -46,7 +50,7 @@ instance SearchMethod 'Traditional where
       Right [snip] <- doSelect conn $ getSnippet (sr_id doc) q'
       pure (doc, snip)
 
-  showResults _ = yield . traverse_ (uncurry tradResult)
+  showResults _ _ = yield . traverse_ (uncurry tradResult)
 
   debugResults = traverse_ $ uncurry $ \r snip -> do
     putStrLn $ T.unpack $ sr_title r

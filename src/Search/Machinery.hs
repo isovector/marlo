@@ -63,7 +63,10 @@ class Demote v => SearchMethod (v :: SearchVariety) where
       -> [SearchResult Identity]
       -> IO (SearchMethodResult v)
   showResults
-      :: Connection -> SearchMethodResult v -> Streaming (Html ()) IO ()
+      :: Connection
+      -> Search Text
+      -> SearchMethodResult v
+      -> Streaming (Html ()) IO ()
   debugResults
      :: SearchMethodResult v -> IO ()
 

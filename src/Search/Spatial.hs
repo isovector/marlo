@@ -8,12 +8,14 @@ module Search.Spatial () where
 
 import           Control.Arrow ((&&&), second)
 import           Control.Exception
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
 import           Data.Bool (bool)
-import           Data.Foldable (traverse_)
+import           Data.Foldable (traverse_, forM_, for_)
 import           Data.Function (fix)
 import           Data.List (sortOn)
+import           Data.List.Extra (chunksOf)
 import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, isJust)
 import           Data.Monoid
 import           Data.QuadAreaTree
@@ -23,10 +25,13 @@ import qualified Data.Text as T
 import           Data.Traversable (for)
 import           Linear hiding (trace)
 import qualified Lucid as L
+import           Lucid.Base (makeAttribute)
 import           Network.URI (uriPath)
 import           Rel8 hiding (sum, filter, bool, evaluate, max, index)
+import           Search.Compiler (compileQuery)
 import           Search.DoSearch (debugSearch)
 import           Search.Machinery
+import           Search.Traditional (getSnippet')
 import           Servant.Server.Generic ()
 import           Servant.StreamingUtil (yield)
 import           Types
@@ -62,12 +67,32 @@ instance SearchMethod 'Spatial where
   --          $ fmap (\x -> x { sr_ranking = best - sr_ranking x })
   --          $ filter (not . T.null . T.strip . sr_title) docs
   --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
-  showResults _
-    = yield
-    . traverse_ spaceResult
-    . uniqueTiles
-    . mapMaybe (traverse getFirst)
-    . tile
+  showResults conn q qt = do
+    let as = uniqueTiles $ mapMaybe (traverse getFirst) $ tile qt
+    yield . traverse_ spaceResult $ as
+    let cdids = chunksOf 20 $ fmap (sr_id . snd) as
+        q' = compileQuery q
+    forM_ cdids $ \dids -> do
+      msnips <-
+        liftIO $ doSelect conn $ do
+          d <- each documentSchema
+          where_ $ in_ (d_docId d) $ fmap lit $ dids
+          getSnippet' d q'
+      case msnips of
+        Left z -> do
+          liftIO $ print z
+          pure ()
+        Right snips -> do
+          yield $
+            for_ (zip dids snips) $ \(did, snip) -> do
+              L.div_
+                [ L.id_ $ "snip" <> T.pack (show $ unDocId did)
+                , L.class_ "spacesnip"
+                ] $ L.toHtmlRaw snip
+
+
+
+
     -- . fmap (fmap r_data)
   debugResults
     = putStrLn
@@ -108,6 +133,7 @@ onlyIfDifferent f a =
    in bool (Just fa) Nothing $ fa == a
 
 
+-- TODO(sandy): bug; this might not put the thing in the right region
 uniqueTiles :: [(Region, SearchResult Identity)] -> [(Region, SearchResult Identity)]
 uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
   for ts $ \t@(_, sr) -> do
@@ -142,7 +168,11 @@ spaceResult (Region x y _ _, d) = do
         , L.width_  "12"
         , L.height_ "12"
         ]
-      L.a_ [L.href_ $ sr_uri d] $ L.toHtml title
+      L.a_ [ L.href_ $ sr_uri d
+           , makeAttribute "data-docid" $ T.pack $ show $ unDocId $ sr_id d
+           , L.onmouseover_ "tt(this)"
+           , L.onmouseout_  "untt(this)"
+           ] $ L.toHtml title
 
 
 main :: IO ()

@@ -37,6 +37,7 @@ dependencies:
 - HTTP
 - servant
 - servant-server
+- extra
 - wai
 - warp
 - servant-lucid
