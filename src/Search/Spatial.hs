@@ -1,16 +1,11 @@
 {-# LANGUAGE NumDecimals      #-}
 {-# LANGUAGE OverloadedLabels #-}
-{-# LANGUAGE RecordWildCards  #-}
 
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Search.Spatial () where
 
-import           Control.Applicative (liftA2, ZipList (ZipList), getZipList, liftA3)
+import           Control.Applicative (ZipList (ZipList), getZipList, liftA3)
 import           Control.Arrow (second)
 import           Control.Concurrent (threadDelay)
 import           Control.Exception
@@ -25,7 +20,6 @@ import           Data.Function ((&))
 import           Data.Generics.Labels ()
 import           Data.List (sortOn, foldl', sort)
 import           Data.List.Extra (chunksOf)
-import qualified Data.Map as M
 import           Data.Maybe (catMaybes, mapMaybe, maybeToList)
 import           Data.Monoid
 import           Data.QuadAreaTree
@@ -43,6 +37,7 @@ import           Network.URI (uriPath)
 import           Rel8 hiding (or, Enum, sum, filter, bool, evaluate, max, index)
 import           Search.Compiler (compileQuery)
 import           Search.Machinery
+import           Search.Spatial.Rankers
 import           Search.Traditional (getSnippet')
 import           Servant.Server.Generic ()
 import           Servant.StreamingUtil (yield)
@@ -94,56 +89,6 @@ instance SearchMethod 'Spatial where
   debugResults = undefined
 
 
-rankByStratifiedAssets :: Integer -> Maybe Float
-rankByStratifiedAssets
-  = stratify (/) [100, 1024, 65535, 126000000]
-
-
-rankByJavascript :: [SearchResult Identity] -> [Maybe Float]
-rankByJavascript
-  = fmap
-  $ rankByStratifiedAssets
-  . fromIntegral
-  . ps_js
-  . sr_stats
-
-
-rankByCss :: [SearchResult Identity] -> [Maybe Float]
-rankByCss
-  = fmap
-  $ rankByStratifiedAssets
-  . fromIntegral
-  . ps_css
-  . sr_stats
-
-
-rankBySize :: [SearchResult Identity] -> [Maybe Float]
-rankBySize
-  = fmap
-  $ stratify (/) [1000, 8000, 20000, 500000]
-  . (flip div 5)
-  . fromIntegral
-  . sr_size
-
-
-rankByAssetSize :: [SearchResult Identity] -> [Maybe Float]
-rankByAssetSize
-  = fmap
-  $ rankByStratifiedAssets
-  . fromIntegral
-  . (liftA2 (+) ps_css ps_js)
-  . sr_stats
-
-
-rankByRank :: [SearchResult Identity] -> [Maybe Float]
-rankByRank
-  = fmap Just
-  . globalUniformRanking
-  . fmap sr_ranking
-
-
-type Scorer = ([SearchResult Identity] -> [Maybe Float])
-
 scoreParam
   :: Scorer
   -> Scorer
@@ -162,48 +107,6 @@ scoreParam fx fy fz srs =
         <$> xs
         <*> ys
         <*> zs
-
-
-globalUniformRanking :: Ord a => [a] -> [Float]
-globalUniformRanking [_] = [1]
-globalUniformRanking sc = do
-  let
-      n = length sc
-      sz = 1 / fromIntegral (length sc - 1)
-      f = M.fromList
-      ordered
-        = f
-        $ flip zip [id @Int 0..]
-        $ fmap fst
-        $ sortOn snd
-        $ zip [id @Int 0 ..] sc
-      getx a = ordered M.! a
-  fmap ((* sz) . fromIntegral . getx) [0 .. n - 1]
-
-
-rankByPopularity :: [SearchResult Identity] -> [Maybe Float]
-rankByPopularity
-  = fmap
-  $ stratify (/) [1000, 50000, 1e7, 1e8]
-  . maybe 1e9 fromIntegral
-  . sr_popularity
-
-
-stratify :: (Float -> Float -> Float) -> [Integer] -> Integer -> Maybe Float
-stratify f ts' x = go 0 0 ts'
-  where
-    n :: Float
-    n = 1 / (fromIntegral $ length ts')
-
-    go  :: Float -> Integer -> [Integer] -> Maybe Float
-    go _ _ [] = Nothing
-    go z acc (t : ts)
-      | x < t =
-        let normalized = x - acc
-            range = t - acc
-         in Just $ f (fromIntegral normalized) (fromIntegral range) * n + z
-      | otherwise = go (z + n) t ts
-
 
 algorithm
     :: WindowSize
