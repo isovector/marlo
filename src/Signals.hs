@@ -77,7 +77,6 @@ title = text "title"
 link :: Ranker (Link URI)
 link = do
   t    <- T.strip <$> text "a"
-  guard $ not $ T.null t
   href <- attr "href" "a"
   fmap (Link t) $ normalizeLink href
 
@@ -217,6 +216,8 @@ forbidSites =
   , "anonfiles.com"
   , "archive.org"
   , "archive.today"
+  , "bandcamp.com"
+  , "hobbyking.com"
   , "bing.com"
   , "bitly.com"
   , "bloomberg.com"
@@ -274,6 +275,7 @@ forbidSites =
   , "vimeo.com"
   , "whatsapp.org"
   , "wikidata.org"
+  , "wikipedia.org"
   , "wp.me"
   , "yahoo.com"
   , "youtu.be"

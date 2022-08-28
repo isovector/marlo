@@ -13,9 +13,11 @@ rootSites =
   [ "https://slatestarcodex.com"  -- rationality / econ
   , "https://jeremykun.com"       -- math
   , "https://neocities.org"       -- amateur
-  , "http://zentasrobots.com"     -- diy
+  , "https://mitxela.com"         -- diy
   , "https://seirdy.one"          -- search engines
   , "https://coffeeadastra.com"   -- coffee
+  , "https://spencermounta.in"    -- ?
+  , "http://worrydream.com"       -- ?
   ]
 
 
