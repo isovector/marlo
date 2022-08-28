@@ -13,7 +13,7 @@ import           Data.Containers.ListUtils (nubOrdOn)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isInfixOf, genericLength)
-import           Data.Maybe (mapMaybe, fromMaybe)
+import           Data.Maybe (mapMaybe, fromMaybe, listToMaybe)
 import           Data.SchemaOrg
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -395,6 +395,7 @@ jsBundleSize = do
   szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
   pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
 
+
 cssBundleSize :: Ranker Int64
 cssBundleSize = do
   s <-
@@ -407,6 +408,16 @@ cssBundleSize = do
   (mgr, conn) <- asks $ (,) <$> e_mgr <*> e_conn
   szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
   pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
+
+
+canonical :: Ranker (Maybe URI)
+canonical = do
+  lcan <-
+    chroots "link" $ do
+      rel <- attr "rel" "link"
+      guard $ rel == "canonical"
+      attr "href" "link"
+  pure $ listToMaybe $ mapMaybe (parseURI . T.unpack) lcan
 
 
 isOnDomain :: String -> String -> Bool

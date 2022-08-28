@@ -1,5 +1,6 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+
 module Spider where
 
 import           Control.Exception.Base
@@ -283,13 +284,14 @@ indexCore :: Connection -> Env -> Document Identity -> IO ()
 indexCore conn env disc = do
   let uri = unsafeURI $ T.unpack $ d_uri disc
   (dom_id, _) <- getDomain conn uri
-  Just (titl, pc, is_pollution, stats') <-
+  Just (titl, pc, is_pollution, stats', canuri) <-
     runRanker env (decodeUtf8 $ prd_data $ d_raw disc) $
-      (,,,)
+      (,,,,)
         <$> title
         <*> rankContent
         <*> isSpiritualPollution
         <*> rankStats
+        <*> canonical
   let stats = stats'
         { ps_cookies
             = isJust
@@ -297,6 +299,9 @@ indexCore conn env disc = do
             $ prd_headers
             $ d_raw disc
         }
+
+  for_ canuri $ \can ->
+    putStrLn $ "canonical for " <> show uri <> " is " <> show can
 
   unless is_pollution $
     buildTitleSegs conn (d_docId disc) titl
@@ -306,10 +311,11 @@ indexCore conn env disc = do
     { target = documentSchema
     , from = pure ()
     , set = \ _ dis -> dis
-        { d_domain = lit $ Just dom_id
-        , d_page = lit pc
-        , d_state    = lit $ bool Explored Unacceptable is_pollution
-        , d_stats    = lit stats
+        { d_uri    = maybe (d_uri dis) (lit . T.pack . show) canuri
+        , d_domain = lit $ Just dom_id
+        , d_page   = lit pc
+        , d_state  = lit $ bool Explored Unacceptable is_pollution
+        , d_stats  = lit stats
         }
     , updateWhere = \ _ dis -> d_docId dis ==. lit (d_docId disc)
     , returning = pure ()
