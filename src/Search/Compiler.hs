@@ -27,7 +27,7 @@ compileSearch q = orderBy ((sr_ranking >$< asc) <> (sr_id >$< asc)) $ do
       pure $ dom_rank dom
 
   pure $ SearchResult
-    { sr_ranking = rank (d_search d) (lit q') rDISTANCE
+    { sr_ranking = rank (d_search d) (lit q') rLENGTH
     , sr_popularity = maybeTable null id popularity
     , sr_id      = d_docId $ d_table d
     , sr_uri     = d_uri   $ d_table d

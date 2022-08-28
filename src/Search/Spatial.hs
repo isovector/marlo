@@ -11,7 +11,7 @@ module Search.Spatial () where
 import           Control.Applicative (liftA2, ZipList (ZipList), getZipList, liftA3)
 import           Control.Arrow (first, second)
 import           Control.Exception
-import           Control.Lens (view, (<&>), (%~))
+import           Control.Lens (view, (<&>), (%~), _2, (*~))
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
@@ -19,10 +19,10 @@ import           Data.Bool (bool)
 import           Data.Foldable (traverse_, forM_, for_, fold)
 import           Data.Function (fix, (&))
 import           Data.Generics.Labels ()
-import           Data.List (sortOn, foldl')
+import           Data.List (sortOn, foldl', sort)
 import           Data.List.Extra (chunksOf)
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, maybeToList)
+import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, maybeToList, isJust)
 import           Data.Monoid
 import           Data.Ord (Down(Down))
 import           Data.QuadAreaTree
@@ -46,6 +46,7 @@ import           Servant.StreamingUtil (yield)
 import           Types
 import           Utils (unsafeURI)
 import Debug.Trace (trace)
+import Control.Lens.Combinators (Lens')
 
 
 -- parameters:
@@ -63,12 +64,11 @@ import Debug.Trace (trace)
 
 
 instance SearchMethod 'Spatial where
-  type SearchMethodResult 'Spatial = QuadTree (Maybe (SearchResult Identity))
+  type SearchMethodResult 'Spatial = QuadTree (First (SizedRegionData (SearchResult Identity)))
   limitStrategy = Limit 500
   accumResults _ ws _
     = evaluate
-    . undefined
-    -- . newLayoutAlgorithm ws
+    . algorithm ws
     -- . fmap fst
     -- . uncurry pizzaDoughLayout
     -- . sortByCenterOffset
@@ -84,11 +84,15 @@ instance SearchMethod 'Spatial where
   --          $ filter (not . T.null . T.strip . sr_title) docs
   --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
   showResults conn q qt = do
-    let as = uniqueTiles $ mapMaybe (traverse id) $ tile qt
-    yield . traverse_ spaceResult $ as
-    let cdids = chunksOf 20 $ fmap (sr_id . snd) as
+    let as = S.toList $ S.fromList
+           $ fmap snd
+           $ mapMaybe (traverse getFirst)
+           $ tile qt
+    yield . traverse_ spaceResult' $ as
+    let cdids = chunksOf 20 $ fmap (sr_id . srd_data) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
+      liftIO $ print dids
       msnips <-
         liftIO $ doSelect conn $ do
           d <- each documentSchema
@@ -113,9 +117,9 @@ instance SearchMethod 'Spatial where
 
     -- . fmap (fmap r_data)
     --
-  debugResults
-    = putStrLn
-    . showTree (maybe ' ' (const 'X'))
+  debugResults = undefined
+    -- = putStrLn
+    -- . showTree (maybe ' ' (const 'X'))
 
 
 rankByStratifiedAssets :: Integer -> Maybe Float
@@ -221,8 +225,33 @@ stratify f ts' x = go 0 0 ts'
       | otherwise = go (z + n) t ts
 
 
-pizzaDoughLayout :: V2 Float -> [(SearchResult Identity, V2 Float)] -> QuadTree (Maybe (SearchResult Identity))
-pizzaDoughLayout = error "not implemented"
+algorithm
+    :: WindowSize
+    -> [SearchResult Identity]
+    -> QuadTree (First (SizedRegionData (SearchResult Identity)))
+algorithm ws srs = do
+  let n = fromIntegral $ length srs
+  tighten (isJust . getFirst)
+    . foldr
+        doPlace
+        (makeTree $ Region 0 (-10000) (ws_width ws) 20000)
+    . fmap (uncurry $ buildRegion ws)
+    . fmap (renormalizeY n)
+    . snd
+    . sortByCenterOffset (_2 . _xy) (view _y)
+    . scoreParam rankByPopularity rankByPageSize rankByPopularity
+    . fmap (\sr -> sr { sr_title = correctTitle sr })
+    $ srs
+
+
+renormalizeY
+    :: Float
+    -> (SearchResult Identity, V3 Float)
+    -> (SearchResult Identity, V3 Float)
+renormalizeY n =
+  _2 . _y *~
+    view _y (measureText' (denormalizePt 0.5) "x") * n
+
 
 toScreenCoords :: WindowSize -> Int -> V2 Int -> V2 Float
 toScreenCoords (WindowSize w h) n (V2 x y) =
@@ -230,27 +259,22 @@ toScreenCoords (WindowSize w h) n (V2 x y) =
      (fromIntegral y)
 
 
-normalizeScores :: (Ord a, Ord b) => [(a, V2 b)] -> [(a, V2 Int)]
-normalizeScores sc = do
-  let
-      f = M.fromList
-        . fmap (first fst)
-        . flip zip [id @Int 0 ..]
-      orderedx  = f $ sortOn (view _x . snd) sc
-      orderedy  = f $ sortOn (Down . view _y . snd) sc
-      getx a = orderedx M.! a
-      gety a = orderedy M.! a
-  fmap fst sc <&> \a -> (a,) $ V2 getx gety <*> pure a
 
-
-sortByCenterOffset :: (Ord b, Fractional b) => [(a, V2 b)] -> (V2 b, [(a, V2 b)])
-sortByCenterOffset placed = do
+sortByCenterOffset
+    :: (Ord b, Ord c, Fractional b)
+    => Lens' a (V2 b)  -- ^ get a V2 out of the data
+    -> (V2 b -> c)     -- ^ what to sort the V2 on
+    -> [a]
+    -> (V2 b, [a])
+sortByCenterOffset l f placed = do
   let
       n = length placed
-      midpoint  = sum (fmap snd placed) / fromIntegral n
+      midpoint = (!! div n 2)
+               $ sortOn f
+               $ fmap (view l) placed
   (midpoint,)
-    $ sortOn (quadrance . snd)
-    $ fmap (second $ subtract midpoint)
+    $ sortOn (quadrance . view l)
+    $ fmap (l %~ subtract midpoint)
     $ placed
 
 
@@ -294,16 +318,6 @@ onlyIfDifferent f a =
    in bool (Just fa) Nothing $ fa == a
 
 
--- TODO(sandy): bug; this might not put the thing in the right region
-uniqueTiles :: [(Region, SearchResult Identity)] -> [(Region, SearchResult Identity)]
-uniqueTiles ts = flip evalState mempty $ fmap catMaybes $
-  for ts $ \t@(_, sr) -> do
-    gets (S.member $ sr_id sr) >>= \case
-       False -> do
-         modify $ S.insert $ sr_id sr
-         pure $ Just t
-       True -> pure Nothing
-
 
 xSize :: Num a => a
 xSize = 11
@@ -326,11 +340,42 @@ spaceResult (Region x y _ _, d) = do
         , L.style_ $ mconcat
             [ "position: absolute;"
             , "top: "
-            , T.pack $ show $ 250 + y * ySize
+            , T.pack $ show $ 250 + y
             , "; "
             , "left: "
             , T.pack $ show $ x
-            , "%"
+            , ";"
+            ]
+        ] $ do
+      let uri = unsafeURI $ T.unpack $ sr_uri d
+      L.img_
+        [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
+        , L.width_  (T.pack $ show $ view _x $ favSize @Int)
+        , L.height_ (T.pack $ show $ view _y $ favSize @Int)
+        ]
+      L.a_ [ L.href_ $ sr_uri d
+           , makeAttribute "data-docid" $ T.pack $ show $ unDocId $ sr_id d
+           , L.onmouseover_ "tt(this)"
+           , L.onmouseout_  "untt(this)"
+           ] $ L.toHtml title
+
+spaceResult' :: SizedRegionData (SearchResult Identity) -> L.Html ()
+spaceResult' (SizedRegionData pt (Region x y _ _) d) = do
+  let title = T.strip $ sr_title d
+  when (not $ T.null title) $ do
+    L.span_
+        [ L.class_ "spatial-title"
+        , L.style_ $ mconcat
+            [ "position: absolute;"
+            , "top: "
+            , T.pack $ show $ 250 + y
+            , "; "
+            , "left: "
+            , T.pack $ show $ x
+            , "; "
+            , "font-size: "
+            , T.pack $ show pt
+            , "pt;"
             ]
         ] $ do
       let uri = unsafeURI $ T.unpack $ sr_uri d
@@ -420,33 +465,37 @@ buildRegion
     -> SearchResult Identity
     -> V3 Float
     -> SizedRegionData (SearchResult Identity)
-buildRegion (WindowSize ww wh) sr (V3 x y prept) =
-  let pt = 10 + prept * 2
+buildRegion (WindowSize ww _) sr (V3 x y prept) =
+  let pt = denormalizePt prept
       V2 w h = fmap round
              $ extendForIcon
              $ measureText' pt
              $ sr_title sr
    in SizedRegionData
         pt
-        (Region (fitIn ww w $ round x * ww) (round y) w h)
+        (Region (fitIn ww w $ round $ x * fromIntegral ww) (round y) w h)
         sr
+
+
+denormalizePt :: Float -> Float
+denormalizePt prept = 10 + prept * 3
 
 
 doPlace
     :: forall a
      . SizedRegionData a
-    -> QuadTree (First a)
-    -> QuadTree (First a)
+    -> QuadTree (First (SizedRegionData a))
+    -> QuadTree (First (SizedRegionData a))
 doPlace srd0 qt = go 0 srd0
   where
-    go :: Int -> SizedRegionData a -> QuadTree (First a)
+    go :: Int -> SizedRegionData a -> QuadTree (First (SizedRegionData a))
     go 3 _ = qt
     go n srd = do
-      let r = srd_region srd0
+      let r = srd_region srd
       case fmap fst
          $ hitTestR (curry $ traverse $ maybeToList . getFirst)
                     r qt of
-        [] -> fill (First $ Just $ srd_data srd) r qt
+        [] -> fill (First $ Just srd) r qt
         conflicts -> do
           let sides = foldMap (checkConflicts r) conflicts
           case (canPan sides, canTryResize r conflicts) of

@@ -150,7 +150,10 @@ instance Monoid RobotDirectives where
   mempty = RobotDirectives {rb_allow = mempty, rb_disallow = mempty}
 
 
-data WindowSize = WindowSize Int Int
+data WindowSize = WindowSize
+  { ws_width :: Int
+  , ws_height :: Int
+  }
   deriving (Eq, Ord, Show)
 
 instance FromHttpApiData WindowSize where
