@@ -5,32 +5,36 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Search.Spatial () where
 
 import           Control.Applicative (liftA2, ZipList (ZipList), getZipList, liftA3)
-import           Control.Arrow (first, second)
+import           Control.Arrow (second)
+import           Control.Concurrent (threadDelay)
 import           Control.Exception
-import           Control.Lens (view, (<&>), (%~), _2, (*~))
+import           Control.Lens (view, (%~), lens)
+import           Control.Lens.Combinators (Lens')
 import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.State (evalState, gets, modify, when)
+import           Control.Monad.State (when, evalState, modify, get)
 import           DB
-import           Data.Bool (bool)
-import           Data.Foldable (traverse_, forM_, for_, fold)
-import           Data.Function (fix, (&))
+import qualified Data.DList as DL
+import           Data.Foldable (forM_, for_, fold)
+import           Data.Function ((&))
 import           Data.Generics.Labels ()
 import           Data.List (sortOn, foldl', sort)
 import           Data.List.Extra (chunksOf)
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, maybeToList, isJust)
+import           Data.Maybe (catMaybes, mapMaybe, maybeToList)
 import           Data.Monoid
-import           Data.Ord (Down(Down))
 import           Data.QuadAreaTree
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
+import           Debug.Trace (trace)
 import           GHC.Generics (Generic)
 import           Linear hiding (trace)
 import qualified Lucid as L
@@ -38,53 +42,24 @@ import           Lucid.Base (makeAttribute)
 import           Network.URI (uriPath)
 import           Rel8 hiding (or, Enum, sum, filter, bool, evaluate, max, index)
 import           Search.Compiler (compileQuery)
-import           Search.DoSearch (debugSearch)
 import           Search.Machinery
 import           Search.Traditional (getSnippet')
 import           Servant.Server.Generic ()
 import           Servant.StreamingUtil (yield)
 import           Types
 import           Utils (unsafeURI)
-import Debug.Trace (trace)
-import Control.Lens.Combinators (Lens')
-import Control.Concurrent (threadDelay)
-import qualified Data.DList as DL
-
-
--- parameters:
---   actual positions assigned to the nodes
---   transformation into screen space
---
--- algorithm?
---   find the midpoint of the dataset
---   order by distance from midpoint
---   build an infinte quadtree guaranteed to fit everything
---   insert in order of distance
---      break ties by sliding AWAY from the midpoint
---      biased vertically
---   renormalize the tree
 
 
 instance SearchMethod 'Spatial where
-  type SearchMethodResult 'Spatial = QuadTree (First (SizedRegionData (SearchResult Identity)))
+  type SearchMethodResult 'Spatial =
+    QuadTree (First (SizedRegionData (SearchResult Identity)))
+
   limitStrategy = Limit 500
+
   accumResults _ ws _
     = evaluate
     . algorithm ws
-    -- . fmap fst
-    -- . uncurry pizzaDoughLayout
-    -- . sortByCenterOffset
-    -- . (\es -> fmap (fmap $ toScreenCoords ws $ length es) es)
-    -- . id -- normalizeScores
-    -- . fmap (id &&& score)
-    -- . fmap (\sr -> sr { sr_title = correctTitle sr })
 
-  -- accumResults _ _ docs = do
-  --   let best = maximum $ fmap sr_ranking docs
-  --   let rs = fmap makeRect
-  --          $ fmap (\x -> x { sr_ranking = best - sr_ranking x })
-  --          $ filter (not . T.null . T.strip . sr_title) docs
-  --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
   showResults conn q qt = do
     let as = S.toList
            $ S.fromList
@@ -93,11 +68,10 @@ instance SearchMethod 'Spatial where
            $ tile qt
     for_ as $ \a -> do
       yield $ spaceResult' a
-      liftIO $ threadDelay 5e4
+      liftIO $ threadDelay 1e4
     let cdids = chunksOf 20 $ fmap (sr_id . srd_data) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
-      liftIO $ print dids
       msnips <-
         liftIO $ doSelect conn $ do
           d <- each documentSchema
@@ -117,20 +91,12 @@ instance SearchMethod 'Spatial where
                 L.span_ [L.class_ "url"] $ L.a_ [L.href_ uri] $ L.toHtml uri
                 L.p_ [L.class_ "snippet"] $ L.toHtmlRaw snip
 
-
-
-
-    -- . fmap (fmap r_data)
-    --
   debugResults = undefined
-    -- = putStrLn
-    -- . showTree (maybe ' ' (const 'X'))
 
 
 rankByStratifiedAssets :: Integer -> Maybe Float
 rankByStratifiedAssets
   = stratify (/) [100, 1024, 65535, 126000000]
-
 
 
 rankByJavascript :: [SearchResult Identity] -> [Maybe Float]
@@ -151,8 +117,17 @@ rankByCss
   . sr_stats
 
 
-rankByPageSize :: [SearchResult Identity] -> [Maybe Float]
-rankByPageSize
+rankBySize :: [SearchResult Identity] -> [Maybe Float]
+rankBySize
+  = fmap
+  $ stratify (/) [1000, 8000, 20000, 500000]
+  . (flip div 5)
+  . fromIntegral
+  . sr_size
+
+
+rankByAssetSize :: [SearchResult Identity] -> [Maybe Float]
+rankByAssetSize
   = fmap
   $ rankByStratifiedAssets
   . fromIntegral
@@ -236,22 +211,42 @@ algorithm
     -> QuadTree (First (SizedRegionData (SearchResult Identity)))
 algorithm ws srs = do
   let n = fromIntegral $ length srs
-  tighten (isJust . getFirst)
-    . foldr
+  foldr
         doPlace
         (makeTree $ Region 0 (-10000) (ws_width ws) 20000)
+    . sortByCenterOffset (#srd_region . regionPos) _y
+    . tightenY
     . fmap (uncurry $ buildRegion ws)
     . renormalizeY n
-    . sortByCenterOffset (_2 . _xy) (_y)
-    . scoreParam rankByPopularity rankByPageSize rankByPopularity
+    . scoreParam rankBySize rankByAssetSize rankByRank
     . fmap (\sr -> sr { sr_title = correctTitle sr })
     $ srs
 
 
-traceShowF :: Show a1 => (a2 -> a1) -> a2 -> a2
-traceShowF f a = trace (show $ f a) a
+regionPos :: Lens' Region (V2 Int)
+regionPos = lens
+  (\(Region x y _ _) -> V2 x y)
+  (\(Region _ _ w h) (V2 x y) -> Region x y w h)
 
 
+tightenY
+    :: [SizedRegionData (SearchResult Identity)]
+    -> [SizedRegionData (SearchResult Identity)]
+tightenY [] = []
+tightenY (sortOn (r_y . srd_region) -> xs) = do
+  let bot (Region _ y _ h) = y + h
+  flip evalState (r_y . srd_region $ head xs) $
+    for xs $ \x -> do
+      let r = srd_region x
+      b <- get
+      let r' = case abs (b - r_y r) <= round (ySize * 1.5) of
+                 True  -> r
+                 False -> r { r_y = b }
+      modify $ max $ bot r'
+      pure $ x { srd_region = r' }
+
+
+-- TODO(sandy): magic number height
 renormalizeY
     :: Float
     -> [(SearchResult Identity, V3 Float)]
@@ -263,19 +258,8 @@ renormalizeY n xs = do
   fmap (second $ _y %~ \y -> (y - lo) / z * 1080) xs
 
 
-  -- _2 . _y *~
-  --   view _y (measureText' (denormalizePt 0.5) "x") * n
-
-
-toScreenCoords :: WindowSize -> Int -> V2 Int -> V2 Float
-toScreenCoords (WindowSize w h) n (V2 x y) =
-  V2 (fromIntegral x / fromIntegral n * fromIntegral w)
-     (fromIntegral y)
-
-
-
 sortByCenterOffset
-    :: (Ord b, Ord c, Num c, Fractional b, Show c)
+    :: (Ord b, Ord c, Num c, Show c)
     => Lens' a (V2 b)  -- ^ get a V2 out of the data
     -> Lens' (V2 b) c     -- ^ what to sort the V2 on
     -> [a]
@@ -286,34 +270,11 @@ sortByCenterOffset l f placed = do
       midpoint = (!! div n 2)
                $ sort
                $ fmap (view $ l . f) placed
-  sortOn (abs . subtract midpoint . view (l . f))
-    $ trace (show midpoint) $ placed
+  sortOn (abs . subtract midpoint . view (l . f)) placed
 
 
 correctTitle :: SearchResult Identity -> Text
 correctTitle = trimTo 37 "..." . sr_title
-
-
-measureText :: Text -> V2 Int
-measureText s = V2 (T.length s + 1) 1
--- plus one for the icon
-
-
-score :: SearchResult Identity -> V2 Float
-score sr =
-  V2 (log $ log $ max 1 $ fromIntegral $ fromMaybe 1e6 $ sr_popularity sr)
-     (sr_ranking sr * 10)
-
-
-
-makeRect :: SearchResult Identity -> Rect (SearchResult Identity)
-makeRect sr = Rect
-  { r_pos = score sr
-  , r_size = measureText title'
-  , r_data = sr { sr_title = title' }
-  }
-  where
-    title' = sr_title sr
 
 
 trimTo :: Int -> Text -> Text -> Text
@@ -323,56 +284,12 @@ trimTo sz rest t
   | otherwise = t
 
 
+ySize :: Float
+ySize = view _y $ measureText' (denormalizePt 0) "x"
 
-onlyIfDifferent :: Eq a => (a -> a) -> a -> Maybe a
-onlyIfDifferent f a =
-  let fa = f a
-   in bool (Just fa) Nothing $ fa == a
-
-
-
-xSize :: Num a => a
-xSize = 11
-
-
-ySize :: Num a => a
-ySize = 18
-
-
-favSize :: Num a => V2 a
-favSize = pure 12
-
-
-spaceResult :: (Region, SearchResult Rel8.Result) -> L.Html ()
-spaceResult (Region x y _ _, d) = do
-  let title = T.strip $ sr_title d
-  when (not $ T.null title) $ do
-    L.span_
-        [ L.class_ "spatial-title"
-        , L.style_ $ mconcat
-            [ "position: absolute;"
-            , "top: "
-            , T.pack $ show $ 250 + y
-            , "; "
-            , "left: "
-            , T.pack $ show $ x
-            , ";"
-            ]
-        ] $ do
-      let uri = unsafeURI $ T.unpack $ sr_uri d
-      L.img_
-        [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
-        , L.width_  (T.pack $ show $ view _x $ favSize @Int)
-        , L.height_ (T.pack $ show $ view _y $ favSize @Int)
-        ]
-      L.a_ [ L.href_ $ sr_uri d
-           , makeAttribute "data-docid" $ T.pack $ show $ unDocId $ sr_id d
-           , L.onmouseover_ "tt(this)"
-           , L.onmouseout_  "untt(this)"
-           ] $ L.toHtml title
 
 spaceResult' :: SizedRegionData (SearchResult Identity) -> L.Html ()
-spaceResult' (SizedRegionData pt (Region x y _ _) d) = do
+spaceResult' (SizedRegionData pt (Region x y _ h) d) = do
   let title = T.strip $ sr_title d
   when (not $ T.null title) $ do
     L.span_
@@ -393,8 +310,8 @@ spaceResult' (SizedRegionData pt (Region x y _ _) d) = do
       let uri = unsafeURI $ T.unpack $ sr_uri d
       L.img_
         [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
-        , L.width_  (T.pack $ show $ view _x $ favSize @Int)
-        , L.height_ (T.pack $ show $ view _y $ favSize @Int)
+        , L.width_  "14" -- (T.pack $ show h)
+        , L.height_ "14" -- (T.pack $ show h)
         ]
       L.a_ [ L.href_ $ sr_uri d
            , makeAttribute "data-docid" $ T.pack $ show $ unDocId $ sr_id d
@@ -403,74 +320,13 @@ spaceResult' (SizedRegionData pt (Region x y _ _) d) = do
            ] $ L.toHtml title
 
 
-main :: IO ()
-main = debugSearch @'Spatial (Term "cities") 1
-
-
-data Rect a = Rect
-  { r_pos    :: !(V2 Float)
-  , r_size   :: !(V2 Int)
-  , r_data   :: !a
-  }
-  deriving (Eq, Ord, Show, Functor)
-
-
-rectCenter :: Rect a -> V2 Float
-rectCenter Rect{..} = r_pos + fmap fromIntegral r_size / 2
-
-
-------------------------------------------------------------------------------
--- | Take a size and a centerpoint, get the top left corner
-uncenter :: V2 Int -> V2 Float -> V2 Float
-uncenter sz center = center - fmap fromIntegral sz / 2
-
-
-rectToRegion :: Rect a -> Region
-rectToRegion Rect{r_pos = fmap round -> V2 x y, r_size = V2 w h } = Region x y w h
-
-
-fillRect :: Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
-fillRect r = fill (pure r) $ rectToRegion r
-
-
-
-place'
-    :: SearchResult Identity
-    -> V2 Float
-    -> QuadTree (First ((V2 Float, Region), SearchResult Identity))
-    -> QuadTree (First ((V2 Float, Region), SearchResult Identity))
-place' sr p0 q = do
-  let V2 w h = measureText $ sr_title sr
-  flip fix p0 $ \go p@(V2 x y) -> do
-    let r = Region (round x) (round y) w h
-    case inBounds q r of
-      False -> q
-      True ->
-        case getFirst $ hitTest id r q of
-          Just (hit, _) -> do
-            let p' = p + V2 0 1
-            go $ p'
-          Nothing -> fill (First $ Just ((p, r), sr)) r q
-
--- test
---   :: Scorer
---   -> Scorer
---   -> Scorer
---   -> [SearchResult Identity]
---   -> QuadTree (First (SearchResult Identity))
--- test scorex scorey scoresz
---   = undefined
---   . fmap (uncurry buildRegion)
---   . scoreParam scorex scorey scoresz
---   . fmap (\sr -> sr { sr_title = correctTitle sr })
-
-
 data SizedRegionData a = SizedRegionData
   { srd_size   :: Float  -- in pts
   , srd_region :: Region
   , srd_data   :: a
   }
   deriving stock (Eq, Ord, Show, Functor, Generic)
+
 
 buildRegion
     :: WindowSize
@@ -490,7 +346,7 @@ buildRegion (WindowSize ww _) sr (V3 x y prept) =
 
 
 denormalizePt :: Float -> Float
-denormalizePt prept = 10 + prept * 3
+denormalizePt prept = 10 + prept * 3.3
 
 
 doPlace
@@ -517,11 +373,13 @@ doPlace srd0 qt = go 0 srd0
             (_, True) -> trace "wants a resize" qt
             (_, _) -> qt
 
+
 pan :: Region -> [Region] -> Region
 pan r0 = flip foldl' r0 $ \r con ->
   case getIntersection r con of
     Just c -> offsetByY c $ offsetByX c r
     Nothing -> r
+
 
 offsetByY :: Region -> Region -> Region
 offsetByY (Region _ cy _ ch) r@(Region rx ry rw rh)
@@ -529,11 +387,13 @@ offsetByY (Region _ cy _ ch) r@(Region rx ry rw rh)
   | ry + rh == cy + ch = Region rx (ry - ch) rw rh
   | otherwise = r
 
+
 offsetByX :: Region -> Region -> Region
 offsetByX (Region cx _ cw _) r@(Region rx ry rw rh)
   | rx      == cx      = Region (rx + cw) ry rw rh
   | rx + rw == cx + cw = Region (rx - cw) ry rw rh
   | otherwise = r
+
 
 checkConflicts :: Region -> Region -> Set SideOf
 checkConflicts rel@(Region rx ry rw rh) con =
@@ -547,8 +407,10 @@ checkConflicts rel@(Region rx ry rw rh) con =
         ]
     Nothing       -> mempty
 
+
 canTryResize :: Region -> [Region] -> Bool
 canTryResize r r2 = r /= fold r2
+
 
 canPan :: Set SideOf -> Bool
 canPan s = not $ or
@@ -556,22 +418,23 @@ canPan s = not $ or
   , S.member TopSide  s && S.member BottomSide s
   ]
 
+
 data SideOf = LeftSide | RightSide | TopSide | BottomSide
   deriving (Eq, Ord, Show, Enum, Bounded)
 
 
-
 fitIn :: Int -> Int -> Int -> Int
-fitIn _sw _w x = x
+fitIn sw w x
+  | x + w >= sw
+  = sw - w
+  | otherwise = x
 
-
-plop :: SearchResult Identity -> V2 Float
-plop = r_pos . makeRect
 
 
 -- determined experimentally
 measureText' :: Float -> Text -> V2 Float
 measureText' pt t = V2 (8 * fromIntegral (T.length t)) 18 ^* (pt / 10)
+
 
 -- icons are square and fill the entire lineheight, so extend the width by that
 extendForIcon :: V2 Float -> V2 Float

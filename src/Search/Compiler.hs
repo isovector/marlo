@@ -26,13 +26,15 @@ compileSearch q = orderBy ((sr_ranking >$< asc) <> (sr_id >$< asc)) $ do
       where_ $ nullify (dom_id dom) ==. d_domain (d_table d)
       pure $ dom_rank dom
 
+  let t = d_table d
   pure $ SearchResult
     { sr_ranking = rank (d_search d) (lit q') rLENGTH
     , sr_popularity = maybeTable null id popularity
-    , sr_id      = d_docId $ d_table d
-    , sr_uri     = d_uri   $ d_table d
-    , sr_title   = d_title $ d_table d
-    , sr_stats   = d_stats $ d_table d
+    , sr_id      = d_docId t
+    , sr_uri     = d_uri   t
+    , sr_size    = function "length" $ pc_content $ d_page t
+    , sr_title   = d_title t
+    , sr_stats   = d_stats t
     }
   where
     q' = compileQuery q

@@ -15,6 +15,7 @@ data SearchResult f = SearchResult
   , sr_id         :: !(Column f DocId)
   , sr_uri        :: !(Column f Text)
   , sr_title      :: !(Column f Text)
+  , sr_size       :: !(Column f Int32)
   , sr_popularity :: !(Column f (Maybe Int32))
   , sr_stats      :: !(PageStats f)
   }

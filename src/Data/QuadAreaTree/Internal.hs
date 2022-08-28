@@ -11,6 +11,7 @@ import Data.QuadAreaTree.Geometry
 import Linear.V2
 import Control.Applicative (liftA2)
 import GHC.Generics (Generic)
+import Data.Bool (bool)
 
 
 type Squadrant a = (Region, Quadrant a)
@@ -84,7 +85,9 @@ origami
     -> Quad b
 origami miss hit what (r, q) =
   let subr = subdivide r
-      subw = fmap (getIntersection what) subr
+      -- if we want to hit the whole region, we can skip the intersection
+      -- checks
+      subw = fmap (bool (getIntersection what) (Just) (r == what)) subr
       -- sel :: Maybe Region -> Region -> Quadrant a -> m
       sel Nothing _ q'   = miss q'
       sel (Just w) r' q' = hit w (r',  q')
