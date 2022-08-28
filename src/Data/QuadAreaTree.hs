@@ -13,6 +13,7 @@ module Data.QuadAreaTree
   , foldTree
   , tightlySatisfying
   , hitTest
+  , hitTestR
   , pointMap
   , getLocation
   , asWeighted
@@ -128,6 +129,10 @@ pointMap
 
 hitTest :: Monoid m => (a -> m) -> Region -> QuadTree a -> m
 hitTest f r = I.hitTest (const f) r . regionify
+
+
+hitTestR :: Monoid m => (Region -> a -> m) -> Region -> QuadTree a -> m
+hitTestR f r = I.hitTest f r . regionify
 
 
 bounds :: QuadTree a -> Region

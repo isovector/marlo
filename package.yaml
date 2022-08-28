@@ -67,6 +67,7 @@ dependencies:
 - directory
 - filepath
 - algebraic-graphs
+- generic-lens
 
 ghc-options:
 - -Wall

@@ -1,37 +1,42 @@
-{-# LANGUAGE NumDecimals     #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NumDecimals      #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE RecordWildCards  #-}
 
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Search.Spatial () where
 
 import           Control.Applicative (liftA2, ZipList (ZipList), getZipList, liftA3)
-import           Control.Arrow ((&&&), first, second)
+import           Control.Arrow (first, second)
 import           Control.Exception
-import           Control.Lens (view, (<&>))
+import           Control.Lens (view, (<&>), (%~))
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State (evalState, gets, modify, when)
 import           DB
 import           Data.Bool (bool)
-import           Data.Foldable (traverse_, forM_, for_)
-import           Data.Function (fix)
-import           Data.List (sortOn)
+import           Data.Foldable (traverse_, forM_, for_, fold)
+import           Data.Function (fix, (&))
+import           Data.Generics.Labels ()
+import           Data.List (sortOn, foldl')
 import           Data.List.Extra (chunksOf)
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, isJust)
+import           Data.Maybe (catMaybes, mapMaybe, fromMaybe, maybeToList)
 import           Data.Monoid
 import           Data.Ord (Down(Down))
 import           Data.QuadAreaTree
+import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
+import           GHC.Generics (Generic)
 import           Linear hiding (trace)
 import qualified Lucid as L
 import           Lucid.Base (makeAttribute)
 import           Network.URI (uriPath)
-import           Rel8 hiding (sum, filter, bool, evaluate, max, index)
+import           Rel8 hiding (or, Enum, sum, filter, bool, evaluate, max, index)
 import           Search.Compiler (compileQuery)
 import           Search.DoSearch (debugSearch)
 import           Search.Machinery
@@ -40,6 +45,7 @@ import           Servant.Server.Generic ()
 import           Servant.StreamingUtil (yield)
 import           Types
 import           Utils (unsafeURI)
+import Debug.Trace (trace)
 
 
 -- parameters:
@@ -152,10 +158,12 @@ rankByRank
   . fmap sr_ranking
 
 
+type Scorer = ([SearchResult Identity] -> [Maybe Float])
+
 scoreParam
-  :: ([SearchResult Identity] -> [Maybe Float])
-  -> ([SearchResult Identity] -> [Maybe Float])
-  -> ([SearchResult Identity] -> [Maybe Float])
+  :: Scorer
+  -> Scorer
+  -> Scorer
   -> [SearchResult Identity]
   -> [(SearchResult Identity, V3 Float)]
 scoreParam fx fy fz srs =
@@ -368,40 +376,6 @@ fillRect :: Rect a -> QuadTree (First (Rect a)) -> QuadTree (First (Rect a))
 fillRect r = fill (pure r) $ rectToRegion r
 
 
-newLayoutAlgorithm
-    :: WindowSize
-    -> [SearchResult Identity]
-    -> QuadTree (First (SearchResult Identity))
-newLayoutAlgorithm (WindowSize sw _) res = do
-  let n         = length res
-      placed0   = fmap (id &&& plop) res
-      midpoint  = sum (fmap snd placed0) / fromIntegral n
-      ordered   = sortOn (quadrance . snd) $ fmap (second $ subtract midpoint) placed0
-      orderedx  = M.fromList
-                $ fmap (first $ sr_id . fst)
-                $ flip zip [0..]
-                $ sortOn (view _x . snd) placed0
-      orderedy  = M.fromList
-                $ fmap (first $ sr_id . fst)
-                $ flip zip [0..]
-                $ sortOn (Down . view _y . snd) placed0
-      sz        = (^) @Int @Int 2 14
-      tree0     = makeTree (Region (-sz) 0 (sz * 2) (sz * 2))
-      total     = length placed0
-      reordered =
-        placed0 <&> \(sr, _) ->
-          ( sr
-          , V2 ((* fromIntegral sw) . (/ fromIntegral total))
-               id <*>
-              (fmap (fromIntegral @_ @Float)(V2 (orderedx M.!)
-                                                (orderedy M.!) <*> pure (sr_id sr)))
-          )
-      tree      = foldr (uncurry place') tree0 reordered
-  renormalize (\(Region _ _ w h) -> Region 0 0 w h)
-    $ tighten (isJust . getFirst)
-    $ fmap (fmap snd)
-    $ tree
-
 
 place'
     :: SearchResult Identity
@@ -421,7 +395,123 @@ place' sr p0 q = do
             go $ p'
           Nothing -> fill (First $ Just ((p, r), sr)) r q
 
+-- test
+--   :: Scorer
+--   -> Scorer
+--   -> Scorer
+--   -> [SearchResult Identity]
+--   -> QuadTree (First (SearchResult Identity))
+-- test scorex scorey scoresz
+--   = undefined
+--   . fmap (uncurry buildRegion)
+--   . scoreParam scorex scorey scoresz
+--   . fmap (\sr -> sr { sr_title = correctTitle sr })
+
+
+data SizedRegionData a = SizedRegionData
+  { srd_size   :: Float  -- in pts
+  , srd_region :: Region
+  , srd_data   :: a
+  }
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+
+buildRegion
+    :: WindowSize
+    -> SearchResult Identity
+    -> V3 Float
+    -> SizedRegionData (SearchResult Identity)
+buildRegion (WindowSize ww wh) sr (V3 x y prept) =
+  let pt = 10 + prept * 2
+      V2 w h = fmap round
+             $ extendForIcon
+             $ measureText' pt
+             $ sr_title sr
+   in SizedRegionData
+        pt
+        (Region (fitIn ww w $ round x * ww) (round y) w h)
+        sr
+
+
+doPlace
+    :: forall a
+     . SizedRegionData a
+    -> QuadTree (First a)
+    -> QuadTree (First a)
+doPlace srd0 qt = go 0 srd0
+  where
+    go :: Int -> SizedRegionData a -> QuadTree (First a)
+    go 3 _ = qt
+    go n srd = do
+      let r = srd_region srd0
+      case fmap fst
+         $ hitTestR (curry $ traverse $ maybeToList . getFirst)
+                    r qt of
+        [] -> fill (First $ Just $ srd_data srd) r qt
+        conflicts -> do
+          let sides = foldMap (checkConflicts r) conflicts
+          case (canPan sides, canTryResize r conflicts) of
+            (True, _) ->
+              go (n + 1) $ srd & #srd_region %~ flip pan conflicts
+            (_, True) -> trace "wants a resize" qt
+            (_, _) -> qt
+
+pan :: Region -> [Region] -> Region
+pan r0 = flip foldl' r0 $ \r con ->
+  case getIntersection r con of
+    Just c -> offsetByY c $ offsetByX c r
+    Nothing -> r
+
+offsetByY :: Region -> Region -> Region
+offsetByY (Region _ cy _ ch) r@(Region rx ry rw rh)
+  | ry      == cy      = Region rx (ry + ch) rw rh
+  | ry + rh == cy + ch = Region rx (ry - ch) rw rh
+  | otherwise = r
+
+offsetByX :: Region -> Region -> Region
+offsetByX (Region cx _ cw _) r@(Region rx ry rw rh)
+  | rx      == cx      = Region (rx + cw) ry rw rh
+  | rx + rw == cx + cw = Region (rx - cw) ry rw rh
+  | otherwise = r
+
+checkConflicts :: Region -> Region -> Set SideOf
+checkConflicts rel@(Region rx ry rw rh) con =
+  case getIntersection rel con of
+    Just (Region cx cy cw ch) -> S.fromList $
+      mconcat
+        [ [ LeftSide   | rx      == cx      ]
+        , [ RightSide  | rx + rw == cx + cw ]
+        , [ TopSide    | ry      == cy      ]
+        , [ BottomSide | ry + rh == cy + ch ]
+        ]
+    Nothing       -> mempty
+
+canTryResize :: Region -> [Region] -> Bool
+canTryResize r r2 = r /= fold r2
+
+canPan :: Set SideOf -> Bool
+canPan s = not $ or
+  [ S.member LeftSide s && S.member RightSide  s
+  , S.member TopSide  s && S.member BottomSide s
+  ]
+
+data SideOf = LeftSide | RightSide | TopSide | BottomSide
+  deriving (Eq, Ord, Show, Enum, Bounded)
+
+
+
+fitIn :: Int -> Int -> Int -> Int
+fitIn _sw _w x = x
+
 
 plop :: SearchResult Identity -> V2 Float
 plop = r_pos . makeRect
+
+
+-- determined experimentally
+measureText' :: Float -> Text -> V2 Float
+measureText' pt t = V2 (8 * fromIntegral (T.length t)) 18 ^* (pt / 10)
+
+-- icons are square and fill the entire lineheight, so extend the width by that
+extendForIcon :: V2 Float -> V2 Float
+extendForIcon (V2 x y) = V2 (x + y) y
 

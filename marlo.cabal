@@ -152,6 +152,7 @@ library
     , directory
     , extra
     , filepath
+    , generic-lens
     , hasql
     , hspec
     , http-client
@@ -264,6 +265,7 @@ executable marlo
     , directory
     , extra
     , filepath
+    , generic-lens
     , hasql
     , hspec
     , http-client
@@ -382,6 +384,7 @@ test-suite marlo-tests
     , directory
     , extra
     , filepath
+    , generic-lens
     , hasql
     , hspec
     , http-client

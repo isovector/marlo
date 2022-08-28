@@ -23,7 +23,7 @@ data Region = Region
   , r_w :: !Int
   , r_h :: !Int
   }
-  deriving stock (Show, Read, Eq, Generic)
+  deriving stock (Show, Read, Eq, Generic, Ord)
 
 -- | Gives a region which fully contains both
 instance Semigroup Region where
