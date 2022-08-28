@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS discovery (
 
 CREATE INDEX depth_idx ON discovery (depth);
 
+CREATE INDEX doc_length_idx ON discovery (length(content));
+
 ALTER TABLE discovery
     ADD COLUMN search tsvector
     GENERATED ALWAYS AS (setweight(to_tsvector('english', title), 'A')

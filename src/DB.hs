@@ -50,26 +50,6 @@ $$ LANGUAGE sql
 IMMUTABLE;
 
 
-  select src, dst, id
-  from edges
-  where dst = 4118454;
-
--- find path
-with recursive graph_cte (src, dst, id)
-as
-(
-  (select src, dst, id
-  from edges
-  where dst = 4118454 limit 1)
-  union all
-  select prev.src, prev.dst, prev.id
-  from edges prev
-    join graph_cte next on prev.dst = next.src
-)
-select id, src, dst
-from graph_cte
-order by id;
-
 -}
 
 module DB

@@ -1,12 +1,10 @@
 function tt(res) {
   const snip = document.getElementById("snip" + res.dataset.docid);
-  const par = res.parentElement;
+  const r = res.getBoundingClientRect();
   if (snip) {
     snip.classList.add("active-tooltip");
-    snip.style.left = par.style.left;
-    const top = par.style.top;
-    // need to chop off the "px"
-    snip.style.top = +top.substring(0, top.length - 2) + 16;
+    snip.style.left = r.left + window.scrollX;
+    snip.style.top = r.top + r.height + window.scrollY;
   }
 }
 

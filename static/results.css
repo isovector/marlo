@@ -49,6 +49,11 @@ body {
   text-decoration: none;
 }
 
+.spatial-title a:hover {
+  background-color: var(--prussian-blue);
+  color: var(--baby-powder);
+}
+
 .spatial-title a:visited {
   color: var(--plum);
 }
