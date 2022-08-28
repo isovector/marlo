@@ -52,10 +52,10 @@ doSearch
     -> WindowSize
     -> Search Text
     -> Maybe PageNumber
-    -> Handler (L.Html ())
+    -> Handler (SourceIO (L.Html ()))
 doSearch conn ws q mpage = do
   (page, (dur, (cnt, res))) <- liftIO $ gatherSearch @v conn ws q mpage
-  pure $ searchPage @v q dur page cnt res
+  pure $ searchPage @v conn q dur page cnt res
 
 
 debugSearch

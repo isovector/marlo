@@ -1,3 +1,5 @@
+{-# LANGUAGE NumDecimals #-}
+
 module Search where
 
 import           API
@@ -22,6 +24,7 @@ import           Search.Spatial ()
 import           Search.Traditional ()
 import           Servant
 import           Servant.Server.Generic ()
+import           Servant.StreamingUtil
 import           Types
 import           Utils (commafy)
 import           WaiAppStatic.Types (MaxAge(NoMaxAge))
@@ -60,8 +63,9 @@ search
     -> Maybe SearchVariety
     -> Maybe (Search Text)
     -> Maybe PageNumber
-    -> Handler (L.Html ())
-search _ _ _ Nothing _ = pure $ "Give me some keywords, punk!"
+    -> Handler (SourceIO (L.Html ()))
+search _ _ _ Nothing _ =
+  pure $ streamingToSourceT $ yield "Give me some keywords, punk!"
 search conn ws (fromMaybe Traditional -> v) (Just q) mpage = do
   liftIO $ putStrLn $ mappend (show v) $ '/' : (T.unpack $ encodeQuery q)
   case toSing v of

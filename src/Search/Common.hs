@@ -4,6 +4,7 @@ module Search.Common where
 
 import           API
 import           Control.Monad (when)
+import           DB (Connection)
 import           Data.Int (Int64)
 import           Data.Proxy
 import           Data.String (fromString)
@@ -13,43 +14,54 @@ import qualified Lucid as L
 import qualified Lucid.Servant as L
 import           Search.Machinery
 import           Search.Parser (encodeQuery)
+import           Servant (toQueryParam)
+import           Servant.API (SourceIO)
 import           Servant.Server.Generic ()
+import           Servant.StreamingUtil
 import           Text.Printf (printf)
 import           Types
 import           Utils (commafy)
-import Servant (toQueryParam)
+
+
+bracketHtml :: Monad m => Text -> Text -> Streaming (L.Html ()) m a -> Streaming (L.Html ()) m a
+bracketHtml start end =
+  bracket (L.toHtmlRaw start) (L.toHtmlRaw end)
 
 
 searchPage
     :: forall v
      . SearchMethod v
-    => Search Text
+    => Connection
+    -> Search Text
     -> NominalDiffTime
     -> PageNumber
     -> Int64
     -> SearchMethodResult v
-    -> L.Html ()
-searchPage q dur page cnt res = do
-  L.html_ $ do
-    L.head_ $ do
-      L.title_ $ mconcat
-        [ "marlo search - results for "
-        , L.toHtml (encodeQuery q)
-        , " (" <> fromString (show cnt)
-        , ")"
-        ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
-      L.link_ [L.rel_ "stylesheet", L.href_ "/results.css" ]
-      L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
-    L.body_ $ do
-      L.div_ [L.class_ "box"] $ do
-        searchBar (demote @v) $ Just q
-        L.toHtmlRaw @String
-          $ printf "%s results &mdash; rendered in %6.2fs seconds"
-              (commafy $ show cnt)
-              (realToFrac @_ @Double dur)
-        showResults @v res
-        pager q (limitStrategy @v) (demote @v) cnt page
+    -> SourceIO (L.Html ())
+searchPage conn q dur page cnt res = streamingToSourceT $ do
+  bracketHtml "<html>" "</html>" $ do
+    yield $ do
+      L.head_ $ do
+        L.title_ $ mconcat
+          [ "marlo search - results for "
+          , L.toHtml (encodeQuery q)
+          , " (" <> fromString (show cnt)
+          , ")"
+          ]
+        L.link_ [L.rel_ "stylesheet", L.href_ "/common.css" ]
+        L.link_ [L.rel_ "stylesheet", L.href_ "/results.css" ]
+        L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
+
+    bracketHtml "<body>" "</body>" $
+      bracketHtml "<div class='box'>" "</div>" $ do
+        yield $ do
+          searchBar (demote @v) $ Just q
+          L.toHtmlRaw @String
+            $ printf "%s results &mdash; search took %6.2fs seconds"
+                (commafy $ show cnt)
+                (realToFrac @_ @Double dur)
+        showResults @v conn q res
+        yield $ pager q (limitStrategy @v) (demote @v) cnt page
 
 
 searchBar :: SearchVariety -> Maybe (Search Text) -> L.Html ()

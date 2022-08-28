@@ -35,7 +35,9 @@ dependencies:
 - http-types
 - bytestring
 - HTTP
+- servant
 - servant-server
+- extra
 - wai
 - warp
 - servant-lucid

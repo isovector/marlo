@@ -63,6 +63,7 @@ library
       Search.Parser
       Search.Spatial
       Search.Traditional
+      Servant.StreamingUtil
       Signals
       Signals.Listicle
       Spider
@@ -149,6 +150,7 @@ library
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec
@@ -168,6 +170,7 @@ library
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
@@ -259,6 +262,7 @@ executable marlo
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec
@@ -279,6 +283,7 @@ executable marlo
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
@@ -375,6 +380,7 @@ test-suite marlo-tests
     , checkers
     , containers
     , directory
+    , extra
     , filepath
     , hasql
     , hspec
@@ -395,6 +401,7 @@ test-suite marlo-tests
     , rel8
     , robots-txt
     , scalpel
+    , servant
     , servant-client
     , servant-lucid
     , servant-server
