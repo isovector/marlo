@@ -47,6 +47,8 @@ import           Types
 import           Utils (unsafeURI)
 import Debug.Trace (trace)
 import Control.Lens.Combinators (Lens')
+import Control.Concurrent (threadDelay)
+import qualified Data.DList as DL
 
 
 -- parameters:
@@ -84,11 +86,14 @@ instance SearchMethod 'Spatial where
   --          $ filter (not . T.null . T.strip . sr_title) docs
   --   evaluate $ foldr place (makeTree (Region 0 0 150 34) Nothing) rs
   showResults conn q qt = do
-    let as = S.toList $ S.fromList
+    let as = S.toList
+           $ S.fromList
            $ fmap snd
            $ mapMaybe (traverse getFirst)
            $ tile qt
-    yield . traverse_ spaceResult' $ as
+    for_ as $ \a -> do
+      yield $ spaceResult' a
+      liftIO $ threadDelay 5e4
     let cdids = chunksOf 20 $ fmap (sr_id . srd_data) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
@@ -236,21 +241,30 @@ algorithm ws srs = do
         doPlace
         (makeTree $ Region 0 (-10000) (ws_width ws) 20000)
     . fmap (uncurry $ buildRegion ws)
-    . fmap (renormalizeY n)
-    . snd
-    . sortByCenterOffset (_2 . _xy) (view _y)
+    . renormalizeY n
+    . sortByCenterOffset (_2 . _xy) (_y)
     . scoreParam rankByPopularity rankByPageSize rankByPopularity
     . fmap (\sr -> sr { sr_title = correctTitle sr })
     $ srs
 
 
+traceShowF :: Show a1 => (a2 -> a1) -> a2 -> a2
+traceShowF f a = trace (show $ f a) a
+
+
 renormalizeY
     :: Float
-    -> (SearchResult Identity, V3 Float)
-    -> (SearchResult Identity, V3 Float)
-renormalizeY n =
-  _2 . _y *~
-    view _y (measureText' (denormalizePt 0.5) "x") * n
+    -> [(SearchResult Identity, V3 Float)]
+    -> [(SearchResult Identity, V3 Float)]
+renormalizeY n xs = do
+  let lo = minimum $ fmap (view _y . snd) xs
+      hi = maximum $ fmap (view _y . snd) xs
+      z = hi - lo
+  fmap (second $ _y %~ \y -> (y - lo) / z * 1080) xs
+
+
+  -- _2 . _y *~
+  --   view _y (measureText' (denormalizePt 0.5) "x") * n
 
 
 toScreenCoords :: WindowSize -> Int -> V2 Int -> V2 Float
@@ -261,21 +275,19 @@ toScreenCoords (WindowSize w h) n (V2 x y) =
 
 
 sortByCenterOffset
-    :: (Ord b, Ord c, Fractional b)
+    :: (Ord b, Ord c, Num c, Fractional b, Show c)
     => Lens' a (V2 b)  -- ^ get a V2 out of the data
-    -> (V2 b -> c)     -- ^ what to sort the V2 on
+    -> Lens' (V2 b) c     -- ^ what to sort the V2 on
     -> [a]
-    -> (V2 b, [a])
+    -> ([a])
 sortByCenterOffset l f placed = do
   let
       n = length placed
       midpoint = (!! div n 2)
-               $ sortOn f
-               $ fmap (view l) placed
-  (midpoint,)
-    $ sortOn (quadrance . view l)
-    $ fmap (l %~ subtract midpoint)
-    $ placed
+               $ sort
+               $ fmap (view $ l . f) placed
+  sortOn (abs . subtract midpoint . view (l . f))
+    $ trace (show midpoint) $ placed
 
 
 correctTitle :: SearchResult Identity -> Text
@@ -493,7 +505,8 @@ doPlace srd0 qt = go 0 srd0
     go n srd = do
       let r = srd_region srd
       case fmap fst
-         $ hitTestR (curry $ traverse $ maybeToList . getFirst)
+         $ DL.toList
+         $ hitTestR (curry $ traverse $ DL.fromList . maybeToList . getFirst)
                     r qt of
         [] -> fill (First $ Just srd) r qt
         conflicts -> do

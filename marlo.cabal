@@ -150,6 +150,7 @@ library
     , checkers
     , containers
     , directory
+    , dlist
     , extra
     , filepath
     , generic-lens
@@ -263,6 +264,7 @@ executable marlo
     , checkers
     , containers
     , directory
+    , dlist
     , extra
     , filepath
     , generic-lens
@@ -382,6 +384,7 @@ test-suite marlo-tests
     , checkers
     , containers
     , directory
+    , dlist
     , extra
     , filepath
     , generic-lens
