@@ -294,6 +294,7 @@ forbidPaths =
   , "/topics/"
   , "/product/"
   , "/products/"
+  , "/comment/"
   , "/opinion/"
   , "/opinions/"
   , "/newsletter-issue/"
