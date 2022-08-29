@@ -81,12 +81,6 @@ instance FromHttpApiData SearchVariety where
   parseQueryParam _         = Left "SearchVariety must be one of 'trad' or 'spatial'"
 
 
-newtype EdgeId = EdgeId
-  { unEdgeId :: Int64
-  }
-  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
-
-
 newtype DocId = DocId
   { unDocId :: Int64
   }

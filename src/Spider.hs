@@ -18,7 +18,6 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
-import           Data.Traversable (for)
 import           Domains (getDomain)
 import           Marlo.Manager (marloManager)
 import           Marlo.Robots
@@ -90,14 +89,13 @@ discover depth dist uri = Insert
   }
 
 
-addEdge :: DocId -> Link DocId -> Insert [EdgeId]
-addEdge src (Link anchor dst) = Insert
+addEdge :: DocId -> Link DocId -> Insert ()
+addEdge src (Link _ dst) = Insert
   { into = edgesSchema
   , rows = do
-      eid <- nextEdgeId
-      pure $ Edges eid (lit src) (lit dst) $ lit anchor
+      pure $ Edges (lit src) (lit dst)
   , onConflict = DoNothing
-  , returning = Projection e_edgeId
+  , returning = pure ()
   }
 
 
@@ -177,14 +175,14 @@ getOrInsert conn build what as = do
   pure $ vals <> more_vals
 
 
-buildEdges :: Connection -> Document Identity -> [Link URI] -> IO [EdgeId]
+buildEdges :: Connection -> Document Identity -> [Link URI] -> IO ()
 buildEdges conn disc ls = do
   ldocs' <- (traverse . traverse) (getDoc conn (d_depth disc) (d_distance disc)) ls
   let ldocs = filter ((/= d_docId disc) . l_uri) $ fmap (fmap d_docId) ldocs'
 
-  for ldocs $ \l -> do
-    Right [eid] <- doInsert conn $ addEdge (d_docId disc) l
-    pure eid
+  for_ ldocs $ \l -> do
+    Right _ <- doInsert conn $ addEdge (d_docId disc) l
+    pure ()
 
 
 spiderMain :: Maybe Text -> IO ()
