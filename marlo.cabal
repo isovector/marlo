@@ -193,6 +193,7 @@ library
     , wai
     , wai-app-static
     , warp
+    , zlib
   default-language: Haskell2010
 
 executable marlo
@@ -310,6 +311,7 @@ executable marlo
     , wai
     , wai-app-static
     , warp
+    , zlib
   default-language: Haskell2010
 
 test-suite marlo-tests
@@ -432,4 +434,5 @@ test-suite marlo-tests
     , wai
     , wai-app-static
     , warp
+    , zlib
   default-language: Haskell2010

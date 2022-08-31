@@ -71,6 +71,7 @@ dependencies:
 - dlist
 - cereal
 - hashable
+- zlib
 
 ghc-options:
 - -Wall
