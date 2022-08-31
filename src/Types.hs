@@ -1,14 +1,20 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Types where
 
 import           Control.Monad.Reader
 import           Data.ByteString (ByteString)
 import           Data.Functor.Identity
+import           Data.Hashable (Hashable)
 import           Data.Int (Int64)
 import           Data.Maybe (fromMaybe)
+import           Data.Serialize
 import           Data.Text (Text)
 import qualified Data.Text as T
+import           Data.Time (UTCTime(..))
 import           GHC.Generics (Generic)
 import           Hasql.Connection (Connection)
+import           Network.HTTP (Header)
 import           Network.HTTP.Client (Manager)
 import           Network.HTTP.Types.Header (ResponseHeaders)
 import           Network.URI
@@ -16,6 +22,7 @@ import           Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
 import           Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
 import           Text.HTML.Scalpel
 import           Text.Read (readMaybe)
+import           Types.Orphans ()
 
 
 data Env = Env
@@ -170,4 +177,21 @@ parseWindowSize t = do
 note :: e -> Maybe a -> Either e a
 note e Nothing = Left e
 note _ (Just a) = Right a
+
+
+data Filestore = Filestore
+  { fs_uri :: URI
+  , fs_collected :: UTCTime
+  , fs_headers :: [Header]
+  , fs_data :: ByteString
+  }
+  deriving stock (Generic, Show)
+  deriving anyclass (Serialize, Hashable)
+
+
+------------------------------------------------------------------------------
+-- | I'm so mad I need to write this every damn time
+hush :: Either a b -> Maybe b
+hush (Left _) = Nothing
+hush (Right b) = Just b
 

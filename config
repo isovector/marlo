@@ -4,4 +4,5 @@ Config
   , cfg_pg_port = 5432
   , cfg_pg_user = "postgres"
   , cfg_pg_pass = ""
+  , cfg_filestore = ".marlo-cache"
   }

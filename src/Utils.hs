@@ -1,6 +1,10 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 
-module Utils where
+module Utils
+  ( module Utils
+  , hush
+  ) where
+
 
 import           Control.Applicative ((<|>))
 import           Control.Arrow (first)
@@ -96,12 +100,6 @@ random = nullaryFunction @Double "RANDOM" >$ asc
 insertAt :: Int -> Int -> a -> [Maybe a]
 insertAt (subtract 1 -> sz) ix a = replicate ix Nothing <> (Just a : replicate (sz - ix) Nothing)
 
-
-------------------------------------------------------------------------------
--- | I'm so mad I need to write this every damn time
-hush :: Either a b -> Maybe b
-hush (Left _) = Nothing
-hush (Right b) = Just b
 
 
 commafy :: String -> String

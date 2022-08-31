@@ -3,3 +3,4 @@ local-data/
 *~
 *.prof
 *.svg
+.marlo-cache/

@@ -10,6 +10,7 @@ import qualified Tools.BackfillDistance
 import qualified Tools.BackfillPopularity
 import qualified Tools.BackfillRobotDirectives
 import qualified Tools.BatchTitles
+import qualified Tools.DumpFilestore
 import qualified Tools.ImportPopularity
 import qualified Tools.Purge
 import qualified Tools.Reindex
@@ -25,6 +26,7 @@ data Command
   | ImportPopularityC FilePath
   | BackfillPopularityC
   | BackfillRobotRulesC
+  | DumpFilestore
   deriving (Eq, Ord, Show)
 
 
@@ -56,6 +58,9 @@ sub = subparser $ mconcat
       ]
   , command "backfill-robot-rules" $ info (pure BackfillRobotRulesC) $ mconcat
       [ progDesc "Backfill robots.txt rules"
+      ]
+  , command "dump-filestore" $ info (pure DumpFilestore) $ mconcat
+      [ progDesc "Dump the old-style database into the newer filestore format"
       ]
   ]
 
@@ -102,4 +107,5 @@ main = do
      BackfillPopularityC   -> Tools.BackfillPopularity.main
      RebuildTitlesC        -> Tools.BatchTitles.main
      BackfillRobotRulesC   -> Tools.BackfillRobotDirectives.main
+     DumpFilestore         -> Tools.DumpFilestore.main
 

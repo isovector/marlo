@@ -9,6 +9,7 @@ data Config = Config
   , cfg_pg_port :: Word16
   , cfg_pg_user :: ByteString
   , cfg_pg_pass :: ByteString
+  , cfg_filestore :: FilePath
   }
   deriving (Eq, Ord, Show, Read)
 
