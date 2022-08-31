@@ -6,6 +6,7 @@ import qualified Data.ByteString.Char8 as BS
 import           Data.Int (Int64)
 import qualified Data.Set as S
 import           Data.Text (Text)
+import qualified Data.Text as T
 import           Data.Traversable (for)
 import           Network.HTTP.Client (responseHeaders)
 import           Network.HTTP.Types (hContentLength)
@@ -23,7 +24,7 @@ getAssetSizes conn uris = do
   let missing = S.fromList uris S.\\ S.fromList (fmap a_uri szs)
   rest <-
     for (S.toList missing) $ \turi -> do
-      resp <- doHEADRequest turi
+      resp <- doHEADRequest $ T.unpack turi
       let size = maybe 0 (fromIntegral . BS.length)
                $ lookup hContentLength
                $ responseHeaders resp
