@@ -67,6 +67,7 @@ library
       Servant.StreamingUtil
       Signals
       Signals.Listicle
+      Signals.ReactsTo
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
