@@ -1,4 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Utils
   ( module Utils
@@ -15,6 +17,8 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$))
+import           Data.Map (Map)
+import qualified Data.Map as M
 import           Data.Maybe (fromJust)
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -27,6 +31,7 @@ import qualified Network.HTTP.Client as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI
 import           Rel8 hiding (filter)
+import           Rel8.Machinery
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
@@ -154,4 +159,5 @@ titleSegs
   . concatMap (T.splitOn ". ")
   . concatMap (T.splitOn " - ")
   . T.split (flip elem [';', ':', '|', '·', '«', '»', '∷', '>', '<', '\8211' ])
+
 

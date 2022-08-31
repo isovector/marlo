@@ -15,7 +15,6 @@ import           Data.Time (UTCTime(..))
 import           GHC.Generics (Generic)
 import           Hasql.Connection (Connection)
 import           Network.HTTP (Header)
-import           Network.HTTP.Client (Manager)
 import           Network.HTTP.Types.Header (ResponseHeaders)
 import           Network.URI
 import           Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
@@ -27,7 +26,6 @@ import           Types.Orphans ()
 
 data Env = Env
   { e_uri  :: URI
-  , e_mgr  :: Manager
   , e_conn :: Connection
   }
 
@@ -87,6 +85,11 @@ instance FromHttpApiData SearchVariety where
   parseQueryParam "spatial" = Right Spatial
   parseQueryParam _         = Left "SearchVariety must be one of 'trad' or 'spatial'"
 
+
+newtype DiscId = DiscId
+  { unDiscId :: Int64
+  }
+  deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 newtype DocId = DocId
   { unDocId :: Int64

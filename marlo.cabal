@@ -36,6 +36,7 @@ library
       Data.SchemaOrg
       DB
       DB.Asset
+      DB.Discovery
       DB.Document
       DB.Domain
       DB.Edges
@@ -51,6 +52,8 @@ library
       Marlo.Filestore
       Marlo.Manager
       Marlo.Robots
+      Marlo.TitleSegs
+      Network.HttpUtils
       Rel8.Arrays
       Rel8.Headers
       Rel8.Machinery

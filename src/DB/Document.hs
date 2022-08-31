@@ -1,12 +1,12 @@
 {-
 
+
 CREATE SEQUENCE doc_id_seq;
-CREATE TABLE IF NOT EXISTS discovery (
+CREATE TABLE IF NOT EXISTS documents (
   doc_id int8 PRIMARY KEY,
   domain int8 REFERENCES domains(id),
   uri TEXT UNIQUE NOT NULL,
   state VARCHAR(16) NOT NULL,
-  depth int4 NOT NULL,
   distance int2[] NOT NULL,
   data bytea NOT NULL,
   headers text[] NOT NULL,
@@ -22,11 +22,11 @@ CREATE TABLE IF NOT EXISTS discovery (
   cookies bool NOT NULL
 );
 
-CREATE INDEX depth_idx ON discovery (depth);
+CREATE INDEX depth_idx ON documents (depth);
 
-CREATE INDEX doc_length_idx ON discovery (length(content));
+CREATE INDEX doc_length_idx ON documents (length(content));
 
-ALTER TABLE discovery
+ALTER TABLE documents
     ADD COLUMN search tsvector
     GENERATED ALWAYS AS (setweight(to_tsvector('english', title), 'A')
                || ' ' || setweight(to_tsvector('english', headings), 'B')
@@ -34,26 +34,25 @@ ALTER TABLE discovery
                || ' ' || setweight(to_tsvector('english', comments), 'D')
                 ) STORED;
 
-CREATE INDEX search_idx ON discovery USING GIN (search);
+CREATE INDEX search_idx ON documents USING GIN (search);
 
 -}
 
 module DB.Document where
 
+import DB.PageContent
+import DB.PageRawData
+import DB.PageStats
+import DB.RootSites
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int32, Int16)
+import Data.Int (Int16)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.TextSearch
 import Types
-import DB.PageRawData
-import DB.PageContent
-import DB.PageStats
-import DB.RootSites
-
 
 data Document f = Document
   { d_docId :: Column f DocId
@@ -63,7 +62,6 @@ data Document f = Document
 
   -- discovery
   , d_state :: Column f DocumentState
-  , d_depth :: Column f Int32
 
   , d_distance :: Column f [Maybe Int16]
 
@@ -79,7 +77,7 @@ deriving instance Show (Document Identity)
 
 documentSchema :: TableSchema (Document Name)
 documentSchema = TableSchema
-  { name    = "discovery"
+  { name    = "documents"
   , schema  = Just "public"
   , columns = Document
       { d_docId = "doc_id"
@@ -87,7 +85,6 @@ documentSchema = TableSchema
       , d_uri   = "uri"
       , d_title = "title"
       , d_state = "state"
-      , d_depth = "depth"
       , d_distance = "distance"
       , d_raw = PageRawData
           { prd_data  = "data"
@@ -137,7 +134,6 @@ emptyDoc = Document
   , d_domain = Nothing
   , d_title = ""
   , d_state = Discovered
-  , d_depth = 0
   , d_raw = PageRawData
       { prd_data = ""
       , prd_headers = []

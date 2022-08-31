@@ -393,8 +393,8 @@ jsBundleSize = do
   s <- chroots "script" $ attr "src" "script"
   inline <- texts "script"
   ls <- traverse normalizeAsset s
-  (mgr, conn) <- asks $ (,) <$> e_mgr <*> e_conn
-  szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
+  (conn) <- asks e_conn
+  szs <- liftIO $ getAssetSizes conn $ fmap (T.pack . show) ls
   pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
 
 
@@ -407,8 +407,8 @@ cssBundleSize = do
       attr "href" "link"
   inline <- texts "style"
   ls <- traverse normalizeAsset s
-  (mgr, conn) <- asks $ (,) <$> e_mgr <*> e_conn
-  szs <- liftIO $ getAssetSizes mgr conn $ fmap (T.pack . show) ls
+  conn <- asks e_conn
+  szs <- liftIO $ getAssetSizes conn $ fmap (T.pack . show) ls
   pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
 
 

@@ -6,15 +6,15 @@ import qualified Data.ByteString.Char8 as BS
 import           Data.Int (Int64)
 import qualified Data.Set as S
 import           Data.Text (Text)
-import qualified Data.Text as T
 import           Data.Traversable (for)
-import           Network.HTTP.Client (httpNoBody, Manager, parseRequest, responseHeaders)
+import           Network.HTTP.Client (responseHeaders)
 import           Network.HTTP.Types (hContentLength)
+import           Network.HttpUtils (doHEADRequest)
 import           Rel8
 
 
-getAssetSizes :: Manager -> Connection -> [Text] -> IO [Int64]
-getAssetSizes mgr conn uris = do
+getAssetSizes :: Connection -> [Text] -> IO [Int64]
+getAssetSizes conn uris = do
   Right szs <-
     doSelect conn $ do
       a <- each assetSchema
@@ -23,8 +23,7 @@ getAssetSizes mgr conn uris = do
   let missing = S.fromList uris S.\\ S.fromList (fmap a_uri szs)
   rest <-
     for (S.toList missing) $ \turi -> do
-      req <- parseRequest $ "HEAD " <> T.unpack turi
-      resp <- flip httpNoBody mgr req
+      resp <- doHEADRequest turi
       let size = maybe 0 (fromIntegral . BS.length)
                $ lookup hContentLength
                $ responseHeaders resp

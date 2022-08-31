@@ -56,6 +56,7 @@ module DB
   ( module DB
   , module DB.Asset
   , module DB.Document
+  , module DB.Discovery
   , module DB.Domain
   , module DB.Edges
   , module DB.PageContent
@@ -63,6 +64,7 @@ module DB
   , module DB.PageStats
   , module DB.SearchResult
   , module DB.Titles
+  , module Rel8.Machinery
 
   , nullDist
   , numRootSites
@@ -75,6 +77,7 @@ module DB
 
 import Config
 import DB.Asset
+import DB.Discovery
 import DB.Document
 import DB.Domain
 import DB.Edges
@@ -86,53 +89,25 @@ import DB.SearchResult
 import DB.Titles
 import Data.Functor.Identity (Identity)
 import Hasql.Connection (settings, Connection, acquire, ConnectionError)
-import Hasql.Session (run, statement, QueryError)
+import Hasql.Session (QueryError)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
-import Rel8.Arrays (insertAt')
-import Types
-
+import Rel8.Machinery
 
 
 rootNodes :: Insert ()
 rootNodes = Insert
-  { into = documentSchema
+  { into = discoverySchema
   , rows = do
-      d <- nextDocId
-      (idx, z) <- values $ zip (fmap lit [0..]) rootSites
-      pure $ (lit emptyDoc)
-        { d_docId    = d
-        , d_uri      = z
-        , d_state    = lit Discovered
-        , d_depth    = 0
-        , d_distance = insertAt' (lit $ fromIntegral numRootSites) idx $ nullify 0
+      d <- nextDiscId
+      z <- values rootSites
+      pure $ (lit emptyDiscovery)
+        { disc_id  = d
+        , disc_uri = z
         }
-  , onConflict = DoUpdate Upsert
-      { index = d_uri
-      , set = \new old -> old { d_distance = d_distance new }
-      , updateWhere = \new old -> d_uri new ==. d_uri old
-      }
+  , onConflict = DoNothing
   , returning = pure ()
   }
-
-
-doInsert :: Connection -> Insert a -> IO (Either QueryError a)
-doInsert conn = flip run conn . statement () . insert
-
-
-doSelect
-    :: Serializable exprs (FromExprs exprs)
-    => Connection
-    -> Query exprs
-    -> IO (Either QueryError [FromExprs exprs])
-doSelect conn = flip run conn . statement () . select
-
-
-doUpdate :: Connection -> Update a -> IO (Either QueryError a)
-doUpdate conn = flip run conn . statement () . update
-
-doDelete :: Connection -> Delete a -> IO (Either QueryError a)
-doDelete conn = flip run conn . statement () . delete
 
 
 connect :: IO (Either ConnectionError Connection)

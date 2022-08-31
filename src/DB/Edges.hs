@@ -45,7 +45,7 @@ import Types
 
 data Edges f = Edges
   { e_src    :: Column f DocId
-  , e_dst    :: Column f DocId
+  , e_dst    :: Column f DiscId
   }
   deriving stock Generic
   deriving anyclass Rel8able
