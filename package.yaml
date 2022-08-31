@@ -125,6 +125,7 @@ default-extensions:
 - StandaloneDeriving
 - StandaloneKindSignatures
 - StarIsType
+- StrictData
 - TraditionalRecordSyntax
 - TupleSections
 - TypeApplications

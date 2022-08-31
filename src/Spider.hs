@@ -18,7 +18,9 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
+import           Data.Time (getCurrentTime)
 import           Domains (getDomain)
+import           Marlo.Filestore (writeFilestore)
 import           Marlo.Manager (marloManager)
 import           Marlo.Robots
 import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
@@ -209,6 +211,13 @@ spiderMain mexclude = do
             catch
               (do
                 down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
+                now <- getCurrentTime
+                writeFilestore $ Filestore
+                  {fs_uri = uri
+                  , fs_collected = now
+                  , fs_headers = fmap headersToHeaders $ Types.d_headers down
+                  , fs_data = d_body down
+                  }
                 index conn (d_depth disc) (d_distance disc) uri down
               )
               (\SomeException{} -> do

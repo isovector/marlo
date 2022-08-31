@@ -134,6 +134,7 @@ library
       StandaloneDeriving
       StandaloneKindSignatures
       StarIsType
+      StrictData
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
@@ -251,6 +252,7 @@ executable marlo
       StandaloneDeriving
       StandaloneKindSignatures
       StarIsType
+      StrictData
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
@@ -372,6 +374,7 @@ test-suite marlo-tests
       StandaloneDeriving
       StandaloneKindSignatures
       StarIsType
+      StrictData
       TraditionalRecordSyntax
       TupleSections
       TypeApplications
