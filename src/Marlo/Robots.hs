@@ -21,7 +21,7 @@ fetchRobotDirectives uri = do
   let robotstxt = uri { uriPath = "/robots.txt" }
   catch ( do
     dl <- downloadBody $ show robotstxt
-    case parseRobots $ d_body dl of
+    case parseRobots $ dl_body dl of
       Left _ -> pure mempty
       Right (robots, _) ->
         pure $ flip foldMap robots $ \(agent, dirs) ->

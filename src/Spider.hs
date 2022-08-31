@@ -5,7 +5,9 @@
 module Spider where
 
 import           Control.Exception.Base
-import           Control.Monad (forever, void, unless)
+import           Control.Monad (forever, void, unless, when)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
@@ -14,17 +16,19 @@ import           Data.Functor.Contravariant ((>$<))
 import           Data.Int (Int32, Int16, Int64)
 import           Data.Map (Map)
 import qualified Data.Map as M
-import           Data.Maybe (isJust)
+import           Data.Maybe (isJust, fromMaybe, listToMaybe)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime)
+import           Data.Traversable (for)
 import           Domains (getDomain)
 import           Marlo.Filestore (writeFilestore)
 import           Marlo.Manager (marloManager)
 import           Marlo.Robots
 import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
+import           Network.HttpUtils (determineHttpsAvailability)
 import           Network.URI (parseURI, URI)
 import           Prelude hiding (max)
 import qualified Rel8 as R8 hiding (filter, bool)
@@ -33,9 +37,129 @@ import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
 import           Rel8.Headers (headersToHeaders)
 import           Rel8.Machinery
 import           Signals
-import qualified Types
-import           Types hiding (d_headers)
-import           Utils (runRanker, unsafeURI, random, downloadBody, titleSegs)
+import           Types
+import           Utils (runRanker, unsafeURI, random, downloadBody, titleSegs, runRankerFS)
+import Control.DeepSeq (force)
+
+
+nextToExplore :: Query (Discovery Expr)
+nextToExplore = orderBy random $ do
+  disc <- each discoverySchema
+  where_ $ disc_canonical disc ==. lit Nothing
+       &&. disc_dead      disc ==. lit False
+  pure disc
+
+
+getCanonicalUri
+    :: Connection
+    -> URI
+    -> IO (Maybe (Download Maybe ByteString, URI))
+getCanonicalUri conn uri = do
+  determineHttpsAvailability uri >>= \case
+    Nothing -> pure Nothing
+    Just uri' -> do
+      dl <- liftIO $ downloadBody $ show uri'
+      mcanon <- runMaybeT $ do
+        uri''  <- MaybeT $ runRanker (Env uri' conn) (decodeUtf8 $ dl_body dl) canonical
+        MaybeT $ determineHttpsAvailability uri''
+      pure $ pure $ (dl, ) $ fromMaybe uri' mcanon
+
+
+getDocByCanonicalUri
+    :: Connection
+    -> URI
+    -> IO (Either DocId (Document Identity))
+getDocByCanonicalUri conn (T.pack . show -> uri) = do
+  Right res <- fmap (fmap listToMaybe) $ doSelect conn $ do
+    d <- each documentSchema
+    where_ $ d_uri d ==. lit uri
+    pure d
+  case res of
+    Just doc -> pure $ Right doc
+    Nothing -> do
+      Right [doc] <- doInsert conn $ Insert
+        { into = documentSchema
+        , rows = do
+            did <- nextDocId
+            pure $ (lit emptyDoc)
+              { d_docId = did
+              , d_uri   = lit uri
+              }
+        , onConflict = DoNothing
+        , returning  = Projection d_docId
+        }
+      pure $ Left doc
+
+
+discover :: Connection -> Discovery Identity -> IO ()
+discover conn disc = do
+  mcandl <- getCanonicalUri conn (unsafeURI $ T.unpack $ disc_uri disc)
+  mcandoc <-
+    for mcandl $ \(dl, can) -> do
+      ed <- getDocByCanonicalUri conn can
+      case ed of
+        Right d -> pure $ d_docId d
+        -- It's a new record, so we need to index it
+        Left did -> do
+          now <- getCurrentTime
+          let fs :: Filestore
+              fs = Filestore
+                    { fs_uri = can
+                    , fs_collected = now
+                    , fs_headers = fmap headersToHeaders $ dl_headers dl
+                    , fs_data = dl_body dl
+                    }
+          reindex conn did fs
+          pure did
+
+  Right _ <- doUpdate conn $ Update
+    { target = discoverySchema
+    , from = pure ()
+    , set = const $ \d ->
+        case mcandoc of
+          Nothing -> d { disc_dead = lit True }
+          Just docid -> d { disc_canonical = lit $ Just docid }
+    , updateWhere = const $ \d -> disc_id d ==. lit (disc_id disc)
+    , returning = pure ()
+    }
+
+  pure ()
+
+
+reindex :: Connection -> DocId -> Filestore -> IO ()
+reindex conn did fs = do
+  writeFilestore fs
+  Just !ls <- runRankerFS conn fs links
+  insertEdges conn did ls
+
+
+insertEdges :: Connection -> DocId -> [URI] -> IO ()
+insertEdges conn did ls = do
+  Right discs <- doInsert conn $ Insert
+    { into = discoverySchema
+    , onConflict = DoNothing
+    , returning = Projection disc_id
+    , rows = do
+        dst <- values $ fmap (lit . T.pack . show) ls
+        pure $ (lit emptyDiscovery)
+          { disc_uri = dst
+          }
+    }
+
+  Right _ <- doInsert conn $ Insert
+    { into = edgesSchema
+    , onConflict = DoNothing
+    , returning = pure ()
+    , rows = do
+        dst <- values $ fmap lit discs
+        pure $ Edges
+          { e_src = lit did
+          , e_dst = dst
+          }
+    }
+  pure ()
+
+
 
 
 -- markExplored :: DocumentState -> Document Identity -> Update ()

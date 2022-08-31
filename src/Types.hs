@@ -32,22 +32,16 @@ data Env = Env
 type Ranker = ScraperT Text (ReaderT Env IO)
 
 
-data Link a = Link
-  { l_text :: Text
-  , l_uri :: a
-  }
-  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
-
 data Download f a = Download
-  { d_mime :: f ByteString
-  , d_headers :: ResponseHeaders
-  , d_body :: a
+  { dl_mime :: f ByteString
+  , dl_headers :: ResponseHeaders
+  , dl_body :: a
   }
   deriving (Functor)
 
 sequenceDownload :: ByteString -> Download Maybe a -> Download Identity a
 sequenceDownload bs d@(Download m _ _) =
-  d { d_mime = Identity $ fromMaybe bs m }
+  d { dl_mime = Identity $ fromMaybe bs m }
 
 data Search a
   = Term a

@@ -72,6 +72,8 @@ dependencies:
 - cereal
 - hashable
 - zlib
+- transformers
+- deepseq
 
 ghc-options:
 - -Wall

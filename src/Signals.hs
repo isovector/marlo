@@ -9,7 +9,7 @@ import           DB
 import           Data.Aeson (decode)
 import           Data.ByteString.Lazy (fromStrict)
 import           Data.Char (toLower, isAlpha, isDigit)
-import           Data.Containers.ListUtils (nubOrdOn)
+import           Data.Containers.ListUtils (nubOrdOn, nubOrd)
 import           Data.Foldable (asum)
 import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isInfixOf, genericLength)
@@ -74,11 +74,11 @@ title = text "title"
 -- titleKeywords = fmap (mapMaybe keywordify . T.words) title
 
 
-link :: Ranker (Link URI)
+link :: Ranker (URI)
 link = do
-  t    <- T.strip <$> text "a"
   href <- attr "href" "a"
-  fmap (Link t) $ normalizeLink href
+  normalizeLink href
+
 
 normalizeLink :: Text -> Ranker URI
 normalizeLink href = do
@@ -412,22 +412,24 @@ cssBundleSize = do
   pure $ sum szs + sum (fmap (fromIntegral . T.length) inline)
 
 
-canonical :: Ranker (Maybe URI)
+canonical :: Ranker URI
 canonical = do
   lcan <-
     chroots "link" $ do
       rel <- attr "rel" "link"
       guard $ rel == "canonical"
       attr "href" "link"
-  pure $ listToMaybe $ mapMaybe (parseURI . T.unpack) lcan
+  maybe empty pure
+    $ listToMaybe
+    $ mapMaybe (parseURI . T.unpack) lcan
 
 
 isOnDomain :: String -> String -> Bool
 isOnDomain x dom = dom == x || isSuffixOf ('.' : dom) x
 
 
-links :: Ranker [Link URI]
-links = fmap (nubOrdOn l_uri) $ chroots "a" link
+links :: Ranker [URI]
+links = fmap nubOrd $ chroots "a" link
 
 
 paraHeadingRatio :: Ranker (Int, Int)

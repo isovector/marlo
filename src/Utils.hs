@@ -1,5 +1,6 @@
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Utils
@@ -10,6 +11,7 @@ module Utils
 
 import           Control.Applicative ((<|>))
 import           Control.Arrow (first)
+import           Control.DeepSeq (force, NFData)
 import           Control.Monad.Reader
 import           DB
 import           Data.ByteString (ByteString)
@@ -17,13 +19,12 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$))
-import           Data.Map (Map)
-import qualified Data.Map as M
 import           Data.Maybe (fromJust)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
+import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime, NominalDiffTime)
 import           Data.Time.Clock (diffUTCTime)
 import           Marlo.Manager (marloManager)
@@ -31,7 +32,6 @@ import qualified Network.HTTP.Client as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI
 import           Rel8 hiding (filter)
-import           Rel8.Machinery
 import           Text.HTML.Scalpel
 import           Text.Printf (printf)
 import           Types
@@ -42,8 +42,13 @@ paginate size page q =
     offset (page * size) q
 
 
-runRanker :: Env -> Text -> Ranker a -> IO (Maybe a)
-runRanker e t = flip runReaderT e . scrapeStringLikeT t
+runRanker :: NFData a => Env -> Text -> Ranker a -> IO (Maybe a)
+runRanker e t r = do
+  z <- flip runReaderT e $ scrapeStringLikeT t r
+  pure $! force z
+
+runRankerFS :: NFData a => Connection -> Filestore -> Ranker a -> IO (Maybe a)
+runRankerFS conn fs = runRanker (Env (fs_uri fs) conn) (decodeUtf8 $ fs_data fs)
 
 
 countOf :: Selector -> Ranker Int
@@ -125,8 +130,8 @@ downloadBody url = do
             $ lookup hContentType
             $ HTTP.responseHeaders resp
   pure
-    $ Download mime (HTTP.responseHeaders resp)
-    $ BSL.toStrict $ HTTP.responseBody resp
+    $! Download mime (HTTP.responseHeaders resp)
+    $! BSL.toStrict $ HTTP.responseBody resp
 
 
 mimeToContentType :: ByteString -> ByteString
@@ -159,5 +164,4 @@ titleSegs
   . concatMap (T.splitOn ". ")
   . concatMap (T.splitOn " - ")
   . T.split (flip elem [';', ':', '|', '·', '«', '»', '∷', '>', '<', '\8211' ])
-
 

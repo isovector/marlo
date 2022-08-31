@@ -159,6 +159,7 @@ library
     , cereal
     , checkers
     , containers
+    , deepseq
     , directory
     , dlist
     , extra
@@ -194,6 +195,7 @@ library
     , tagsoup
     , text
     , time
+    , transformers
     , wai
     , wai-app-static
     , warp
@@ -277,6 +279,7 @@ executable marlo
     , cereal
     , checkers
     , containers
+    , deepseq
     , directory
     , dlist
     , extra
@@ -313,6 +316,7 @@ executable marlo
     , tagsoup
     , text
     , time
+    , transformers
     , wai
     , wai-app-static
     , warp
@@ -401,6 +405,7 @@ test-suite marlo-tests
     , cereal
     , checkers
     , containers
+    , deepseq
     , directory
     , dlist
     , extra
@@ -437,6 +442,7 @@ test-suite marlo-tests
     , tagsoup
     , text
     , time
+    , transformers
     , wai
     , wai-app-static
     , warp

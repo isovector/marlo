@@ -55,19 +55,19 @@ import Rel8.TextSearch
 import Types
 
 data Document f = Document
-  { d_docId :: Column f DocId
-  , d_domain :: Column f (Maybe DomainId)
+  { d_docId    :: Column f DocId
+  , d_domain   :: Column f (Maybe DomainId)
   , d_title    :: Column f Text
-  , d_uri   :: Column f Text
+  , d_uri      :: Column f Text
 
   -- discovery
-  , d_state :: Column f DocumentState
+  , d_state    :: Column f DocumentState
 
   , d_distance :: Column f [Maybe Int16]
 
-  , d_raw   :: PageRawData f
-  , d_page  :: PageContent f
-  , d_stats :: PageStats f
+  , d_raw      :: PageRawData f
+  , d_page     :: PageContent f
+  , d_stats    :: PageStats f
   }
   deriving stock Generic
   deriving anyclass Rel8able
