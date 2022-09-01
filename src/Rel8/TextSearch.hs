@@ -1,16 +1,21 @@
-{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Rel8.TextSearch where
 
 import           Data.Int (Int16)
+import           Data.String (IsString, fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Hasql.Decoders as Decode
+import           Opaleye.Internal.HaskellDB.PrimQuery (PrimExpr)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as Prim
-import           Rel8 hiding (index)
+import           Rel8 hiding (Enum, index)
 import           Servant.Server.Generic ()
 
-data Tsvector = Tsvector
+data Label = A | B | C | D
+  deriving (Eq, Ord, Show, Enum, Bounded)
+
+data Tsvector = Tsvector [(Label, Text)]
   deriving (Eq, Ord, Show)
 
 instance DBEq Tsvector
@@ -19,10 +24,32 @@ instance DBOrd Tsvector
 
 instance DBType Tsvector where
   typeInformation = TypeInformation
-    { encode = const $ Prim.ConstExpr $ Prim.StringLit ""
-    , decode = Decode.custom $ \_ _ -> pure Tsvector
+    { encode = \(Tsvector ts) ->
+        foldr
+          (\a b -> uncurry mkWeightedTsVec a ||.. " " ||.. b)
+          ""
+          ts
+    , decode = error "can't decode tsvector yet"
     , typeName = "tsvector"
     }
+
+(||..) :: PrimExpr -> PrimExpr -> PrimExpr
+a ||.. b = Prim.BinExpr (Prim.:||) a b
+
+infixr 5 ||..
+
+
+mkWeightedTsVec :: Label -> Text -> Prim.PrimExpr
+mkWeightedTsVec l t = Prim.FunExpr "setweight"
+  [ Prim.FunExpr "to_tsvector"
+      [ "english"
+      , fromString $ T.unpack t
+      ]
+  , fromString $ show l
+  ]
+
+instance IsString Prim.PrimExpr where
+  fromString = Prim.ConstExpr . Prim.StringLit
 
 data Tsquery
   = TsqTerm Text

@@ -1,6 +1,5 @@
 {-# LANGUAGE PartialTypeSignatures           #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports          #-}
 
 {-# LANGUAGE NoMonoLocalBinds                #-}
 {-# LANGUAGE NoMonomorphismRestriction       #-}
@@ -8,43 +7,29 @@
 
 module Spider where
 
-import           Control.DeepSeq (force)
-import           Control.Exception.Base
-import           Control.Monad (forever, void, unless, when)
+import           Control.Monad (when)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
-import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
-import           Data.Foldable (for_, toList)
-import           Data.Functor.Contravariant ((>$<))
-import           Data.Int (Int32, Int16, Int64)
-import           Data.Map (Map)
-import qualified Data.Map as M
-import           Data.Maybe (isJust, fromMaybe, listToMaybe)
-import qualified Data.Set as S
-import           Data.Text (Text)
+import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime)
 import           Data.Traversable (for)
 import           Domains (getDomain)
 import           Marlo.Filestore (writeFilestore)
-import           Marlo.Manager (marloManager)
 import           Marlo.Robots
-import           Network.HTTP (lookupHeader, HeaderName (HdrSetCookie))
+import           Marlo.TitleSegs (buildTitleSegs)
 import           Network.HttpUtils (determineHttpsAvailability)
-import           Network.URI (parseURI, URI)
+import           Network.URI (URI)
 import           Prelude hiding (max)
-import qualified Rel8 as R8 hiding (filter, bool)
 import           Rel8 hiding (filter, bool, index)
-import           Rel8.Arrays (arrayInc, arrayZipWithLeast)
 import           Rel8.Headers (headersToHeaders)
-import           Rel8.Machinery
+import           Rel8.TextSearch
 import           Signals
 import           Types
-import           Utils (runRanker, unsafeURI, random, downloadBody, titleSegs, runRankerFS)
-import Marlo.TitleSegs (buildTitleSegs)
+import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -156,7 +141,12 @@ reindex conn did fs = do
       , set = const $ \d -> d
           { d_domain = lit $ Just dom
           , d_title  = lit t
-          , d_page   = lit pc
+          , d_search = lit $ Tsvector
+              [ (A, ts)
+              , (B, pc_headings pc)
+              , (C, pc_content pc)
+              , (D, pc_comments pc)
+              ]
           , d_stats  = lit stats
           }
 
