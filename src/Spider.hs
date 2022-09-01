@@ -7,7 +7,8 @@
 
 module Spider where
 
-import           Control.Monad (when)
+import           Control.Exception
+import           Control.Monad (when, forever)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
@@ -33,7 +34,7 @@ import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
 
 
 nextToExplore :: Query (Discovery Expr)
-nextToExplore = orderBy random $ do
+nextToExplore = limit 1 $ orderBy random $ do
   disc <- each discoverySchema
   where_ $ disc_canonical disc ==. lit Nothing
        &&. disc_dead      disc ==. lit False
@@ -53,6 +54,17 @@ getCanonicalUri conn uri = do
         uri''  <- MaybeT $ runRanker (Env uri' conn) (decodeUtf8 $ dl_body dl) canonical
         MaybeT $ determineHttpsAvailability uri''
       pure $ pure $ (dl, ) $ fromMaybe uri' mcanon
+
+
+markDead :: Connection -> DiscId -> IO ()
+markDead conn did =
+  doUpdate_ conn $ Update
+    { target = discoverySchema
+    , from = pure ()
+    , set = const $ \d -> d { disc_dead = lit True }
+    , updateWhere = const $ \d -> disc_id d ==. lit did
+    , returning = pure ()
+    }
 
 
 getDocByCanonicalUri
@@ -84,11 +96,15 @@ getDocByCanonicalUri conn (T.pack . show -> uri) = do
 discover :: Connection -> Discovery Identity -> IO ()
 discover conn disc = do
   mcandl <- getCanonicalUri conn (unsafeURI $ T.unpack $ disc_uri disc)
+  putStrLn $ "canonical: " <> show (fmap snd mcandl)
   mcandoc <-
     for mcandl $ \(dl, can) -> do
       ed <- getDocByCanonicalUri conn can
       case ed of
-        Right d -> pure $ d_docId d
+        Right d -> do
+          putStrLn "already indexed"
+          pure $ d_docId d
+
         -- It's a new record, so we need to index it
         Left did -> do
           now <- getCurrentTime
@@ -183,43 +199,22 @@ insertEdges conn did ls = do
   pure ()
 
 
--- spiderMain :: Maybe Text -> IO ()
--- spiderMain mexclude = do
---   Right conn <- connect
---   z <- doInsert conn rootNodes
---   print z
---   forever $ do
---     Right [disc] <- doSelect conn $
---       limit 1 $ orderBy ((d_depth >$< asc) <> random) $ do
---         d <- each documentSchema
---         where_ $ d_state d ==. lit Discovered
---         for_ mexclude $ \exc ->
---           where_ $ not_ $ like (lit exc) (d_uri d)
---         pure d
+spiderMain :: IO ()
+spiderMain = do
+  Right conn <- connect
+  z <- doInsert conn rootNodes
+  print z
+  forever $ do
+    Right [disc] <- doSelect conn nextToExplore
 
---     let url = d_uri disc
---     case parseURI $ T.unpack url of
---       Nothing -> error $ "died on bad URI: " <> show url
---       Just uri -> do
---         case isAcceptableLink uri of
---           True -> do
---             putStrLn $ "fetching " <> T.unpack url
---             catch
---               (do
---                 down <- fmap (sequenceDownload "text/html") $ downloadBody $ T.unpack url
---                 now <- getCurrentTime
---                 writeFilestore $ Filestore
---                   {fs_uri = uri
---                   , fs_collected = now
---                   , fs_data = d_body down
---                   }
---                 index conn (d_depth disc) (d_distance disc) uri down
---               )
---               (\SomeException{} -> do
---                 putStrLn $ "errored on " <> show (d_docId disc)
---                 void $ doUpdate conn $ markExplored Errored disc
---               )
---           False -> do
---             putStrLn $ "ignoring " <> T.unpack url
---             void $ doUpdate conn $ markExplored Pruned disc
+    let url = disc_uri disc
+    putStrLn $ "fetching " <> T.unpack url
+    catch
+      (do
+        discover conn disc
+      )
+      (\SomeException{} -> do
+        putStrLn "failed"
+        markDead conn (disc_id disc)
+      )
 
