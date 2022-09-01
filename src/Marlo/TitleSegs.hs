@@ -7,11 +7,11 @@ import Data.Int (Int64)
 import Data.Text (Text)
 import Prelude hiding (max)
 import Rel8 hiding (filter, bool, index)
-import Types hiding (d_headers)
-import Utils (titleSegs, getOrInsert)
+import Types
+import Utils (titleSegs)
 
 
-buildTitleSegs :: Connection -> DocId -> Text -> IO ()
+buildTitleSegs :: Connection -> DocId -> Text -> IO Text
 buildTitleSegs conn doc t = do
   let segs = titleSegs t
   segids <- getOrInsert conn TitleSeg ts_seg segs
@@ -28,7 +28,8 @@ buildTitleSegs conn doc t = do
     , onConflict = DoNothing
     , returning = pure ()
     }
-  pure ()
+  Right [res] <- doSelect conn $ getBestTitle doc
+  pure res
 
 
 commonTitleSegs :: Query (Expr TitleSegId, Expr Int64)

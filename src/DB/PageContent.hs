@@ -1,5 +1,6 @@
 module DB.PageContent where
 
+import Control.DeepSeq (NFData)
 import Data.Functor.Identity
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -17,4 +18,5 @@ data PageContent f = PageContent
 
 deriving instance Eq (PageContent Identity)
 deriving instance Show (PageContent Identity)
+deriving instance NFData (PageContent Identity)
 

@@ -1,5 +1,6 @@
 module DB.PageStats where
 
+import Control.DeepSeq (NFData)
 import Data.Functor.Identity
 import Data.Int (Int32, Int16)
 import GHC.Generics (Generic)
@@ -20,4 +21,5 @@ data PageStats f = PageStats
 deriving instance Show (PageStats Identity)
 deriving instance Eq (PageStats Identity)
 deriving instance Ord (PageStats Identity)
+deriving instance NFData (PageStats Identity)
 

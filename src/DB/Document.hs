@@ -40,8 +40,6 @@ CREATE INDEX search_idx ON documents USING GIN (search);
 
 module DB.Document where
 
-import DB.PageContent
-import DB.PageRawData
 import DB.PageStats
 import DB.RootSites
 import Data.Coerce (coerce)
@@ -61,12 +59,12 @@ data Document f = Document
   , d_uri      :: Column f Text
 
   -- discovery
+  -- , d_search   :: Column f Tsvector
   , d_state    :: Column f DocumentState
 
   , d_distance :: Column f [Maybe Int16]
 
-  , d_raw      :: PageRawData f
-  , d_page     :: PageContent f
+  -- , d_page     :: PageContent f
   , d_stats    :: PageStats f
   }
   deriving stock Generic
@@ -84,17 +82,9 @@ documentSchema = TableSchema
       , d_domain = "domain"
       , d_uri   = "uri"
       , d_title = "title"
+      -- , d_search = "search"
       , d_state = "state"
       , d_distance = "distance"
-      , d_raw = PageRawData
-          { prd_data  = "data"
-          , prd_headers  = "headers"
-          }
-      , d_page = PageContent
-          { pc_headings = "headings"
-          , pc_content = "content"
-          , pc_comments = "comments"
-          }
       , d_stats = PageStats
           { ps_js = "js"
           , ps_css = "css"
@@ -134,16 +124,8 @@ emptyDoc = Document
   , d_domain = Nothing
   , d_title = ""
   , d_state = Discovered
-  , d_raw = PageRawData
-      { prd_data = ""
-      , prd_headers = []
-      }
+  -- , d_search = Tsvector
   , d_distance = replicate numRootSites Nothing
-  , d_page = PageContent
-      { pc_headings = ""
-      , pc_content  = ""
-      , pc_comments = ""
-      }
   , d_stats = PageStats
       { ps_js      = 0
       , ps_css     = 0

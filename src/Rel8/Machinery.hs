@@ -16,6 +16,12 @@ doInsert :: Connection -> Insert a -> IO (Either QueryError a)
 doInsert conn = flip run conn . statement () . insert
 
 
+doInsert_ :: Connection -> Insert () -> IO ()
+doInsert_ conn i = do
+  Right _ <- doInsert conn i
+  pure ()
+
+
 doSelect
     :: Serializable exprs (FromExprs exprs)
     => Connection
@@ -26,6 +32,12 @@ doSelect conn = flip run conn . statement () . select
 
 doUpdate :: Connection -> Update a -> IO (Either QueryError a)
 doUpdate conn = flip run conn . statement () . update
+
+
+doUpdate_ :: Connection -> Update () -> IO ()
+doUpdate_ conn u = do
+  Right _ <- doUpdate conn u
+  pure ()
 
 
 doDelete :: Connection -> Delete a -> IO (Either QueryError a)

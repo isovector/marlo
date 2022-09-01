@@ -12,7 +12,6 @@ import           Marlo.Robots
 import           Network.URI
 import           Rel8
 import           Types
-import           Utils (hush)
 
 
 getDomain :: Connection -> URI -> IO (DomainId, RobotDirectives)
