@@ -13,6 +13,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.ByteString (ByteString)
+import           Data.Int (Int32)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -25,13 +26,12 @@ import           Marlo.TitleSegs (buildTitleSegs)
 import           Network.HttpUtils (determineHttpsAvailability)
 import           Network.URI (URI)
 import           Prelude hiding (max)
-import           Rel8 hiding (filter, bool, index)
+import           Rel8 hiding (sum, filter, bool, index)
 import           Rel8.Headers (headersToHeaders)
 import           Rel8.TextSearch
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
-import Data.Int (Int32)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -167,6 +167,14 @@ reindex conn did fs = do
     Just !pc    <- run rankContent
     Just !stats <- run rankStats
 
+    let word_count = length . T.words
+        num_words = sum
+          [ word_count ts
+          , word_count $ pc_headings pc
+          , word_count $ pc_content pc
+          , word_count $ pc_comments pc
+          ]
+
     doUpdate_ conn $ Update
       { target = documentSchema
       , from = pure ()
@@ -179,6 +187,7 @@ reindex conn did fs = do
               , (C, pc_content pc)
               , (D, pc_comments pc)
               ]
+          , d_wordCount = lit $ fromIntegral num_words
           , d_stats  = lit stats
           }
 

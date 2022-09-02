@@ -3,14 +3,15 @@
 
 CREATE SEQUENCE doc_id_seq;
 CREATE TABLE IF NOT EXISTS documents (
-  doc_id int8 PRIMARY KEY,
+  id int8 PRIMARY KEY,
   domain int8 REFERENCES domains(id),
   uri TEXT UNIQUE NOT NULL,
-  state VARCHAR(16) NOT NULL,
-  distance int2[] NOT NULL,
+
   title TEXT NOT NULL,
   search tsvector NOT NULL,
 
+  state VARCHAR(16) NOT NULL,
+  distance int2[] NOT NULL,
   js int4 NOT NULL,
   css int4 NOT NULL,
   tweets int2 NOT NULL,
@@ -32,7 +33,7 @@ import DB.PageStats
 import DB.RootSites
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int16)
+import Data.Int (Int16, Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)
@@ -41,17 +42,18 @@ import Rel8.TextSearch
 import Types
 
 data Document f = Document
-  { d_docId    :: Column f DocId
-  , d_domain   :: Column f (Maybe DomainId)
-  , d_uri      :: Column f Text
+  { d_docId     :: Column f DocId
+  , d_domain    :: Column f (Maybe DomainId)
+  , d_uri       :: Column f Text
 
-  , d_title    :: Column f Text
-  , d_search   :: ~(Column f Tsvector)
+  , d_title     :: Column f Text
+  , d_wordCount :: Column f Int32
+  , d_search    :: ~(Column f Tsvector)
 
-  , d_state    :: Column f DocumentState
+  , d_state     :: Column f DocumentState
 
-  , d_distance :: Column f [Maybe Int16]
-  , d_stats    :: PageStats f
+  , d_distance  :: Column f [Maybe Int16]
+  , d_stats     :: PageStats f
   }
   deriving stock Generic
   deriving anyclass Rel8able
@@ -64,10 +66,11 @@ documentSchema = TableSchema
   { name    = "documents"
   , schema  = Just "public"
   , columns = Document
-      { d_docId = "doc_id"
+      { d_docId = "id"
       , d_domain = "domain"
       , d_uri   = "uri"
       , d_title = "title"
+      , d_wordCount = "word_count"
       , d_search = "search"
       , d_state = "state"
       , d_distance = "distance"
@@ -92,6 +95,7 @@ emptyDoc = Document
   , d_uri   = ""
   , d_domain = Nothing
   , d_title = ""
+  , d_wordCount = 0
   , d_state = Discovered
   , d_search = Tsvector []
   , d_distance = replicate numRootSites Nothing
