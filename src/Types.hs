@@ -22,6 +22,7 @@ import           Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQue
 import           Text.HTML.Scalpel
 import           Text.Read (readMaybe)
 import           Types.Orphans ()
+import Control.DeepSeq (NFData)
 
 
 data Env = Env
@@ -109,18 +110,6 @@ newtype TitleSegId = TitleSegId
   deriving newtype (Eq, Ord, Show, DBType, DBEq, DBOrd)
 
 
-data DocumentState
-  = Discovered
-  | Explored
-  | Pruned
-  | Errored
-  | Unacceptable
-  | NoContent
-  | DisallowedByRobots
-  deriving stock (Eq, Ord, Show, Read, Enum, Bounded, Generic)
-  deriving (DBType, DBEq) via ReadShow DocumentState
-
-
 data LimitStrategy
   = Limit Word
   | Paginate Word  -- ^ Page size
@@ -184,6 +173,18 @@ data Filestore = Filestore
   }
   deriving stock (Generic, Show)
   deriving anyclass (Serialize, Hashable)
+
+data DocumentFlag
+  = DisallowedByRobots
+  | IsProhibitedURI
+  | IsNews
+  | IsShopping
+  | IsPaywalled
+  | IsListicle
+  | IsMedia
+  | IsAnticompetitiveTech
+  | HasAds
+  deriving (Eq, Ord, Show, Enum, Bounded, Generic, NFData)
 
 
 ------------------------------------------------------------------------------

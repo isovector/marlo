@@ -40,6 +40,7 @@ import Prelude hiding (null)
 import Rel8 hiding (Enum)
 import Rel8.TextSearch
 import Types
+import Rel8.StateMask (BitMask)
 
 data Document f = Document
   { d_docId     :: Column f DocId
@@ -50,7 +51,7 @@ data Document f = Document
   , d_wordCount :: Column f Int32
   , d_search    :: ~(Column f Tsvector)
 
-  , d_state     :: Column f DocumentState
+  , d_flags     :: Column f (BitMask DocumentFlag)
 
   , d_distance  :: Column f [Maybe Int16]
   , d_stats     :: PageStats f
@@ -72,7 +73,7 @@ documentSchema = TableSchema
       , d_title = "title"
       , d_wordCount = "word_count"
       , d_search = "search"
-      , d_state = "state"
+      , d_flags = "flags"
       , d_distance = "distance"
       , d_stats = PageStats
           { ps_js = "js"
@@ -96,7 +97,7 @@ emptyDoc = Document
   , d_domain = Nothing
   , d_title = ""
   , d_wordCount = 0
-  , d_state = Discovered
+  , d_flags = mempty
   , d_search = Tsvector []
   , d_distance = replicate numRootSites Nothing
   , d_stats = PageStats

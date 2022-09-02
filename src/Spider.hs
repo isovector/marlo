@@ -32,6 +32,7 @@ import           Rel8.TextSearch
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
+import Rel8.StateMask
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -141,60 +142,69 @@ discover conn disc = do
 
 reindex :: Connection -> DocId -> Filestore -> IO ()
 reindex conn did fs = do
+  writeFilestore fs
+
   let uri = fs_uri fs
       run = runRankerFS conn fs
 
   (dom, directives) <- getDomain conn uri
   let can_index = checkRobotsDirectives directives (CanIndex uri)
 
+  Right inc_depth
+    <- fmap (fmap (fromMaybe 0 . listToMaybe))
+      $ doSelect conn
+      $ incomingDepth did
+  let depth' = inc_depth + 1
+
   Just !pol <- run isSpiritualPollution
-  when (can_index && not pol) $ do
-    writeFilestore fs
 
-    Right inc_depth
-      <- fmap (fmap (fromMaybe 0 . listToMaybe))
-       $ doSelect conn
-       $ incomingDepth did
+  update_doc <- case (can_index && isEmpty pol) of
+    False -> pure id
+    True -> do
+      Just !ls <- run links
+      insertEdges conn did depth' ls
 
-    let depth' = inc_depth + 1
+      Just !ts    <- run title
+      t <- buildTitleSegs conn did ts
 
-    Just !ls <- run links
-    insertEdges conn did depth' ls
+      Just !pc    <- run rankContent
+      Just !stats <- run rankStats
 
-    Just !ts    <- run title
-    t <- buildTitleSegs conn did ts
+      let word_count = length . T.words
+          num_words = sum
+            [ word_count ts
+            , word_count $ pc_headings pc
+            , word_count $ pc_content pc
+            , word_count $ pc_comments pc
+            ]
 
-    Just !pc    <- run rankContent
-    Just !stats <- run rankStats
+      pure $ \d -> d
+        { d_title  = lit t
+        , d_search = lit $ Tsvector
+            [ (A, ts)
+            , (B, pc_headings pc)
+            , (C, pc_content pc)
+            , (D, pc_comments pc)
+            ]
+        , d_wordCount = lit $ fromIntegral num_words
+        , d_stats  = lit stats
+        }
 
-    let word_count = length . T.words
-        num_words = sum
-          [ word_count ts
-          , word_count $ pc_headings pc
-          , word_count $ pc_content pc
-          , word_count $ pc_comments pc
-          ]
 
-    doUpdate_ conn $ Update
-      { target = documentSchema
-      , from = pure ()
-      , set = const $ \d -> d
-          { d_domain = lit $ Just dom
-          , d_title  = lit t
-          , d_search = lit $ Tsvector
-              [ (A, ts)
-              , (B, pc_headings pc)
-              , (C, pc_content pc)
-              , (D, pc_comments pc)
-              ]
-          , d_wordCount = lit $ fromIntegral num_words
-          , d_stats  = lit stats
-          }
-
-      , updateWhere = const $ \d -> d_docId d ==. lit did
-      , returning = pure ()
-      }
-    pure ()
+  doUpdate_ conn $ Update
+    { target = documentSchema
+    , from = pure ()
+    , set = const $ \d -> (update_doc d)
+        { d_domain = lit $ Just dom
+        , d_flags = lit $ mconcat
+            [ flagIf DisallowedByRobots $ not can_index
+            , flagIf IsProhibitedURI    $ not $ isAcceptableLink uri
+            , pol
+            ]
+        }
+    , updateWhere = const $ \d -> d_docId d ==. lit did
+    , returning = pure ()
+    }
 
 
 insertEdges :: Connection -> DocId -> Int32 -> [URI] -> IO ()

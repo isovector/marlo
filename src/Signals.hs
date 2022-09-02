@@ -10,7 +10,7 @@ import           Data.Aeson (decode)
 import           Data.ByteString.Lazy (fromStrict)
 import           Data.Char (toLower, isAlpha, isDigit)
 import           Data.Containers.ListUtils (nubOrdOn, nubOrd)
-import           Data.Foldable (asum)
+import           Data.Foldable (asum, fold)
 import           Data.Int (Int64)
 import           Data.List (isSuffixOf, partition, dropWhileEnd, isInfixOf, genericLength)
 import           Data.Maybe (mapMaybe, fromMaybe, listToMaybe)
@@ -27,6 +27,8 @@ import           Signals.Listicle (isListicle)
 import           Text.HTML.Scalpel
 import           Types
 import           Utils
+import Rel8.StateMask (BitMask (BitMask), flag, flagIf)
+import Data.Bool (bool)
 
 
 gif :: Ranker Text
@@ -519,12 +521,12 @@ textWithoutScripts = fmap (fmap T.strip) $ inSerial $ many $ stepNext innerScrap
     recurseOn tag = chroot (tag `atDepth` 0) $ textWithoutScripts
 
 
-isSpiritualPollution :: Ranker Bool
-isSpiritualPollution = fmap or $ sequenceA $
+isSpiritualPollution :: Ranker (BitMask DocumentFlag)
+isSpiritualPollution = fmap fold $ sequenceA $
   [ canBeFilteredOutBySchemaType
-  , hasGoogleAds
-  , hasPaywall
-  , isListicle
+  , flagIf HasAds      <$> hasGoogleAds
+  , flagIf IsPaywalled <$> hasPaywall
+  , flagIf IsListicle  <$> isListicle
   ]
 
 hasPaywall :: Ranker Bool
@@ -536,7 +538,7 @@ hasPaywall = do
       Just (IsAccessibleForFree b) -> not b
 
 
-canBeFilteredOutBySchemaType :: Ranker Bool
+canBeFilteredOutBySchemaType :: Ranker (BitMask DocumentFlag)
 canBeFilteredOutBySchemaType = do
   uri <- asks $ e_uri
   -- HACK: Substack and medium stupidly tag themselves as a news article
@@ -544,19 +546,22 @@ canBeFilteredOutBySchemaType = do
   let is_medium = maybe False (isInfixOf "medium.com" . uriRegName) $ uriAuthority uri
 
   ds <- texts $ "script" @: ["type" @= "application/ld+json"]
-  pure $ flip any ds $ \d ->
+  pure $ flip foldMap ds $ \d ->
     case fmap getMetadataType $ decode $ fromStrict $ encodeUtf8 d of
-      Just "AggregateOffer" -> True
-      Just "AmpStory"       -> True
-      Just "Clip"           -> True
-      Just "Episode"        -> True
-      Just "Movie"          -> True
-      Just "NewsArticle"    -> True && not is_substack && not is_medium
-      Just "Offer"          -> True
-      Just "Product"        -> True
-      Just "TVSeason"       -> True
-      Just "TVSeries"       -> True
-      _                     -> False
+      Just "AggregateOffer" -> flag IsShopping
+      Just "AmpStory"       -> flag IsAnticompetitiveTech
+      Just "Clip"           -> flag IsMedia
+      Just "Episode"        -> flag IsMedia
+      Just "Movie"          -> flag IsMedia
+      Just "NewsArticle"    ->
+        case is_substack || is_medium of
+          True -> mempty
+          False -> flag IsNews
+      Just "Offer"          -> flag IsShopping
+      Just "Product"        -> flag IsShopping
+      Just "TVSeason"       -> flag IsMedia
+      Just "TVSeries"       -> flag IsMedia
+      _                     -> mempty
 
 
 mainContent :: Ranker Text
