@@ -31,6 +31,7 @@ import           Rel8.TextSearch
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
+import Data.Int (Int32)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -65,6 +66,14 @@ markDead conn did =
     , updateWhere = const $ \d -> disc_id d ==. lit did
     , returning = pure ()
     }
+
+
+incomingDepth :: DocId -> Query (Expr Int32)
+incomingDepth did = aggregate $ do
+  disc <- each discoverySchema
+  where_ $ disc_canonical disc ==. lit (Just did)
+  pure $ Rel8.min $ disc_depth disc
+
 
 
 getDocByCanonicalUri
@@ -142,8 +151,15 @@ reindex conn did fs = do
   when (can_index && not pol) $ do
     writeFilestore fs
 
+    Right inc_depth
+      <- fmap (fmap (fromMaybe 0 . listToMaybe))
+       $ doSelect conn
+       $ incomingDepth did
+
+    let depth' = inc_depth + 1
+
     Just !ls <- run links
-    insertEdges conn did ls
+    insertEdges conn did depth' ls
 
     Just !ts    <- run title
     t <- buildTitleSegs conn did ts
@@ -172,16 +188,19 @@ reindex conn did fs = do
     pure ()
 
 
-insertEdges :: Connection -> DocId -> [URI] -> IO ()
-insertEdges conn did ls = do
+insertEdges :: Connection -> DocId -> Int32 -> [URI] -> IO ()
+insertEdges conn did depth ls = do
   Right discs <- doInsert conn $ Insert
     { into = discoverySchema
     , onConflict = DoNothing
     , returning = Projection disc_id
     , rows = do
+        discid <- nextDiscId
         dst <- values $ fmap (lit . T.pack . show) ls
         pure $ (lit emptyDiscovery)
-          { disc_uri = dst
+          { disc_id    = discid
+          , disc_uri   = dst
+          , disc_depth = lit depth
           }
     }
 

@@ -47,12 +47,12 @@ discoverySchema = TableSchema
   { name    = "discovery"
   , schema  = Just "public"
   , columns = Discovery
-    { disc_id = "id"
-    , disc_uri = "uri"
-    , disc_depth = "depth"
-    , disc_dead = "dead"
+    { disc_id         = "id"
+    , disc_uri        = "uri"
+    , disc_depth      = "depth"
+    , disc_dead       = "dead"
     , disc_resolvedAt = "resolved_at"
-    , disc_canonical = "canonical"
+    , disc_canonical  = "canonical"
     }
   }
 
