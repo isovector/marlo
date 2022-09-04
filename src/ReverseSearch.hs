@@ -61,7 +61,8 @@ reverseDeps which = do
   dst <- each documentSchema
   where_ $ which dst
   e <- each edgesSchema
-  where_ $ e_dst e ==. d_docId dst
+  dstdisc <- each discoverySchema
+  where_ $ e_dst e ==. disc_id dstdisc
   src <- each documentSchema
   where_ $ e_src e ==. d_docId src
   where_ $ isAncestor (d_distance src) (d_distance dst)

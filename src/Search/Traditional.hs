@@ -4,7 +4,6 @@ module Search.Traditional (getSnippet') where
 
 import           DB
 import           Data.Foldable (traverse_)
-import           Data.List (intersperse)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Traversable (for)
@@ -21,22 +20,15 @@ import           Types
 
 getSnippet :: DocId -> Tsquery -> Query (Expr Text)
 getSnippet did q = do
-  d <- d_table <$> each documentSchema'
-  where_ $ d_docId d ==. lit did
+  d <- each documentSchema'
+  where_ $ d_docId (d_table d) ==. lit did
   getSnippet' d q
 
-getSnippet' :: Document Expr -> Tsquery -> Query (Expr Text)
-getSnippet' d q = do
-  let pc = d_page d
+getSnippet' :: Document' Expr -> Tsquery -> Query (Expr Text)
+getSnippet' d =
   pure
-    $ headline
-        (foldr1 (<>.)
-          $ intersperse " "
-            [ pc_content pc
-            , pc_headings pc
-            , pc_comments pc
-            ])
-    $ lit q
+    . headline (d_doc_text d)
+    . lit
 
 
 instance SearchMethod 'Traditional where

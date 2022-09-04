@@ -16,10 +16,12 @@ wrongDistance = do
   e <- each edgesSchema
   src <- each documentSchema
   where_ $ e_src e ==. d_docId src
+  dstdisc <- each discoverySchema
+  where_ $ e_dst e ==. disc_id dstdisc
   dst <- each documentSchema
-  where_ $ e_dst e ==. d_docId dst
+  where_ $ disc_canonical dstdisc ==. nullify (d_docId dst)
   where_ $ distCard (d_distance src) >. distCard (d_distance dst)
-  pure (e_dst e, d_distance src)
+  pure (d_docId dst, d_distance src)
 
 
 propagateDistances :: Update Int64
@@ -45,8 +47,10 @@ findJoins = limit 1 $ orderBy random $ do
   src <- each documentSchema
   where_ $ e_src e ==. d_docId src
   where_ $ d_distance src /=. nullDist
+  dstdisc <- each discoverySchema
+  where_ $ e_dst e ==. disc_id dstdisc
   dst <- each documentSchema
-  where_ $ e_dst e ==. d_docId dst
+  where_ $ disc_canonical dstdisc ==. nullify (d_docId dst)
   where_ $ d_distance dst /=. nullDist
   where_ $ distCard (d_distance src) <. distCard (d_distance dst)
   pure ((d_uri src, d_distance src), (d_uri dst, d_distance dst))

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS documents (
 
   title TEXT NOT NULL,
   search tsvector NOT NULL,
+  doc_text TEXT NOT NULL.
 
   state VARCHAR(16) NOT NULL,
   distance int2[] NOT NULL,
@@ -49,9 +50,9 @@ data Document f = Document
 
   , d_title     :: Column f Text
   , d_wordCount :: Column f Int32
-  , d_search    :: ~(Column f Tsvector)
 
   , d_flags     :: Column f (BitMask DocumentFlag)
+  -- , d_doc_text  :: Column f Text
 
   , d_distance  :: Column f [Maybe Int16]
   , d_stats     :: PageStats f
@@ -60,6 +61,16 @@ data Document f = Document
   deriving anyclass Rel8able
 
 deriving instance Show (Document Identity)
+
+data Document' f = Document'
+  { d_table     :: Document f
+  , d_doc_text  :: Column f Text
+  , d_search    :: ~(Column f Tsvector)
+  }
+  deriving stock Generic
+  deriving anyclass Rel8able
+
+deriving instance Show (Document' Identity)
 
 
 documentSchema :: TableSchema (Document Name)
@@ -72,8 +83,8 @@ documentSchema = TableSchema
       , d_uri   = "uri"
       , d_title = "title"
       , d_wordCount = "word_count"
-      , d_search = "search"
       , d_flags = "flags"
+      -- , d_doc_text = "doc_text"
       , d_distance = "distance"
       , d_stats = PageStats
           { ps_js = "js"
@@ -82,6 +93,17 @@ documentSchema = TableSchema
           , ps_gifs = "gifs"
           , ps_cookies = "cookies"
           }
+      }
+  }
+
+documentSchema' :: TableSchema (Document' Name)
+documentSchema' = TableSchema
+  { name    = "documents"
+  , schema  = Just "public"
+  , columns = Document'
+      { d_table = columns documentSchema
+      , d_doc_text = "doc_text"
+      , d_search = "search"
       }
   }
 
@@ -98,7 +120,6 @@ emptyDoc = Document
   , d_title = ""
   , d_wordCount = 0
   , d_flags = mempty
-  , d_search = Tsvector []
   , d_distance = replicate numRootSites Nothing
   , d_stats = PageStats
       { ps_js      = 0

@@ -69,9 +69,10 @@ instance SearchMethod 'Spatial where
     forM_ cdids $ \dids -> do
       msnips <-
         liftIO $ doSelect conn $ do
-          d <- each documentSchema
-          where_ $ in_ (d_docId d) $ fmap lit $ dids
-          fmap (d_docId d, d_uri d,) $ getSnippet' d q'
+          d <- each documentSchema'
+          let t = d_table d
+          where_ $ in_ (d_docId t) $ fmap lit $ dids
+          fmap (d_docId t, d_uri t,) $ getSnippet' d q'
       case msnips of
         Left z -> do
           liftIO $ print z

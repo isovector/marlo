@@ -1,13 +1,13 @@
 module Tools.BatchTitles where
 
-import           Control.Monad (when)
+import           Control.Monad (when, void)
 import           DB
 import           Data.Foldable (for_)
 import           Data.Int (Int64)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import           Rel8
-import           Spider (setBestTitle, buildTitleSegs)
+import           Marlo.TitleSegs (setBestTitle, buildTitleSegs)
 import           Types
 
 
@@ -16,7 +16,6 @@ main = do
   Right conn <- connect
   Right docs <- doSelect conn $ do
     d <- each documentSchema
-    where_ $ d_state d ==. lit Explored
     pure $ d_docId d
   for_ docs $ \did -> do
     Right [doc] <-
@@ -27,7 +26,7 @@ main = do
     let docid = d_docId doc
     Right num <- doSelect conn $ numTitleSegs docid
     when (fromMaybe 0 (listToMaybe num) == 0) $
-      buildTitleSegs conn docid $ d_title doc
+      void $ buildTitleSegs conn docid $ d_title doc
 
     case d_title doc of
       "" -> pure ()

@@ -8,7 +8,7 @@
 module Spider where
 
 import           Control.Exception
-import           Control.Monad (when, forever)
+import           Control.Monad (forever)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
@@ -125,6 +125,7 @@ discover conn disc = do
                     , fs_headers = fmap headersToHeaders $ dl_headers dl
                     , fs_data = dl_body dl
                     }
+          writeFilestore fs
           reindex conn did fs
           pure did
 
@@ -142,8 +143,6 @@ discover conn disc = do
 
 reindex :: Connection -> DocId -> Filestore -> IO ()
 reindex conn did fs = do
-  writeFilestore fs
-
   let uri = fs_uri fs
       run = runRankerFS conn fs
 
@@ -179,30 +178,41 @@ reindex conn did fs = do
             ]
 
       pure $ \d -> d
-        { d_title  = lit t
+        { d_table = (d_table d)
+          { d_title  = lit t
+          , d_wordCount = lit $ fromIntegral num_words
+          , d_stats  = lit stats
+          }
+        , d_doc_text = lit $ T.intercalate " "
+            [ ts
+            , pc_headings pc
+            , pc_content pc
+            , pc_comments pc
+            ]
         , d_search = lit $ Tsvector
             [ (A, ts)
             , (B, pc_headings pc)
             , (C, pc_content pc)
             , (D, pc_comments pc)
             ]
-        , d_wordCount = lit $ fromIntegral num_words
-        , d_stats  = lit stats
         }
-
 
   doUpdate_ conn $ Update
-    { target = documentSchema
+    { target = documentSchema'
     , from = pure ()
-    , set = const $ \d -> (update_doc d)
-        { d_domain = lit $ Just dom
-        , d_flags = lit $ mconcat
-            [ flagIf DisallowedByRobots $ not can_index
-            , flagIf IsProhibitedURI    $ not $ isAcceptableLink uri
-            , pol
-            ]
-        }
-    , updateWhere = const $ \d -> d_docId d ==. lit did
+    , set = const $ \d ->
+        let d' = update_doc d
+         in d'
+           { d_table = (d_table d')
+              { d_domain = lit $ Just dom
+              , d_flags = lit $ mconcat
+                  [ flagIf DisallowedByRobots $ not can_index
+                  , flagIf IsProhibitedURI    $ not $ isAcceptableLink uri
+                  , pol
+                  ]
+              }
+           }
+    , updateWhere = const $ \d -> d_docId (d_table d) ==. lit did
     , returning = pure ()
     }
 

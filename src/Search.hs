@@ -32,13 +32,20 @@ import           WaiAppStatic.Types (MaxAge(NoMaxAge))
 
 home :: Connection -> Handler (L.Html ())
 home conn = do
-  sizes <- liftIO $ do
-    Right sizes <- fmap (fmap M.fromList) $
-      doSelect conn $ do
-        aggregate $ do
-          d <- each documentSchema
-          pure (groupBy $ d_state d, countStar)
-    pure sizes
+  (disc_size, exp_size, prune_size) <- liftIO $ do
+    Right [exp_size] <-
+      doSelect conn $ countRows $ do
+        d <- each documentSchema
+        where_ $ d_flags d ==. lit mempty
+        pure ()
+    Right [disc_size] <-
+      doSelect conn $ countRows $ each discoverySchema
+    Right [prune_size] <-
+      doSelect conn $ countRows $ do
+        d <- each documentSchema
+        where_ $ d_flags d /=. lit mempty
+        pure ()
+    pure (disc_size, exp_size, prune_size)
   pure $
     L.html_ $ do
       L.head_ $ do
@@ -51,9 +58,11 @@ home conn = do
         L.div_ [L.class_ "metrics"] $ do
           L.span_ $ mconcat
             [ "Indexed: "
-            , L.toHtml (commafy $ show $ fromMaybe 0 (M.lookup Explored sizes))
+            , L.toHtml (commafy $ show exp_size)
             , " / Discovered: "
-            , L.toHtml (commafy $ show $ fromMaybe 0 (M.lookup Discovered sizes))
+            , L.toHtml (commafy $ show disc_size)
+            , " / Polution: "
+            , L.toHtml (commafy $ show prune_size)
             ]
 
 

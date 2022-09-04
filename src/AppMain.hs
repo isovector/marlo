@@ -2,7 +2,6 @@
 
 module AppMain where
 
-import           Data.Text (Text)
 import           Options.Applicative
 import qualified Search
 import qualified Spider
@@ -10,7 +9,6 @@ import qualified Tools.BackfillDistance
 import qualified Tools.BackfillPopularity
 import qualified Tools.BackfillRobotDirectives
 import qualified Tools.BatchTitles
-import qualified Tools.DumpFilestore
 import qualified Tools.ImportPopularity
 import qualified Tools.Purge
 import qualified Tools.Reindex
@@ -18,7 +16,7 @@ import qualified Tools.Reindex
 
 data Command
   = SearchC
-  | SpiderC (Maybe Text)
+  | SpiderC
   | PurgeC
   | ReindexC
   | BackfillDistanceC
@@ -26,7 +24,6 @@ data Command
   | ImportPopularityC FilePath
   | BackfillPopularityC
   | BackfillRobotRulesC
-  | DumpFilestore
   deriving (Eq, Ord, Show)
 
 
@@ -59,19 +56,11 @@ sub = subparser $ mconcat
   , command "backfill-robot-rules" $ info (pure BackfillRobotRulesC) $ mconcat
       [ progDesc "Backfill robots.txt rules"
       ]
-  , command "dump-filestore" $ info (pure DumpFilestore) $ mconcat
-      [ progDesc "Dump the old-style database into the newer filestore format"
-      ]
   ]
 
 
 parseSpider :: Parser Command
-parseSpider =
-  SpiderC
-    <$> optional (strOption $ mconcat
-          [ long "exclude"
-          , help "A sql LIKE pattern to exclude uris from being indexed"
-          ])
+parseSpider = pure SpiderC
 
 
 parseImportPopularity :: Parser Command
@@ -99,7 +88,7 @@ main :: IO ()
 main = do
   execParser commandParser >>= \case
      SearchC               -> Search.main
-     SpiderC exc           -> Spider.spiderMain exc
+     SpiderC               -> Spider.spiderMain
      PurgeC                -> Tools.Purge.main
      ReindexC              -> Tools.Reindex.main
      BackfillDistanceC     -> Tools.BackfillDistance.main
@@ -107,5 +96,4 @@ main = do
      BackfillPopularityC   -> Tools.BackfillPopularity.main
      RebuildTitlesC        -> Tools.BatchTitles.main
      BackfillRobotRulesC   -> Tools.BackfillRobotDirectives.main
-     DumpFilestore         -> Tools.DumpFilestore.main
 

@@ -43,6 +43,8 @@ instance (Ord a, Bounded a, Enum a) => DBType (BitMask a) where
     , typeName = "int8"
     }
 
+instance (Ord a, Bounded a, Enum a) => DBEq (BitMask a)
+
 
 fromBitMask :: forall a. (Ord a, Enum a, Bounded a) => Integer -> BitMask a
 fromBitMask

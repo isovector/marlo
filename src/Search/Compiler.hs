@@ -32,7 +32,7 @@ compileSearch q = orderBy ((sr_ranking >$< asc) <> (sr_id >$< asc)) $ do
     , sr_popularity = maybeTable null id popularity
     , sr_id      = d_docId t
     , sr_uri     = d_uri   t
-    , sr_size    = function "length" $ pc_content $ d_page t
+    , sr_size    = d_wordCount t
     , sr_title   = d_title t
     , sr_stats   = d_stats t
     }
@@ -58,7 +58,7 @@ compile' (Or lhs rhs) = merge TsqOr union (compile' lhs) (compile' rhs)
 compile' (SiteLike t) = Full $ do
   d <- each documentSchema'
   where_ $ like (lit $ "%" <> t <> "%") (d_uri $ d_table d)
-       &&. d_state (d_table d) ==. lit Explored
+       &&. d_flags (d_table d) ==. lit mempty
   pure d
 compile' (WithProperty prop op) = Full $ do
   d <- each documentSchema'
@@ -93,7 +93,7 @@ matching :: Tsquery -> Query (Document' Expr)
 matching q = do
   d <- each documentSchema'
   where_ $ match (d_search d) (lit q)
-       &&. d_state (d_table d) ==. lit Explored
+       &&. d_flags (d_table d) ==. lit mempty
   pure d
 
 
