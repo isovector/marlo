@@ -89,15 +89,19 @@ getDocByCanonicalUri conn (T.pack . show -> uri) = do
     Just doc -> pure $ Right doc
     Nothing -> do
       Right [doc] <- doInsert conn $ Insert
-        { into = documentSchema
+        { into = documentSchema'
         , rows = do
             did <- nextDocId
-            pure $ (lit emptyDoc)
-              { d_docId = did
-              , d_uri   = lit uri
+            pure $ Document'
+              { d_table = (lit emptyDoc)
+                { d_docId = did
+                , d_uri   = lit uri
+                }
+              , d_doc_text = lit ""
+              , d_search = lit $ Tsvector []
               }
         , onConflict = DoNothing
-        , returning  = Projection d_docId
+        , returning  = Projection $ d_docId . d_table
         }
       pure $ Left doc
 

@@ -1,8 +1,9 @@
 module Network.HttpUtils where
 
 import           Control.Applicative (empty, (<|>))
+import           Control.Concurrent.Async (runConcurrently, Concurrently (..))
 import           Control.Monad (void)
-import           Data.Foldable (asum)
+import           Data.Monoid (First (..))
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8')
 import           Marlo.Manager (marloManager)
@@ -51,9 +52,13 @@ determineHttpsAvailability uri = do
             maybe empty pure
               $ parseURI =<< (hush $ fmap T.unpack $ decodeUtf8' bs)
 
-  asum
-    [ Just <$> check https
-    , Just <$> check http
-    , pure Nothing
-    ]
+
+  fmap getFirst
+    . runConcurrently
+    . fmap (foldMap First)
+    $ traverse Concurrently
+        [ Just <$> check https
+        , Just <$> check http
+        , pure Nothing
+        ]
 

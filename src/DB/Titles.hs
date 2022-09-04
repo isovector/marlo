@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS title_segs (
 CREATE SEQUENCE title_edge_id_seq;
 CREATE TABLE IF NOT EXISTS title_edges (
   id int8 PRIMARY KEY,
-  doc int8 NOT NULL REFERENCES discovery(doc_id) ON DELETE CASCADE,
+  doc int8 NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   seg int8 NOT NULL REFERENCES title_segs(id) ON DELETE CASCADE
 );
 

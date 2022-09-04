@@ -1,8 +1,8 @@
 {-
 
 CREATE TABLE IF NOT EXISTS edges (
-  src int8 NOT NULL REFERENCES discovery(doc_id) ON DELETE CASCADE,
-  dst int8 NOT NULL REFERENCES discovery(doc_id) ON DELETE CASCADE,
+  src int8 NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  dst int8 NOT NULL REFERENCES discovery(id) ON DELETE CASCADE,
   PRIMARY KEY (src, dst)
 );
 

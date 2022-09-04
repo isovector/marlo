@@ -9,9 +9,10 @@ CREATE TABLE IF NOT EXISTS documents (
 
   title TEXT NOT NULL,
   search tsvector NOT NULL,
-  doc_text TEXT NOT NULL.
+  flags int8 not null;
+  word_count int4 NOT NULL,
+  doc_text TEXT NOT NULL,
 
-  state VARCHAR(16) NOT NULL,
   distance int2[] NOT NULL,
   js int4 NOT NULL,
   css int4 NOT NULL,
@@ -20,11 +21,9 @@ CREATE TABLE IF NOT EXISTS documents (
   cookies bool NOT NULL
 );
 
-CREATE INDEX depth_idx ON documents (depth);
-
-CREATE INDEX doc_length_idx ON documents (length(content));
-
+CREATE INDEX distance_idx ON documents (distance);
 CREATE INDEX search_idx ON documents USING GIN (search);
+CREATE INDEX doc_uri_idx ON documents (uri);
 
 -}
 

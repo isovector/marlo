@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   depth int4 NOT NULL,
   dead bool NOT NULL,
   resolved_at timestamptz,
-  canonical int8
+  canonical int8 REFERENCES documents(id) ON DELETE CASCADE
 );
 
 -}
