@@ -76,7 +76,6 @@ incomingDepth did = aggregate $ do
   pure $ Rel8.min $ disc_depth disc
 
 
-
 getDocByCanonicalUri
     :: Connection
     -> URI
