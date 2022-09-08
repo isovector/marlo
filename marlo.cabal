@@ -49,6 +49,7 @@ library
       Domains
       Integration.Alexa
       Keywords
+      Lasercutter.HTML
       Marlo.Filestore
       Marlo.Manager
       Marlo.Robots
@@ -78,7 +79,6 @@ library
       Tools.BackfillPopularity
       Tools.BackfillRobotDirectives
       Tools.BatchTitles
-      Tools.DumpFilestore
       Tools.ImportPopularity
       Tools.Purge
       Tools.Reindex
@@ -172,6 +172,8 @@ library
     , http-client
     , http-client-tls
     , http-types
+    , lasercutter
+    , lattices
     , lens
     , linear
     , lucid
@@ -292,6 +294,8 @@ executable marlo
     , http-client
     , http-client-tls
     , http-types
+    , lasercutter
+    , lattices
     , lens
     , linear
     , lucid
@@ -418,6 +422,8 @@ test-suite marlo-tests
     , http-client
     , http-client-tls
     , http-types
+    , lasercutter
+    , lattices
     , lens
     , linear
     , lucid

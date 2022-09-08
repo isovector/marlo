@@ -74,6 +74,8 @@ dependencies:
 - zlib
 - transformers
 - deepseq
+- lasercutter
+- lattices
 
 ghc-options:
 - -Wall

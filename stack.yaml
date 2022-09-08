@@ -16,4 +16,5 @@ extra-deps:
 - streaming-with-0.3.0.0@sha256:5d1637de1023aa2bb3fac5999f4c915afdbf702c81461b54ebfcc9749a372c46,1298
 - robots-txt-0.4.1.7@sha256:fc4308ea1076b8b868fa52f26aafbefc5281ed90a893515a37b1aeebffeab04e,1629
 - algebraic-graphs-0.7
+- lasercutter-0.1.0.0
 
