@@ -12,7 +12,7 @@ module Lasercutter.HTML
 
 import           Algebra.Heyting
 import           Algebra.Lattice ((/\), (\/))
-import           Data.Maybe (maybeToList, listToMaybe, isJust)
+import           Data.Maybe (maybeToList, listToMaybe, isJust, fromMaybe)
 import           Data.Proxy
 import           Data.Set (Set)
 import qualified Data.Set as S
@@ -24,6 +24,9 @@ import           GHC.TypeLits (symbolVal, KnownSymbol)
 import           Lasercutter
 import           Text.HTML.TagSoup
 import           Text.HTML.TagSoup.Tree
+import Data.Bool (bool)
+import Data.Tree
+import Text.HTML.TagSoup.PermissiveTree (parsePermissiveTree)
 
 type Html = TagTree Text
 type HtmlParser = Parser (Set Text) (TagTree Text)
@@ -83,9 +86,15 @@ texts :: HtmlParser [Text]
 texts = targetMap getText
 
 
-contentTexts :: HtmlParser [Text]
-contentTexts
-  = fmap catMaybes
+flattenedText :: HtmlParser Text
+flattenedText
+  = fmap (T.intercalate " " . filter (not . T.null) . fmap T.strip)
+  $ texts
+
+
+contentText :: HtmlParser Text
+contentText
+  = fmap (T.intercalate " " . filter (not . T.null) . fmap T.strip . catMaybes)
   $ target isText
   $ ifS isContentNode (proj getText) (pure Nothing)
 
@@ -188,9 +197,31 @@ example =
       ]
     ]
 
+scrape :: HtmlParser a -> [Html] -> [a]
+scrape = mapMaybe . flip (runParser summarize)
 
-main :: IO ()
-main = print $ runParser summarize example $ sequenceA
-  [ match (".main" \/ #lorem) innerHtml
-  ]
+failIfEmpty :: HtmlParser Text -> HtmlParser Text
+failIfEmpty
+  = mapMaybe
+  $ \t -> bool Nothing (Just t) $ not $ T.null t
+
+
+-- main :: IO ()
+-- main = print $ runParser summarize example $ failIfEmpty $ asum [pure "yo"]
+
+foldHtml :: Html -> Maybe (Tree Text)
+foldHtml (TagBranch txt _ tts) = Just $ Node txt $ mapMaybe foldHtml tts
+foldHtml (TagLeaf (TagOpen txt _)) = Just $ Node txt []
+foldHtml (TagLeaf (TagText (T.strip -> txt)))
+  | T.null txt
+  = Nothing
+  | otherwise
+  = Just $ Node (T.pack $ show $ T.take 40 $ T.strip txt) []
+foldHtml _ = Nothing
+
+debugTree :: Html -> String
+debugTree = fromMaybe "" . fmap drawTree . fmap (fmap T.unpack) . foldHtml
+
+debugForest :: [Html] -> String
+debugForest = drawForest . fmap (fmap T.unpack) . catMaybes . fmap foldHtml
 

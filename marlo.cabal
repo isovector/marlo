@@ -53,6 +53,7 @@ library
       Marlo.Filestore
       Marlo.Manager
       Marlo.Robots
+      Marlo.ScrapeContent
       Marlo.TitleSegs
       Network.HttpUtils
       Rel8.Arrays
