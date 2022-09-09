@@ -197,8 +197,13 @@ example =
       ]
     ]
 
-scrape :: HtmlParser a -> [Html] -> [a]
-scrape = mapMaybe . flip (runParser summarize)
+scrape :: HtmlParser a -> [Html] -> Maybe a
+scrape p
+  = flip (runParser summarize) p
+  . TagBranch "" []
+
+expectSome :: HtmlParser [a] -> HtmlParser [a]
+expectSome p = expect $ ifS (fmap null p) (pure Nothing) (fmap Just p)
 
 failIfEmpty :: HtmlParser Text -> HtmlParser Text
 failIfEmpty

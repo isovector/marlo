@@ -2,23 +2,21 @@
 
 module Text.HTML.TagSoup.PermissiveTree where
 
-import Data.List.NonEmpty (NonEmpty(..))
+import           Control.Monad (when, void)
+import           Control.Monad.State (State, evalState, modify, gets)
+import           Data.Foldable (asum, toList)
+import           Data.List (findIndices)
+import           Data.Maybe
+import           Data.Set (Set)
 import qualified Data.Set as S
-import Data.Set (Set)
-import Text.HTML.TagSoup
-import Text.HTML.TagSoup.Tree
-import Text.StringLike (StringLike)
-import Text.Megaparsec hiding (State)
-import Data.Text (Text)
-import Data.Void (Void)
-import Data.Tree
+import           Data.Text (Text)
 import qualified Data.Text as T
-import Data.Maybe
-import Data.Foldable (asum, toList, find)
-import Control.Monad.State (State, evalState, runState, modify, gets, StateT, evalStateT)
-import Control.Monad (when, void)
-import Data.List (findIndices)
-import Debug.Trace (traceM)
+import           Data.Tree
+import           Data.Void (Void)
+import           Text.HTML.TagSoup
+import           Text.HTML.TagSoup.Tree
+import           Text.Megaparsec hiding (State)
+
 
 type Html = TagTree Text
 

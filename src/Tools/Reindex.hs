@@ -4,13 +4,13 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.Foldable (traverse_)
-import           Data.Maybe (fromMaybe)
+import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import qualified Data.Text.IO as T
 import           GHC.Stack (HasCallStack)
 import           Lasercutter
-import           Lasercutter.HTML (scrape, match, contentText, html, (/\), targetOne, debugTree, debugForest)
+import           Lasercutter.HTML (scrape, match, contentText, html, (/\), targetOne, debugTree, debugForest, (\/), text, expectSome, flattenedText)
 import           Marlo.Filestore (streamFilestore)
 import           Marlo.ScrapeContent (mainContent, headingsContent)
 import           Network.HttpUtils (determineHttpsAvailability)
@@ -41,7 +41,12 @@ reindex' _ _ fs = do
   let Just tt = parsePermissiveTree $ z
   -- print (fs_uri fs)
   putStrLn $ debugForest tt
-  print $ scrape headingsContent tt
+  print $ fmap trimTree tt
+  print $ scrape (fmap (T.intercalate " ") $ match ("h1" \/ "h2") flattenedText) tt
+
+trimTree :: TagTree T.Text -> TagTree T.Text
+trimTree (TagBranch txt x0 _) = TagBranch txt x0 []
+trimTree z = z
 
 
 canonicalizing :: Connection -> Filestore -> IO (Maybe (DocId, Filestore))
