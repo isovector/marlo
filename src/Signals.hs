@@ -282,6 +282,7 @@ forbidSites =
   , "yahoo.com"
   , "youtu.be"
   , "youtube.com"
+  , "zoom.us"
   ]
 
 
