@@ -6,6 +6,7 @@ import           Control.Monad (void, join)
 import           Data.Monoid (First (..))
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8')
+import           GHC.Stack (HasCallStack)
 import           Marlo.Manager (marloManager)
 import           Network.HTTP.Client
 import           Network.HTTP.Types (statusCode, hLocation)
@@ -13,21 +14,21 @@ import           Network.URI
 import           Utils
 
 
-mkHEADRequest :: String ->  IO Request
+mkHEADRequest :: HasCallStack => String ->  IO Request
 mkHEADRequest = parseRequest . mappend "HEAD "
 
-doHEADRequest :: String -> IO (Response ())
+doHEADRequest :: HasCallStack => String -> IO (Response ())
 doHEADRequest turi = do
   req <- mkHEADRequest turi
   flip httpNoBody marloManager req
 
 
-determineHttpsAvailability :: URI -> IO (Maybe URI)
+determineHttpsAvailability :: HasCallStack => URI -> IO (Maybe URI)
 determineHttpsAvailability uri = fmap join $ optional $ do
   let https = uri { uriScheme = "https:" }
   let http  = uri { uriScheme = "http:" }
 
-  let check :: URI -> IO (Maybe URI)
+  let check :: HasCallStack => URI -> IO (Maybe URI)
       check u = fmap join $ optional $ do
         rq <- mkHEADRequest $ show u
         rh <- fmap void $ withResponseHistory rq marloManager pure

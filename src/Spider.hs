@@ -34,6 +34,7 @@ import           Rel8.TextSearch
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
+import GHC.Stack (HasCallStack)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -45,7 +46,8 @@ nextToExplore = limit 1 $ orderBy random $ do
 
 
 getCanonicalUri
-    :: Connection
+    :: HasCallStack
+    => Connection
     -> URI
     -> IO (Maybe (Download Maybe ByteString, URI))
 getCanonicalUri conn uri = do
@@ -78,7 +80,8 @@ incomingDepth did = aggregate $ do
 
 
 getDocByCanonicalUri
-    :: Connection
+    :: HasCallStack
+    => Connection
     -> URI
     -> IO (Either DocId (Document Identity))
 getDocByCanonicalUri conn (T.pack . show -> uri) = do
@@ -108,7 +111,7 @@ getDocByCanonicalUri conn (T.pack . show -> uri) = do
       pure $ Left doc
 
 
-discover :: Connection -> Discovery Identity -> IO ()
+discover :: HasCallStack => Connection -> Discovery Identity -> IO ()
 discover conn disc = do
   mcandl <- getCanonicalUri conn (unsafeURI $ T.unpack $ disc_uri disc)
   putStrLn $ "canonical: " <> show (fmap snd mcandl)
@@ -151,7 +154,7 @@ markDiscovered mdoc f =
     }
 
 
-reindex :: Connection -> DocId -> Filestore -> IO ()
+reindex :: HasCallStack => Connection -> DocId -> Filestore -> IO ()
 reindex conn did fs = void $ optional $ do
   let uri = fs_uri fs
       run = runRankerFS conn fs
@@ -257,7 +260,7 @@ insertEdges conn did depth ls = do
   pure ()
 
 
-spiderMain :: IO ()
+spiderMain :: HasCallStack => IO ()
 spiderMain = do
   Right conn <- connect
   z <- doInsert conn rootNodes
