@@ -1,6 +1,6 @@
 module Network.HttpUtils where
 
-import           Control.Applicative (empty, (<|>))
+import           Control.Applicative ((<|>))
 import           Control.Concurrent.Async (runConcurrently, Concurrently (..))
 import           Control.Monad (void)
 import           Data.Monoid (First (..))
@@ -32,24 +32,24 @@ determineHttpsAvailability uri = do
         rq <- mkHEADRequest $ show u
         rh <- fmap void $ withResponseHistory rq marloManager pure
         let hd = hrFinalResponse rh
-        case statusCode $ responseStatus hd of
-          200 -> locationHeader hd <|> pure (Just $ getUri $ hrFinalRequest rh)
+        pure $ case statusCode $ responseStatus hd of
+          200 -> locationHeader hd <|> (Just $ getUri $ hrFinalRequest rh)
           300 -> locationHeader hd
           301 -> locationHeader hd
           302 -> locationHeader hd
-          307 -> pure Nothing  -- too hard to deal with temporary redirects
+          307 -> Nothing  -- too hard to deal with temporary redirects
           308 -> locationHeader hd
-          403 -> pure Nothing
-          404 -> pure Nothing
+          403 -> Nothing
+          404 -> Nothing
           -- one day support 500s to retry later
-          _   -> pure Nothing
+          _   -> Nothing
 
-      locationHeader :: Response () -> IO (Maybe URI)
+      locationHeader :: Response () -> Maybe URI
       locationHeader hd =
         case lookup hLocation $ responseHeaders hd of
-          Nothing -> pure Nothing
+          Nothing -> Nothing
           Just bs ->
-            pure $ parseURI =<< (hush $ fmap T.unpack $ decodeUtf8' bs)
+            parseURI =<< (hush $ fmap T.unpack $ decodeUtf8' bs)
 
 
   fmap getFirst
