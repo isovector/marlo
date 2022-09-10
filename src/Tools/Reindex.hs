@@ -1,5 +1,7 @@
 module Tools.Reindex where
 
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Maybe
 import           DB
 import           Data.Maybe (fromMaybe)
 import           Data.Text.Encoding (decodeUtf8)
@@ -18,16 +20,17 @@ main = do
   S.effects
     $ S.mapM (uncurry $ reindex conn)
     $ S.mapM (\x -> print (fs_uri $ snd x) >> pure x)
-    $ S.mapM (canonicalizing conn)
+    $ S.mapMaybeM (canonicalizing conn)
     $ streamFilestore
 
 
-canonicalizing :: Connection -> Filestore -> IO (DocId, Filestore)
+canonicalizing :: Connection -> Filestore -> IO (Maybe (DocId, Filestore))
 canonicalizing conn fs = do
   let uri = fs_uri fs
   uri'  <- runRanker (Env uri conn) (decodeUtf8 $ fs_data fs) canonical
-  Just uri'' <- determineHttpsAvailability $ fromMaybe uri uri'
-  doc <- getDocByCanonicalUri conn uri''
-  let did = either id d_docId doc
-  pure (did, fs { fs_uri = uri })
+  runMaybeT $ do
+    uri'' <- MaybeT $ determineHttpsAvailability $ fromMaybe uri uri'
+    doc <- liftIO $ getDocByCanonicalUri conn uri''
+    let did = either id d_docId doc
+    pure (did, fs { fs_uri = uri })
 

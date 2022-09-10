@@ -6,13 +6,11 @@ CREATE TABLE IF NOT EXISTS documents (
   id int8 PRIMARY KEY,
   domain int8 REFERENCES domains(id),
   uri TEXT UNIQUE NOT NULL,
-
   title TEXT NOT NULL,
   search tsvector NOT NULL,
-  flags int8 not null;
+  flags int8 not null,
   word_count int4 NOT NULL,
   doc_text TEXT NOT NULL,
-
   distance int2[] NOT NULL,
   js int4 NOT NULL,
   css int4 NOT NULL,

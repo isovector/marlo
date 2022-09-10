@@ -81,10 +81,11 @@ getDocByCanonicalUri
     -> URI
     -> IO (Either DocId (Document Identity))
 getDocByCanonicalUri conn (T.pack . show -> uri) = do
-  Right res <- fmap (fmap listToMaybe) $ doSelect conn $ do
+  z <- fmap (fmap listToMaybe) $ doSelect conn $ do
     d <- each documentSchema
     where_ $ d_uri d ==. lit uri
     pure d
+  let Right res = z
   case res of
     Just doc -> pure $ Right doc
     Nothing -> do

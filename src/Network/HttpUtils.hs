@@ -27,38 +27,37 @@ determineHttpsAvailability uri = do
   let https = uri { uriScheme = "https:" }
   let http  = uri { uriScheme = "http:" }
 
-  let check :: URI -> IO URI
+  let check :: URI -> IO (Maybe URI)
       check u = do
         rq <- mkHEADRequest $ show u
         rh <- fmap void $ withResponseHistory rq marloManager pure
         let hd = hrFinalResponse rh
         case statusCode $ responseStatus hd of
-          200 -> locationHeader hd <|> pure (getUri $ hrFinalRequest rh)
+          200 -> locationHeader hd <|> pure (Just $ getUri $ hrFinalRequest rh)
           300 -> locationHeader hd
           301 -> locationHeader hd
           302 -> locationHeader hd
-          307 -> empty  -- too hard to deal with temporary redirects
+          307 -> pure Nothing  -- too hard to deal with temporary redirects
           308 -> locationHeader hd
-          403 -> empty
-          404 -> empty
+          403 -> pure Nothing
+          404 -> pure Nothing
           -- one day support 500s to retry later
-          _   -> empty
+          _   -> pure Nothing
 
-      locationHeader :: Response () -> IO URI
+      locationHeader :: Response () -> IO (Maybe URI)
       locationHeader hd =
         case lookup hLocation $ responseHeaders hd of
-          Nothing -> empty
+          Nothing -> pure Nothing
           Just bs ->
-            maybe empty pure
-              $ parseURI =<< (hush $ fmap T.unpack $ decodeUtf8' bs)
+            pure $ parseURI =<< (hush $ fmap T.unpack $ decodeUtf8' bs)
 
 
   fmap getFirst
     . runConcurrently
     . fmap (foldMap First)
     $ traverse Concurrently
-        [ Just <$> check https
-        , Just <$> check http
+        [ check https
+        , check http
         , pure Nothing
         ]
 
