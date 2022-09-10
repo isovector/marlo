@@ -6,7 +6,6 @@ import           API
 import           Config
 import           Control.Monad.IO.Class (liftIO)
 import           DB
-import qualified Data.Map as M
 import           Data.Maybe (fromMaybe)
 import           Data.Proxy
 import           Data.Text (Text)

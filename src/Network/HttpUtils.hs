@@ -28,7 +28,7 @@ determineHttpsAvailability uri = fmap join $ optional $ do
   let http  = uri { uriScheme = "http:" }
 
   let check :: URI -> IO (Maybe URI)
-      check u = do
+      check u = fmap join $ optional $ do
         rq <- mkHEADRequest $ show u
         rh <- fmap void $ withResponseHistory rq marloManager pure
         let hd = hrFinalResponse rh
