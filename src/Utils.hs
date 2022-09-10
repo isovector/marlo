@@ -12,6 +12,7 @@ module Utils
 import           Control.Applicative ((<|>))
 import           Control.Arrow (first)
 import           Control.DeepSeq (force, NFData)
+import           Control.Exception
 import           Control.Monad.Reader
 import           DB
 import           Data.ByteString (ByteString)
@@ -164,4 +165,8 @@ titleSegs
   . concatMap (T.splitOn ". ")
   . concatMap (T.splitOn " - ")
   . T.split (flip elem [';', ':', '|', '·', '«', '»', '∷', '>', '<', '\8211' ])
+
+
+tryIO :: IO a -> IO (Maybe a)
+tryIO m = catch (fmap Just m) $ \(SomeException{}) -> pure Nothing
 

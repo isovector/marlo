@@ -1,6 +1,6 @@
 module Network.HttpUtils where
 
-import           Control.Applicative ((<|>), optional)
+import           Control.Applicative ((<|>))
 import           Control.Concurrent.Async (runConcurrently, Concurrently (..))
 import           Control.Monad (void, join)
 import           Data.Monoid (First (..))
@@ -24,12 +24,12 @@ doHEADRequest turi = do
 
 
 determineHttpsAvailability :: HasCallStack => URI -> IO (Maybe URI)
-determineHttpsAvailability uri = fmap join $ optional $ do
+determineHttpsAvailability uri = fmap join $ tryIO $ do
   let https = uri { uriScheme = "https:" }
   let http  = uri { uriScheme = "http:" }
 
   let check :: HasCallStack => URI -> IO (Maybe URI)
-      check u = fmap join $ optional $ do
+      check u = fmap join $ tryIO $ do
         rq <- mkHEADRequest $ show u
         rh <- fmap void $ withResponseHistory rq marloManager pure
         let hd = hrFinalResponse rh

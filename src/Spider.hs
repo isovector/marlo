@@ -7,7 +7,6 @@
 
 module Spider where
 
-import           Control.Applicative (optional)
 import           Control.Exception
 import           Control.Monad (forever, void)
 import           Control.Monad.IO.Class (liftIO)
@@ -21,6 +20,7 @@ import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime)
 import           Data.Traversable (for)
 import           Domains (getDomain)
+import           GHC.Stack (HasCallStack)
 import           Marlo.Filestore (writeFilestore)
 import           Marlo.Robots
 import           Marlo.TitleSegs (buildTitleSegs)
@@ -33,8 +33,7 @@ import           Rel8.StateMask
 import           Rel8.TextSearch
 import           Signals
 import           Types
-import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
-import GHC.Stack (HasCallStack)
+import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS, tryIO)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -155,7 +154,7 @@ markDiscovered mdoc f =
 
 
 reindex :: HasCallStack => Connection -> DocId -> Filestore -> IO ()
-reindex conn did fs = void $ optional $ do
+reindex conn did fs = void $ tryIO $ do
   let uri = fs_uri fs
       run = runRankerFS conn fs
 
