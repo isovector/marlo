@@ -134,14 +134,19 @@ discover conn disc = do
           reindex conn did fs
           pure did
 
-  doUpdate_ conn $ Update
+  doUpdate_ conn $ markDiscovered mcandoc $ \d -> disc_id d ==. lit (disc_id disc)
+
+
+markDiscovered :: Maybe DocId -> (Discovery Expr -> Expr Bool) -> Update ()
+markDiscovered mdoc f =
+    Update
     { target = discoverySchema
     , from = pure ()
     , set = const $ \d ->
-        case mcandoc of
+        case mdoc of
           Nothing -> d { disc_dead = lit True }
           Just docid -> d { disc_canonical = lit $ Just docid }
-    , updateWhere = const $ \d -> disc_id d ==. lit (disc_id disc)
+    , updateWhere = const f
     , returning = pure ()
     }
 
