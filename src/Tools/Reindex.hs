@@ -29,20 +29,19 @@ main = do
   Right conn <- connect
   S.effects
     $ S.mapM (uncurry $ reindex' conn)
-    $ S.mapM (\x -> print (fs_uri $ snd x) >> pure x)
+    -- $ S.mapM (\x -> print (fs_uri $ snd x) >> pure x)
     $ S.mapMaybeM (canonicalizing conn)
-    $ S.take 2
-    $ S.drop 29
+    $ S.take 30
     $ streamFilestore
 
 reindex' :: HasCallStack => Connection -> DocId -> Filestore -> IO ()
 reindex' _ _ fs = do
-  z <- T.readFile "local-data/ssc.html"
-  let Just tt = parsePermissiveTree $ z
+  -- z <- T.readFile "local-data/ssc.html"
+  let Just tt = parsePermissiveTree $ decodeUtf8 $ fs_data fs
   -- print (fs_uri fs)
-  putStrLn $ debugForest tt
-  print $ fmap trimTree tt
-  print $ scrape (fmap (T.intercalate " ") $ match ("h1" \/ "h2") flattenedText) tt
+  -- putStrLn $ debugForest tt
+  -- print $ fmap trimTree tt
+  print $ scrape rankContent tt
 
 trimTree :: TagTree T.Text -> TagTree T.Text
 trimTree (TagBranch txt x0 _) = TagBranch txt x0 []
@@ -51,10 +50,11 @@ trimTree z = z
 
 canonicalizing :: Connection -> Filestore -> IO (Maybe (DocId, Filestore))
 canonicalizing conn fs = do
-  let uri = fs_uri fs
-  uri'  <- runRanker (Env uri conn) (decodeUtf8 $ fs_data fs) canonical
-  runMaybeT $ do
-    uri'' <- MaybeT $ determineHttpsAvailability $ fromMaybe uri uri'
-    doc <- liftIO $ getDocByCanonicalUri conn uri''
-    let did = either id d_docId doc
-    pure (did, fs { fs_uri = uri })
+  -- let uri = fs_uri fs
+  pure $ Just (undefined, fs)
+  -- uri'  <- runRanker (Env uri conn) (decodeUtf8 $ fs_data fs) canonical
+  -- runMaybeT $ do
+  --   uri'' <- MaybeT $ determineHttpsAvailability $ fromMaybe uri uri'
+  --   doc <- liftIO $ getDocByCanonicalUri conn uri''
+  --   let did = either id d_docId doc
+  --   pure (did, fs { fs_uri = uri })

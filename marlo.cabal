@@ -76,6 +76,7 @@ library
       Signals.Listicle
       Signals.ReactsTo
       Spider
+      Text.HTML.TagSoup.PermissiveTree
       Tools.BackfillDistance
       Tools.BackfillPopularity
       Tools.BackfillRobotDirectives

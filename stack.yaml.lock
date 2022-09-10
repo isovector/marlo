@@ -74,13 +74,6 @@ packages:
       sha256: 5caf69702b46f7be7744f357bc59bd56c0ae61a1addfcfc3b10b289629deb3db
   original:
     hackage: algebraic-graphs-0.7
-- completed:
-    hackage: lasercutter-0.1.0.0@sha256:4a08708dee89adb0b75f0e0415296992f147469efe04c6b5c3269cf74d279871,3686
-    pantry-tree:
-      size: 675
-      sha256: 34cc647e5afb774feb82ce549734651eb5e302148a1c3d341806f333cce89d6b
-  original:
-    hackage: lasercutter-0.1.0.0
 snapshots:
 - completed:
     size: 586286

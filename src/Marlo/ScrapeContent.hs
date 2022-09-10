@@ -35,10 +35,7 @@ mainContent
 headingsContent :: HtmlParser Text
 headingsContent
   = fmap (T.intercalate " ")
-  $ fmap (filter $ not . T.null)
-  $ liftA2 (<>)
-      <$> match "h1" text
-      <*> match "h2" text
+  $ match ("h1" \/ "h2") flattenedText
 
 
 commentsContent :: HtmlParser Text
