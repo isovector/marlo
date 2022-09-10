@@ -7,8 +7,9 @@
 
 module Spider where
 
+import           Control.Applicative (optional)
 import           Control.Exception
-import           Control.Monad (forever)
+import           Control.Monad (forever, void)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
@@ -26,13 +27,13 @@ import           Marlo.TitleSegs (buildTitleSegs)
 import           Network.HttpUtils (determineHttpsAvailability)
 import           Network.URI (URI)
 import           Prelude hiding (max)
-import           Rel8 hiding (sum, filter, bool, index)
+import           Rel8 hiding (sum, filter, bool, index, optional)
 import           Rel8.Headers (headersToHeaders)
+import           Rel8.StateMask
 import           Rel8.TextSearch
 import           Signals
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS)
-import Rel8.StateMask
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -146,7 +147,7 @@ discover conn disc = do
 
 
 reindex :: Connection -> DocId -> Filestore -> IO ()
-reindex conn did fs = do
+reindex conn did fs = void $ optional $ do
   let uri = fs_uri fs
       run = runRankerFS conn fs
 
