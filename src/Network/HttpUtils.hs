@@ -1,8 +1,8 @@
 module Network.HttpUtils where
 
-import           Control.Applicative ((<|>))
+import           Control.Applicative ((<|>), optional)
 import           Control.Concurrent.Async (runConcurrently, Concurrently (..))
-import           Control.Monad (void)
+import           Control.Monad (void, join)
 import           Data.Monoid (First (..))
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8')
@@ -23,7 +23,7 @@ doHEADRequest turi = do
 
 
 determineHttpsAvailability :: URI -> IO (Maybe URI)
-determineHttpsAvailability uri = do
+determineHttpsAvailability uri = fmap join $ optional $ do
   let https = uri { uriScheme = "https:" }
   let http  = uri { uriScheme = "http:" }
 
