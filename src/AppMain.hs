@@ -18,13 +18,12 @@ data Command
   = SearchC
   | SpiderC
   | PurgeC
-  | ReindexC
+  | ReindexC (IO (Maybe Int))
   | BackfillDistanceC
   | RebuildTitlesC
   | ImportPopularityC FilePath
   | BackfillPopularityC
   | BackfillRobotRulesC
-  deriving (Eq, Ord, Show)
 
 
 sub :: Parser Command
@@ -38,7 +37,7 @@ sub = subparser $ mconcat
   , command "purge" $ info (pure PurgeC) $ mconcat
       [ progDesc "Prune webpages that are now excluded by filter rules"
       ]
-  , command "reindex" $ info (pure ReindexC) $ mconcat
+  , command "reindex" $ info (helper <*> parseReindex) $ mconcat
       [ progDesc "Reindex every explored site"
       ]
   , command "batch-titles" $ info (pure RebuildTitlesC) $ mconcat
@@ -61,6 +60,13 @@ sub = subparser $ mconcat
 
 parseSpider :: Parser Command
 parseSpider = pure SpiderC
+
+parseReindex :: Parser Command
+parseReindex = ReindexC
+    <$> (flag (pure Nothing) (fmap (\x -> seq x (Just $ read x)) $! readFile "/tmp/marlo-reindex")  $ mconcat
+          [ help "Path to the unzipped https://statvoo.com/dl/top-1million-sites.csv.zip"
+          , long "continue"
+          ])
 
 
 parseImportPopularity :: Parser Command
@@ -90,7 +96,7 @@ main = do
      SearchC               -> Search.main
      SpiderC               -> Spider.spiderMain
      PurgeC                -> Tools.Purge.main
-     ReindexC              -> Tools.Reindex.main
+     ReindexC resume       -> Tools.Reindex.main =<< resume
      BackfillDistanceC     -> Tools.BackfillDistance.main
      ImportPopularityC csv -> Tools.ImportPopularity.main csv
      BackfillPopularityC   -> Tools.BackfillPopularity.main

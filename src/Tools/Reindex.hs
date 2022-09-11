@@ -16,13 +16,16 @@ import           Types
 import           Utils (runRanker)
 
 
-main :: IO ()
-main = do
+main :: Maybe Int -> IO ()
+main start = do
   Right conn <- connect
   S.effects
     $ S.mapM (uncurry $ reindex conn)
     $ S.mapM (\x -> print (fs_uri $ snd x) >> pure x)
     $ S.mapMaybeM (canonicalizing conn)
+    $ S.mapM (\(ix, a) -> writeFile "/tmp/marlo-reindex" (show @Integer ix) >> pure a)
+    $ S.drop (maybe 0 (+1) start)
+    $ S.zip (S.each [0..])
     $ streamFilestore
 
 
