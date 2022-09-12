@@ -72,8 +72,10 @@ library
       Search.Traditional
       Servant.StreamingUtil
       Signals
+      Signals.AcceptableURI
       Signals.Listicle
       Signals.ReactsTo
+      Signals.Schema
       Spider
       Tools.BackfillDistance
       Tools.BackfillPopularity
