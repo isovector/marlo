@@ -35,9 +35,10 @@ isEmpty = S.null . getBitMask
 instance (Ord a, Bounded a, Enum a) => DBType (BitMask a) where
   typeInformation = TypeInformation
     { encode = \(BitMask s)
-         -> foldr (BinExpr (:+))
-              (ConstExpr $ IntegerLit 0)
-          $ fmap (ConstExpr . IntegerLit . toBitMask)
+         -> ConstExpr
+          $ IntegerLit
+          $ Prelude.sum
+          $ fmap toBitMask
           $ S.toList s
     , decode = fmap (fromBitMask . fromIntegral) int8
     , typeName = "int8"
