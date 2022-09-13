@@ -24,6 +24,8 @@ import           GHC.TypeLits (symbolVal, KnownSymbol)
 import           Lasercutter
 import           Text.HTML.TagSoup
 import           Text.HTML.TagSoup.Tree
+import Control.Applicative (Alternative)
+import Data.Bool (bool)
 
 type Html = TagTree Text
 type HtmlParser = Parser (Set Text) (TagTree Text)
@@ -83,11 +85,22 @@ texts :: HtmlParser [Text]
 texts = targetMap getText
 
 
+failIfEmpty :: HtmlParser Text -> HtmlParser Text
+failIfEmpty
+  = mapMaybe
+  $ \t -> bool Nothing (Just t) $ not $ T.null t
+
+
 contentTexts :: HtmlParser [Text]
 contentTexts
   = fmap catMaybes
   $ target isText
   $ ifS isContentNode (proj getText) (pure Nothing)
+
+contentText :: HtmlParser Text
+contentText
+  = fmap flatten
+  $ contentTexts
 
 
 isText :: Html -> Bool
@@ -160,6 +173,9 @@ html = proj $ renderTree . pure
 innerHtml :: HtmlParser Text
 innerHtml = fmap renderTree $ onChildren self
 
+flatten :: [Text] -> Text
+flatten = T.intercalate " " . filter (not . T.null) . fmap T.strip
+
 
 example :: TagTree Text
 example =
@@ -189,8 +205,8 @@ example =
     ]
 
 
-main :: IO ()
-main = print $ runParser summarize example $ sequenceA
-  [ match (".main" \/ #lorem) innerHtml
-  ]
+-- main :: IO ()
+-- main = print $ runParser summarize example $ sequenceA
+--   [ match (".main" \/ #lorem) flatContent
+--   ]
 

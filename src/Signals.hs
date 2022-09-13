@@ -3,7 +3,7 @@
 module Signals where
 
 import           Assets (getAssetSizes)
-import           Control.Applicative (empty, liftA2, many, (<|>))
+import           Control.Applicative (empty, liftA2, many, (<|>), Alternative)
 import           Control.Monad.Reader
 import           DB
 import           Data.Containers.ListUtils (nubOrd)
@@ -242,12 +242,6 @@ mainContent = fmap (T.intercalate " ") $
   , failIfEmpty $ textsWithoutScripts $ tagClass "td" "mainsection"
   , failIfEmpty $ textsWithoutScripts "body"
   ]
-
-failIfEmpty :: Monad m => ScraperT z m [a] -> ScraperT z m [a]
-failIfEmpty m = do
-  m >>= \case
-    [] -> empty
-    x -> pure x
 
 
 headingsContent :: Ranker Text

@@ -54,6 +54,7 @@ library
       Marlo.Manager
       Marlo.Robots
       Marlo.TitleSegs
+      Marlo.URIs
       Network.HttpUtils
       Rel8.Arrays
       Rel8.Headers
@@ -73,10 +74,12 @@ library
       Servant.StreamingUtil
       Signals
       Signals.AcceptableURI
+      Signals.Content
       Signals.Listicle
       Signals.ReactsTo
       Signals.Schema
       Spider
+      Text.HTML.TagSoup.PermissiveTree
       Tools.BackfillDistance
       Tools.BackfillPopularity
       Tools.BackfillRobotDirectives

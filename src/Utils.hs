@@ -5,6 +5,7 @@
 
 module Utils
   ( module Utils
+  , parsePermissiveTree
   , hush
   ) where
 
@@ -21,19 +22,21 @@ import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Foldable (for_)
 import           Data.Functor.Contravariant ((>$))
 import           Data.Maybe (fromJust)
-import           Data.Set (Set)
-import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime, NominalDiffTime)
 import           Data.Time.Clock (diffUTCTime)
+import           Lasercutter (runParser)
+import           Lasercutter.HTML (HtmlParser, summarize)
 import           Marlo.Manager (marloManager)
 import qualified Network.HTTP.Client as HTTP
 import           Network.HTTP.Types (hContentType)
 import           Network.URI
 import           Rel8 hiding (filter)
 import           Text.HTML.Scalpel
+import           Text.HTML.TagSoup.PermissiveTree (parsePermissiveTree)
+import           Text.HTML.TagSoup.Tree (TagTree)
 import           Text.Printf (printf)
 import           Types
 
@@ -50,6 +53,11 @@ runRanker e t r = do
 
 runRankerFS :: NFData a => Connection -> Filestore -> Ranker a -> IO (Maybe a)
 runRankerFS conn fs = runRanker (Env (fs_uri fs) conn) (decodeUtf8 $ fs_data fs)
+
+
+
+runScraper :: TagTree Text -> HtmlParser a -> Maybe a
+runScraper = runParser summarize
 
 
 countOf :: Selector -> Ranker Int
@@ -71,10 +79,6 @@ unsafeURI :: String -> URI
 unsafeURI = fromJust . parseURI
 
 
-currentURI :: Ranker URI
-currentURI = asks e_uri
-
-
 withClass :: Selector -> (Text -> Bool) -> Ranker ()
 withClass s f = do
   cls <- T.words <$> attr "class" s
@@ -83,10 +87,6 @@ withClass s f = do
 
 has :: Ranker a -> Ranker Bool
 has r = True <$ r <|> pure False
-
-
-posKeywordsToInv :: [(Int, Text)] -> Set Text
-posKeywordsToInv = S.fromList . fmap snd
 
 
 timeItT :: IO a -> IO (NominalDiffTime, a)
