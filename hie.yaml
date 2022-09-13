@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "src"
+      component: "marlo:lib"
+
+    - path: "test"
+      component: "marlo:test:marlo-tests"

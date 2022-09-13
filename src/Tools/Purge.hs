@@ -3,7 +3,7 @@ module Tools.Purge where
 import           DB
 import qualified Data.Text as T
 import           Rel8
-import           Signals (forbidPaths, forbidSites)
+import           Signals.AcceptableURI (forbidPaths, forbidSites)
 
 
 main :: IO ()

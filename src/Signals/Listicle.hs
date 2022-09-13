@@ -1,22 +1,24 @@
 module Signals.Listicle where
 
+import           Control.Monad (join)
 import           Data.Char (isDigit)
 import           Data.Containers.ListUtils (nubOrd)
-import           Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           Text.HTML.Scalpel
+import           Lasercutter.HTML
 import           Text.Read (readMaybe)
-import           Types
 
 
-isListicle :: Ranker Bool
-isListicle = fmap (any isListicleFor) $ sequenceA
-  [ texts "h1"
-  , texts "h2"
-  , texts "h3"
-  ]
+isListicle :: HtmlParser Bool
+isListicle
+  = fmap (any isListicleFor)
+  $ sequenceA
+  $ fmap (fmap join)
+      [ target "h1" texts
+      , target "h2" texts
+      , target "h3" texts
+      ]
 
 
 -- Check if each heading is numbered, evenly-spaced.

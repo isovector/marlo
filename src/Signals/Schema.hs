@@ -1,34 +1,40 @@
+{-# LANGUAGE ApplicativeDo #-}
+
 module Signals.Schema where
 
-import Control.Monad.Reader
-import Data.Aeson (decode)
+import Data.Aeson (decode, FromJSON)
 import Data.ByteString.Lazy (fromStrict)
 import Data.List (isInfixOf)
 import Data.SchemaOrg
 import Data.Text.Encoding (encodeUtf8)
 import Network.URI
 import Rel8.StateMask (flag, BitMask)
-import Text.HTML.Scalpel
 import Types
+import Lasercutter.HTML
 
 
-hasPaywall :: Ranker Bool
+ldJson :: FromJSON a => HtmlParser [a]
+ldJson = do
+  ds <- match ("script" /\ (Just "application/ld+json" ==) . getAttr "type") text
+  pure $ mapMaybe (decode . fromStrict . encodeUtf8) ds
+
+
+hasPaywall :: HtmlParser Bool
 hasPaywall = do
-  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+  ds <- match ("script" /\ (Just "application/ld+json" ==) . getAttr "type") text
   pure $ flip any ds $ \d ->
     case decode $ fromStrict $ encodeUtf8 d of
       Nothing -> False
       Just (IsAccessibleForFree b) -> not b
 
 
-canBeFilteredOutBySchemaType :: Ranker (BitMask DocumentFlag)
-canBeFilteredOutBySchemaType = do
-  uri <- asks $ e_uri
+canBeFilteredOutBySchemaType :: URI -> HtmlParser (BitMask DocumentFlag)
+canBeFilteredOutBySchemaType uri = do
   -- HACK: Substack and medium stupidly tag themselves as a news article
   let is_substack = maybe False (isInfixOf "substack.com" . uriRegName) $ uriAuthority uri
   let is_medium = maybe False (isInfixOf "medium.com" . uriRegName) $ uriAuthority uri
 
-  ds <- texts $ "script" @: ["type" @= "application/ld+json"]
+  ds <- match ("script" /\ (Just "application/ld+json" ==) . getAttr "type") text
   pure $ flip foldMap ds $ \d ->
     case fmap getMetadataType $ decode $ fromStrict $ encodeUtf8 d of
       Just "AggregateOffer" -> flag IsShopping

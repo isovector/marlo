@@ -15,6 +15,7 @@ import           DB
 import           Data.ByteString (ByteString)
 import           Data.Int (Int32)
 import           Data.Maybe (fromMaybe, listToMaybe)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Time (getCurrentTime)
@@ -24,16 +25,19 @@ import           GHC.Stack (HasCallStack)
 import           Marlo.Filestore (writeFilestore)
 import           Marlo.Robots
 import           Marlo.TitleSegs (buildTitleSegs)
+import           Marlo.URIs (normalizeURI)
 import           Network.HttpUtils (determineHttpsAvailability)
-import           Network.URI (URI)
+import           Network.URI (URI, relativeTo)
 import           Prelude hiding (max)
-import           Rel8 hiding (sum, filter, bool, index, optional)
+import           Rel8 hiding (evaluate, sum, filter, bool, index, optional)
 import           Rel8.Headers (headersToHeaders)
 import           Rel8.StateMask
 import           Rel8.TextSearch
-import           Signals
+import           Signals (canonical, rankStats)
+import           Signals.AcceptableURI (isAcceptableLink)
+import           Signals.Content hiding (canonical)
 import           Types
-import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS, tryIO)
+import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS, tryIO, parsePermissiveTree, runScraper)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -158,6 +162,11 @@ reindex conn did fs = void $ tryIO $ do
   let uri = fs_uri fs
       run = runRankerFS conn fs
 
+      !tree = parsePermissiveTree $ decodeUtf8 $ fs_data fs
+      runL
+        = runScraper
+        $ fromMaybe (error "failed to parse the html document!") tree
+
   (dom, directives) <- getDomain conn uri
   let can_index = checkRobotsDirectives directives (CanIndex uri)
 
@@ -167,18 +176,25 @@ reindex conn did fs = void $ tryIO $ do
       $ incomingDepth did
   let depth' = inc_depth + 1
 
-  Just !pol <- run isSpiritualPollution
+  Just !xpol <- evaluate $ runL $ isSpiritualPollution uri
+  let pol = mconcat
+              [ flagIf DisallowedByRobots $ not can_index
+              , flagIf IsProhibitedURI $ not $ isAcceptableLink uri
+              , xpol
+              ]
+  print pol
 
-  update_doc <- case (can_index && isEmpty pol) of
+  update_doc <- case isEmpty pol of
     False -> pure id
     True -> do
-      Just !ls <- run links
+      Just !rls <- evaluate $ runL links
+      let ls = fmap (normalizeURI . flip relativeTo uri) $ S.toList rls
       insertEdges conn did depth' ls
 
-      Just !ts    <- run title
+      Just !ts <- evaluate $ runL title
       t <- buildTitleSegs conn did ts
 
-      Just !pc    <- run rankContent
+      Just !pc <- evaluate $ runL rankContent
       Just !stats <- run rankStats
 
       let word_count = length . T.words
@@ -217,11 +233,7 @@ reindex conn did fs = void $ tryIO $ do
          in d'
            { d_table = (d_table d')
               { d_domain = lit $ Just dom
-              , d_flags = lit $ mconcat
-                  [ flagIf DisallowedByRobots $ not can_index
-                  , flagIf IsProhibitedURI    $ not $ isAcceptableLink uri
-                  , pol
-                  ]
+              , d_flags = lit pol
               }
            }
     , updateWhere = const $ \d -> d_docId (d_table d) ==. lit did
@@ -271,7 +283,7 @@ spiderMain = do
     putStrLn $ "fetching " <> T.unpack url
     catch
       (do
-        discover conn disc
+      discover conn disc
       )
       (\SomeException{} -> do
         putStrLn "failed"

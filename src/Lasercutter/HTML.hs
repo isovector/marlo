@@ -8,10 +8,13 @@ module Lasercutter.HTML
   , (/\)
   , (\/)
   , module Algebra.Heyting
+  , module Lasercutter
+  , listToMaybe
   ) where
 
 import           Algebra.Heyting
 import           Algebra.Lattice ((/\), (\/))
+import           Data.Bool (bool)
 import           Data.Maybe (maybeToList, listToMaybe, isJust)
 import           Data.Proxy
 import           Data.Set (Set)
@@ -24,8 +27,6 @@ import           GHC.TypeLits (symbolVal, KnownSymbol)
 import           Lasercutter
 import           Text.HTML.TagSoup
 import           Text.HTML.TagSoup.Tree
-import Control.Applicative (Alternative)
-import Data.Bool (bool)
 
 type Html = TagTree Text
 type HtmlParser = Parser (Set Text) (TagTree Text)
@@ -78,7 +79,7 @@ targetOne f = expect . fmap listToMaybe . target f
 
 
 text :: HtmlParser Text
-text = expect $ fmap listToMaybe $ texts
+text = fmap flatten texts
 
 
 texts :: HtmlParser [Text]
@@ -96,6 +97,7 @@ contentTexts
   = fmap catMaybes
   $ target isText
   $ ifS isContentNode (proj getText) (pure Nothing)
+
 
 contentText :: HtmlParser Text
 contentText
@@ -145,6 +147,7 @@ nonContentNodes = S.fromList
   , "ul"
   , "ol"
   , "iframe"
+  , "form"
   , "nav"
   , "object"
   , "source"
@@ -182,6 +185,7 @@ example =
   TagBranch "html" [("lang", "en")]
     [ TagBranch "head" []
       [ TagBranch "title" [] [ TagLeaf $ TagText "Hello World!" ]
+      , TagLeaf $ TagOpen "link" [("rel", "canonical"), ("href", "https://test.com")]
       , TagBranch "style" [("type", "text/css")]
           [ TagLeaf $ TagText "css"
           ]
@@ -207,6 +211,6 @@ example =
 
 -- main :: IO ()
 -- main = print $ runParser summarize example $ sequenceA
---   [ match (".main" \/ #lorem) flatContent
+--   [ canonical
 --   ]
 

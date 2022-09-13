@@ -1,13 +1,16 @@
 module ListicleSpec where
 
+import           Control.Exception
 import           Data.Bool
 import           Data.Foldable
+import           Data.Maybe
 import qualified Data.Text as T
 import           Signals.Listicle
 import           System.Directory
 import           System.FilePath
 import           Test.Hspec
 import           Utils
+import           Utils (runScraper)
 
 
 spec :: Spec
@@ -27,6 +30,6 @@ checkIfListicle :: Bool -> FilePath -> Spec
 checkIfListicle is fp = do
   it (fp <> " is " <> bool "not " "" is <> "a listicle") $ do
     fc <- readFile fp
-    z <- runRanker undefined (T.pack fc) isListicle
+    z <- evaluate $ runScraper (fromJust $ parsePermissiveTree $ T.pack fc) isListicle
     shouldBe z $ Just is
 
