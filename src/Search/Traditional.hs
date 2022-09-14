@@ -36,7 +36,7 @@ instance SearchMethod 'Traditional where
 
   limitStrategy = Paginate 20
 
-  accumResults conn _ q docs = do
+  accumResults conn _ _ q docs = do
     let q' = compileQuery q
     for docs $ \doc -> do
       Right [snip] <- doSelect conn $ getSnippet (sr_id doc) q'

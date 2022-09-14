@@ -48,7 +48,7 @@ reverseSearch conn (T.intercalate "/" -> uri) = do
         L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
       L.body_ $ do
         L.div_ [L.class_ "box"] $ do
-          searchBar Spatial Nothing
+          searchBar Spatial defaultSearchDims Nothing
           graphToHtml [d_uri d] $ fmap d_uri gr
 
 

@@ -193,3 +193,34 @@ hush :: Either a b -> Maybe b
 hush (Left _) = Nothing
 hush (Right b) = Just b
 
+
+data SearchDimension
+  = ByJavascript
+  | ByCss
+  | ByAssetSize
+  | ByWordCount
+  | ByRelevance
+  | ByPopularity
+  deriving (Eq, Ord, Show, Read, Enum, Bounded)
+
+instance FromHttpApiData SearchDimension where
+  parseQueryParam "js"         = Right ByJavascript
+  parseQueryParam "css"        = Right ByCss
+  parseQueryParam "words"      = Right ByWordCount
+  parseQueryParam "assets"     = Right ByAssetSize
+  parseQueryParam "relevance"  = Right ByRelevance
+  parseQueryParam "popularity" = Right ByPopularity
+  parseQueryParam _
+    = Left
+    $ mappend "should be one of: "
+    $ T.intercalate ", "
+    $ fmap toQueryParam $ enumFrom @SearchDimension minBound
+
+instance ToHttpApiData SearchDimension where
+  toQueryParam ByJavascript = "js"
+  toQueryParam ByCss        = "css"
+  toQueryParam ByWordCount  = "words"
+  toQueryParam ByAssetSize  = "assets"
+  toQueryParam ByRelevance  = "relevance"
+  toQueryParam ByPopularity = "popularity"
+

@@ -27,6 +27,9 @@ type SearchEndpoint =
     :> QueryParam "v" SearchVariety
     :> QueryParam "q" (Search Text)
     :> QueryParam "p" PageNumber
+    :> QueryParam "x" SearchDimension
+    :> QueryParam "y" SearchDimension
+    :> QueryParam "z" SearchDimension
     :> StreamGet NewlineFraming HTML (SourceIO (L.Html ()))
 
 

@@ -51,9 +51,9 @@ instance SearchMethod 'Spatial where
 
   limitStrategy = Limit 500
 
-  accumResults _ ws _
+  accumResults _ ws dims _
     = evaluate
-    . algorithm ws
+    . algorithm ws dims
 
   showResults conn q qt = do
     let as = S.toList
@@ -111,9 +111,10 @@ scoreParam fx fy fz srs =
 
 algorithm
     :: WindowSize
+    -> V3 SearchDimension
     -> [SearchResult Identity]
     -> QuadTree (First (SizedRegionData (SearchResult Identity)))
-algorithm ws srs = do
+algorithm ws (fmap compileDimension -> V3 x y z) srs = do
   let n = fromIntegral $ length srs
   foldr
         doPlace
@@ -122,9 +123,11 @@ algorithm ws srs = do
     . tightenY
     . fmap (uncurry $ buildRegion ws)
     . renormalizeY n
-    . scoreParam rankBySize rankByAssetSize rankByRank
+    . scoreParam x y z
     . fmap (\sr -> sr { sr_title = correctTitle sr })
     $ srs
+
+
 
 
 regionPos :: Lens' Region (V2 Int)

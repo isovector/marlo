@@ -5,11 +5,14 @@ module Search.Common where
 import           API
 import           Control.Monad (when)
 import           DB (Connection)
+import           Data.Foldable (for_)
 import           Data.Int (Int64)
 import           Data.Proxy
 import           Data.String (fromString)
 import           Data.Text (Text)
+import qualified Data.Text as T
 import           Data.Time (NominalDiffTime)
+import           Linear (V3 (V3))
 import qualified Lucid as L
 import qualified Lucid.Servant as L
 import           Search.Machinery
@@ -32,13 +35,14 @@ searchPage
     :: forall v
      . SearchMethod v
     => Connection
+    -> V3 SearchDimension
     -> Search Text
     -> NominalDiffTime
     -> PageNumber
     -> Int64
     -> SearchMethodResult v
     -> SourceIO (L.Html ())
-searchPage conn q dur page cnt res = streamingToSourceT $ do
+searchPage conn dims q dur page cnt res = streamingToSourceT $ do
   bracketHtml "<html>" "</html>" $ do
     yield $ do
       L.head_ $ do
@@ -55,7 +59,7 @@ searchPage conn q dur page cnt res = streamingToSourceT $ do
     bracketHtml "<body>" "</body>" $
       bracketHtml "<div class='box'>" "</div>" $ do
         yield $ do
-          searchBar (demote @v) $ Just q
+          searchBar (demote @v) dims $ Just q
           L.toHtmlRaw @String
             $ printf "%s results &mdash; search took %6.2fs seconds"
                 (commafy $ show cnt)
@@ -64,11 +68,18 @@ searchPage conn q dur page cnt res = streamingToSourceT $ do
         yield $ pager q (limitStrategy @v) (demote @v) cnt page
 
 
-searchBar :: SearchVariety -> Maybe (Search Text) -> L.Html ()
-searchBar v t =
+searchBar :: SearchVariety -> V3 SearchDimension -> Maybe (Search Text) -> L.Html ()
+searchBar v (V3 x y z) t =
   L.div_ [L.class_ "logo-box"] $ do
     L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
       L.h1_ "mar"
+      for_ (zip [x, y, z] "xyz") $ \(d, n) ->
+        L.input_ $
+          [ L.name_ $ T.pack $ pure n
+          , L.type_ "hidden"
+          , L.value_ $ toQueryParam d
+          ]
+
       L.input_ $
         [ L.id_ "query"
         , L.type_ "text"
@@ -82,14 +93,17 @@ searchBar v t =
         L.option_ (selected Traditional [ L.value_ $ toQueryParam Traditional ]) "traditional"
         L.option_ (selected Spatial     [ L.value_ $ toQueryParam Spatial ])     "spatial"
   where
-    selected v' z
-      | v == v' = L.selected_ "selected" : z
-      | otherwise = z
+    selected v' a
+      | v == v' = L.selected_ "selected" : a
+      | otherwise = a
 
+
+defaultSearchDims :: V3 SearchDimension
+defaultSearchDims = V3 ByWordCount ByAssetSize ByRelevance
 
 searchHref :: SearchVariety -> Search Text -> PageNumber -> L.Attribute
 searchHref v q p =
-  L.safeAbsHref_ (Proxy @API) (Proxy @SearchEndpoint) (Just v) (Just q) (Just $  p)
+  L.safeAbsHref_ (Proxy @API) (Proxy @SearchEndpoint) (Just v) (Just q) (Just p) Nothing Nothing Nothing
 
 
 pager :: Search Text -> LimitStrategy -> SearchVariety -> Int64 -> PageNumber ->  L.Html ()

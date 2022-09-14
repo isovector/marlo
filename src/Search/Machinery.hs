@@ -8,6 +8,7 @@ import Data.Text (Text)
 import Lucid (Html)
 import Types
 import Servant.StreamingUtil (Streaming)
+import Linear (V3)
 
 
 data SSearchVariety (v :: SearchVariety) where
@@ -59,6 +60,7 @@ class Demote v => SearchMethod (v :: SearchVariety) where
   accumResults
       :: Connection
       -> WindowSize
+      -> V3 SearchDimension
       -> Search Text
       -> [SearchResult Identity]
       -> IO (SearchMethodResult v)

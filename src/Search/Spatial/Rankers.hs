@@ -6,6 +6,7 @@ import           Control.Applicative (liftA2)
 import           DB
 import           Data.List (sortOn)
 import qualified Data.Map as M
+import           Types
 
 
 type Scorer = ([SearchResult Identity] -> [Maybe Float])
@@ -96,3 +97,13 @@ stratify f ts' x = go 0 0 ts'
             range = t - acc
          in Just $ f (fromIntegral normalized) (fromIntegral range) * n + z
       | otherwise = go (z + n) t ts
+
+
+compileDimension :: SearchDimension -> Scorer
+compileDimension ByJavascript = rankByJavascript
+compileDimension ByCss        = rankByCss
+compileDimension ByAssetSize  = rankByAssetSize
+compileDimension ByWordCount  = rankBySize
+compileDimension ByRelevance  = rankByRank
+compileDimension ByPopularity = rankByPopularity
+

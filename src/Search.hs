@@ -10,12 +10,13 @@ import           Data.Maybe (fromMaybe)
 import           Data.Proxy
 import           Data.Text (Text)
 import qualified Data.Text as T
+import           Linear.V3 (V3(V3))
 import qualified Lucid as L
 import           Network.Wai.Application.Static (defaultWebAppSettings, ssMaxAge)
 import qualified Network.Wai.Handler.Warp as W
 import           Rel8 hiding (max, index)
 import           ReverseSearch (reverseSearch)
-import           Search.Common (searchBar)
+import           Search.Common (searchBar, defaultSearchDims)
 import           Search.DoSearch (doSearch)
 import           Search.Machinery
 import           Search.Parser (encodeQuery)
@@ -53,7 +54,7 @@ home conn = do
         L.script_ [L.type_ "text/javascript", L.src_ "size.js"] $ id @Text ""
         L.title_ "marlo: search, for humans"
       L.body_ $ L.div_ $ do
-        searchBar Spatial Nothing
+        searchBar Spatial defaultSearchDims Nothing
         L.div_ [L.class_ "metrics"] $ do
           L.span_ $ mconcat
             [ "Indexed: "
@@ -65,22 +66,32 @@ home conn = do
             ]
 
 
+
 search
     :: Connection
     -> Maybe WindowSize
     -> Maybe SearchVariety
     -> Maybe (Search Text)
     -> Maybe PageNumber
+    -> Maybe SearchDimension
+    -> Maybe SearchDimension
+    -> Maybe SearchDimension
     -> Handler (SourceIO (L.Html ()))
-search _ _ _ Nothing _ =
+search _ _ _ Nothing _ _ _ _ =
   pure $ streamingToSourceT $ yield "Give me some keywords, punk!"
-search conn ws (fromMaybe Traditional -> v) (Just q) mpage = do
+search conn ws
+      (fromMaybe Traditional -> v)
+      (Just q)
+      mpage
+      (fromMaybe ByWordCount -> x)
+      (fromMaybe ByAssetSize -> y)
+      (fromMaybe ByRelevance -> z) = do
   liftIO $ putStrLn $ mappend (show v) $ '/' : (T.unpack $ encodeQuery q)
   case toSing v of
     SomeSearchVariety (s :: SSearchVariety v) ->
       case dict1 @SearchMethod s of
         Dict1 ->
-          doSearch @v conn (fromMaybe (WindowSize 1920 0) ws) q mpage
+          doSearch @v conn (fromMaybe (WindowSize 1920 0) ws) (V3 x y z) q mpage
 
 
 ------------------------------------------------------------------------------
