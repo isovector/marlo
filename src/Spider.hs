@@ -7,7 +7,7 @@
 
 module Spider where
 
-import           Control.Concurrent.Async (async)
+import           Control.Concurrent.Async (async, wait)
 import           Control.Exception
 import           Control.Monad (forever, void)
 import           Control.Monad.IO.Class (liftIO)
@@ -278,7 +278,7 @@ spiderMain threads = do
   Right conn <- connect
   z <- doInsert conn rootNodes
   print z
-  for_ [0 .. fromMaybe 0 threads] $ const $ do
+  ts <- for [0 .. fromMaybe 0 threads] $ const $ do
     async $ do
       forever $ do
         Right [disc] <- doSelect conn nextToExplore
@@ -293,4 +293,5 @@ spiderMain threads = do
             putStrLn "failed"
             markDead conn (disc_id disc)
           )
+  void $ for_ ts wait
 
