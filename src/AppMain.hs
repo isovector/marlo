@@ -16,7 +16,7 @@ import qualified Tools.Reindex
 
 data Command
   = SearchC
-  | SpiderC
+  | SpiderC (Maybe Int)
   | PurgeC
   | ReindexC (IO (Maybe Int))
   | BackfillDistanceC
@@ -59,7 +59,13 @@ sub = subparser $ mconcat
 
 
 parseSpider :: Parser Command
-parseSpider = pure SpiderC
+parseSpider = SpiderC
+  <$> (option auto $ mconcat
+        [ help "How many threads to run?"
+        , long "threads"
+        ]
+      )
+
 
 parseReindex :: Parser Command
 parseReindex = ReindexC
@@ -94,7 +100,7 @@ main :: IO ()
 main = do
   execParser commandParser >>= \case
      SearchC               -> Search.main
-     SpiderC               -> Spider.spiderMain
+     SpiderC threads       -> Spider.spiderMain threads
      PurgeC                -> Tools.Purge.main
      ReindexC resume       -> Tools.Reindex.main =<< resume
      BackfillDistanceC     -> Tools.BackfillDistance.main

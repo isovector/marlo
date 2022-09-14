@@ -7,12 +7,14 @@
 
 module Spider where
 
+import           Control.Concurrent.Async (async)
 import           Control.Exception
 import           Control.Monad (forever, void)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.ByteString (ByteString)
+import           Data.Foldable (for_)
 import           Data.Int (Int32)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Set as S
@@ -271,22 +273,24 @@ insertEdges conn did depth ls = do
   pure ()
 
 
-spiderMain :: HasCallStack => IO ()
-spiderMain = do
+spiderMain :: HasCallStack => Maybe Int -> IO ()
+spiderMain threads = do
   Right conn <- connect
   z <- doInsert conn rootNodes
   print z
-  forever $ do
-    Right [disc] <- doSelect conn nextToExplore
+  for_ [0 .. fromMaybe 0 threads] $ const $ do
+    async $ do
+      forever $ do
+        Right [disc] <- doSelect conn nextToExplore
 
-    let url = disc_uri disc
-    putStrLn $ "fetching " <> T.unpack url
-    catch
-      (do
-      discover conn disc
-      )
-      (\SomeException{} -> do
-        putStrLn "failed"
-        markDead conn (disc_id disc)
-      )
+        let url = disc_uri disc
+        putStrLn $ "fetching " <> T.unpack url
+        catch
+          (do
+          discover conn disc
+          )
+          (\SomeException{} -> do
+            putStrLn "failed"
+            markDead conn (disc_id disc)
+          )
 
