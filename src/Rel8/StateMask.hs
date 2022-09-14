@@ -19,6 +19,9 @@ newtype BitMask a = BitMask
   deriving stock (Eq, Ord, Show)
   deriving newtype (Semigroup, Monoid, NFData)
 
+instance (Ord a, Bounded a, Enum a) => DBSemigroup (BitMask a) where
+  (<>.) = binaryOperator "|"
+
 
 flag :: a -> BitMask a
 flag = BitMask . S.singleton
