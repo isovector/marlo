@@ -24,6 +24,7 @@ import           Servant.StreamingUtil
 import           Text.Printf (printf)
 import           Types
 import           Utils (commafy)
+import Data.Bool (bool)
 
 
 bracketHtml :: Monad m => Text -> Text -> Streaming (L.Html ()) m a -> Streaming (L.Html ()) m a
@@ -72,27 +73,47 @@ searchBar :: SearchVariety -> V3 SearchDimension -> Maybe (Search Text) -> L.Htm
 searchBar v (V3 x y z) t =
   L.div_ [L.class_ "logo-box"] $ do
     L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
-      L.h1_ "mar"
-      for_ (zip [x, y, z] "xyz") $ \(d, n) ->
-        L.input_ $
-          [ L.name_ $ T.pack $ pure n
-          , L.type_ "hidden"
-          , L.value_ $ toQueryParam d
-          ]
+      L.div_ [] $ do
+        L.h1_ "mar"
+        for_ (zip [x, y, z] "xyz") $ \(d, n) ->
+          L.input_ $
+            [ L.name_ $ T.pack $ pure n
+            , L.type_ "hidden"
+            , L.value_ $ toQueryParam d
+            ]
 
-      L.input_ $
-        [ L.id_ "query"
-        , L.type_ "text"
-        , L.name_ "q"
-        , L.value_ $ maybe "" encodeQuery t
-        ] <>
-        [ L.autofocus_
-        | t == Nothing
-        ]
-      L.select_ [ L.name_ "v" ] $ do
-        L.option_ (selected Traditional [ L.value_ $ toQueryParam Traditional ]) "traditional"
-        L.option_ (selected Spatial     [ L.value_ $ toQueryParam Spatial ])     "spatial"
+        L.input_ $
+          [ L.id_ "query"
+          , L.type_ "text"
+          , L.name_ "q"
+          , L.value_ $ maybe "" encodeQuery t
+          ] <>
+          [ L.autofocus_
+          | t == Nothing
+          ]
+      L.div_ [L.id_ "searchopts"] $ do
+        L.label_ $ do
+          "style: "
+          L.select_ [ L.name_ "v" ] $ do
+            L.option_ (selected Traditional [ L.value_ $ toQueryParam Traditional ]) "traditional"
+            L.option_ (selected Spatial     [ L.value_ $ toQueryParam Spatial ])     "spatial"
+        buildDim "x" x
+        buildDim "y" y
+        buildDim "z" z
+
+        L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "go!" ]
   where
+    buildDim :: Text -> SearchDimension -> L.Html ()
+    buildDim nm a = L.label_ $ do
+      L.toHtml $ nm <> ": "
+      L.select_ [L.name_ nm] $
+        for_ (enumFrom @SearchDimension minBound) $ \d ->
+            L.option_
+                (L.value_ (toQueryParam d) : bool [] (pure $ L.selected_ "selected") (d == a))
+              $ L.toHtml
+              $ toQueryParam d
+
+
     selected v' a
       | v == v' = L.selected_ "selected" : a
       | otherwise = a

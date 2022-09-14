@@ -38,6 +38,7 @@ h1 {
 h1::after {
   content: "lo";
   color: var(--prussian-blue);
+  z-index: 10;
 }
 
 
@@ -46,4 +47,18 @@ h1::after {
   background-color: var(--baby-powder);
   color: var(--prussian-blue);
   z-index: 0;
+}
+
+#go {
+  margin-top: 0em;
+  float: right;
+  z-index: 15;
+}
+
+label + label {
+  margin-left: 0.5em;
+}
+
+#searchopts {
+  margin-top: 0.5em;
 }

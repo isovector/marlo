@@ -1,12 +1,12 @@
 module Rel8.StateMask where
 
 import           Control.Arrow ((&&&))
+import           Control.DeepSeq (NFData)
 import           Data.Set (Set)
 import qualified Data.Set as S
 import           Hasql.Decoders (int8)
 import           Opaleye.Internal.HaskellDB.PrimQuery
 import           Rel8 hiding (Enum)
-import Control.DeepSeq (NFData)
 
 
 toBitMask :: Enum a => a -> Integer
