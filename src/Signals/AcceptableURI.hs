@@ -189,6 +189,11 @@ forbidPaths =
   , "/feed"
   , "/download"
   , "search-results"
+  , "Portal:"
+  , "Category:"
+  , "Special:"
+  , "Template:"
+  , "Talk:"
   ]
 
 
