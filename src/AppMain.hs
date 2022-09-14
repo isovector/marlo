@@ -60,7 +60,7 @@ sub = subparser $ mconcat
 
 parseSpider :: Parser Command
 parseSpider = SpiderC
-  <$> (option auto $ mconcat
+  <$> (optional $ option auto $ mconcat
         [ help "How many threads to run?"
         , long "threads"
         ]
