@@ -5,12 +5,12 @@ module Search.Common where
 import           API
 import           Control.Monad (when)
 import           DB (Connection)
+import           Data.Bool (bool)
 import           Data.Foldable (for_)
 import           Data.Int (Int64)
 import           Data.Proxy
 import           Data.String (fromString)
 import           Data.Text (Text)
-import qualified Data.Text as T
 import           Data.Time (NominalDiffTime)
 import           Linear (V3 (V3))
 import qualified Lucid as L
@@ -24,7 +24,6 @@ import           Servant.StreamingUtil
 import           Text.Printf (printf)
 import           Types
 import           Utils (commafy)
-import Data.Bool (bool)
 
 
 bracketHtml :: Monad m => Text -> Text -> Streaming (L.Html ()) m a -> Streaming (L.Html ()) m a
@@ -73,15 +72,7 @@ searchBar :: SearchVariety -> V3 SearchDimension -> Maybe (Search Text) -> L.Htm
 searchBar v (V3 x y z) t =
   L.div_ [L.class_ "logo-box"] $ do
     L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
-      L.div_ [] $ do
-        L.h1_ "mar"
-        for_ (zip [x, y, z] "xyz") $ \(d, n) ->
-          L.input_ $
-            [ L.name_ $ T.pack $ pure n
-            , L.type_ "hidden"
-            , L.value_ $ toQueryParam d
-            ]
-
+      L.div_ [L.id_ "searchbar"] $ do
         L.input_ $
           [ L.id_ "query"
           , L.type_ "text"
@@ -91,6 +82,7 @@ searchBar v (V3 x y z) t =
           [ L.autofocus_
           | t == Nothing
           ]
+        L.h1_ "mar"
       L.div_ [L.id_ "searchopts"] $ do
         L.label_ $ do
           "style: "
@@ -101,7 +93,7 @@ searchBar v (V3 x y z) t =
         buildDim "y" y
         buildDim "z" z
 
-        L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "go!" ]
+        L.input_ [ L.id_ "go", L.type_ "submit", L.value_ "discover »" ]
   where
     buildDim :: Text -> SearchDimension -> L.Html ()
     buildDim nm a = L.label_ $ do

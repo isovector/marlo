@@ -77,15 +77,14 @@ body {
 }
 
 h1 {
-  font-size: 8em !important;
-  top: -0.39em;
-
+  font-size: 3.5em !important;
+  /* top: -0.39em; */
 }
 
 #query {
-  font-size: 12pt;
+  /* font-size: 12pt; */
   width: 100%;
-  padding: 0.5em;
+  /* padding: 0.5em; */
 }
 
 footer {
