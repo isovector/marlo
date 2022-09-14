@@ -176,6 +176,7 @@ forbidPaths =
   , "/users/"
   , "/author/"
   , "/authors/"
+  , "/profiles/"
   , "/news/"
   , "/commit/"
   , "/tree/"
@@ -189,11 +190,12 @@ forbidPaths =
   , "/feed"
   , "/download"
   , "search-results"
-  , "Portal:"
-  , "Category:"
-  , "Special:"
-  , "Template:"
-  , "Talk:"
+  , "project:"
+  , "portal:"
+  , "category:"
+  , "special:"
+  , "template:"
+  , "talk:"
   ]
 
 
