@@ -56,14 +56,13 @@ getCanonicalUri
     -> URI
     -> IO (Maybe (Download Maybe ByteString, URI))
 getCanonicalUri conn uri = do
-  determineHttpsAvailability uri >>= \case
-    Nothing -> pure Nothing
-    Just uri' -> do
-      dl <- liftIO $ downloadBody $ show uri'
-      mcanon <- runMaybeT $ do
-        uri''  <- MaybeT $ runRanker (Env uri' conn) (decodeUtf8 $ dl_body dl) canonical
-        MaybeT $ determineHttpsAvailability uri''
-      pure $ pure $ (dl, ) $ fromMaybe uri' mcanon
+  dl <- liftIO $ downloadBody $ show uri
+  mcanon <- runMaybeT $ do
+    uri''  <- MaybeT $ runRanker (Env uri conn) (decodeUtf8 $ dl_body dl) canonical
+    MaybeT $ determineHttpsAvailability uri''
+  fmap (fmap (dl,)) $ case mcanon of
+    Nothing   -> determineHttpsAvailability uri
+    Just uri' -> pure $ Just uri'
 
 
 markDead :: Connection -> DiscId -> IO ()
