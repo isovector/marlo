@@ -4,6 +4,7 @@ import           Control.Arrow ((&&&))
 import           Control.DeepSeq (NFData)
 import           Data.Set (Set)
 import qualified Data.Set as S
+import           GHC.Exts (IsList(..))
 import           Hasql.Decoders (int8)
 import           Opaleye.Internal.HaskellDB.PrimQuery
 import           Rel8 hiding (Enum)
@@ -16,12 +17,17 @@ toBitMask a = 2 ^ fromEnum a
 newtype BitMask a = BitMask
   { getBitMask :: Set a
   }
-  deriving stock (Eq, Ord, Show)
-  deriving newtype (Semigroup, Monoid, NFData)
+  deriving stock (Eq, Ord)
+  deriving newtype (Semigroup, Monoid, NFData, Show)
 
 instance (Ord a, Bounded a, Enum a) => DBSemigroup (BitMask a) where
   (<>.) = binaryOperator "|"
 
+
+instance Ord a => IsList (BitMask a) where
+  type Item (BitMask a) = a
+  fromList = BitMask . S.fromList
+  toList = S.toList . getBitMask
 
 flag :: a -> BitMask a
 flag = BitMask . S.singleton
