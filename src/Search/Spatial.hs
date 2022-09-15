@@ -118,7 +118,7 @@ algorithm ws (fmap compileDimension -> V3 x y z) srs = do
   let n = fromIntegral $ length srs
   foldr
         doPlace
-        (makeTree $ Region 0 (-10000) (ws_width ws) 20000)
+        (startingTree ws)
     . sortByCenterOffset (#srd_region . regionPos) _y
     . tightenY
     . fmap (uncurry $ buildRegion ws)
@@ -126,6 +126,24 @@ algorithm ws (fmap compileDimension -> V3 x y z) srs = do
     . scoreParam x y z
     . fmap (\sr -> sr { sr_title = correctTitle sr })
     $ srs
+
+
+startingTree :: WindowSize -> QuadTree (First (SizedRegionData (SearchResult Identity)))
+startingTree (WindowSize w h)
+  = addBarrier (Region (-1000) (-100) 100 (h + 2000))
+  $ addBarrier (Region w (-100) 100 (h + 2000))
+  $ addBarrier (Region (-1000) (-100) (w + 2000) 100)
+  $ addBarrier (Region (-1000) h (w + 2000) 100)
+  $ makeTree
+  $ Region (-w) (-10000) (2 * w) 20000
+
+
+addBarrier
+    :: Region
+    -> QuadTree (First (SizedRegionData (SearchResult Identity)))
+    -> QuadTree (First (SizedRegionData (SearchResult Identity)))
+addBarrier r = fill (First $ Just $ Barrier r) r
+
 
 
 
@@ -196,6 +214,7 @@ ySize = view _y $ measureText' (denormalizePt 0) "x"
 
 
 spaceResult' :: SizedRegionData (SearchResult Identity) -> L.Html ()
+spaceResult' Barrier{} = pure ()
 spaceResult' (SizedRegionData pt (Region x y _ h) d) = do
   let title = T.strip $ sr_title d
   when (not $ T.null title) $ do
@@ -227,11 +246,15 @@ spaceResult' (SizedRegionData pt (Region x y _ h) d) = do
            ] $ L.toHtml title
 
 
-data SizedRegionData a = SizedRegionData
-  { srd_size   :: Float  -- in pts
-  , srd_region :: Region
-  , srd_data   :: a
-  }
+data SizedRegionData a
+  = SizedRegionData
+    { srd_size   :: Float  -- in pts
+    , srd_region :: Region
+    , srd_data   :: a
+    }
+  | Barrier
+    { srd_region :: Region
+    }
   deriving stock (Eq, Ord, Show, Functor, Generic)
 
 

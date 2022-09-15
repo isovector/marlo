@@ -79,7 +79,7 @@ rankByPopularity :: [SearchResult Identity] -> [Maybe Float]
 rankByPopularity
   = fmap
   $ stratify (/) [1000, 50000, 1e7, 1e8]
-  . maybe 1e9 fromIntegral
+  . maybe 9e7 fromIntegral
   . sr_popularity
 
 
