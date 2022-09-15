@@ -9,7 +9,7 @@ import           Control.Applicative (ZipList (ZipList), getZipList, liftA3)
 import           Control.Arrow (second)
 import           Control.Concurrent (threadDelay)
 import           Control.Exception
-import           Control.Lens (view, (%~), lens)
+import           Control.Lens (view, (%~), lens, to, preview)
 import           Control.Lens.Combinators (Lens')
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State (when, evalState, modify, get)
@@ -18,6 +18,8 @@ import qualified Data.DList as DL
 import           Data.Foldable (forM_, for_, fold)
 import           Data.Function ((&))
 import           Data.Generics.Labels ()
+import           Data.Generics.Product (position)
+import           Data.Generics.Sum (_Ctor)
 import           Data.List (sortOn, foldl', sort)
 import           Data.List.Extra (chunksOf)
 import           Data.Maybe (catMaybes, mapMaybe, maybeToList)
@@ -64,7 +66,7 @@ instance SearchMethod 'Spatial where
     for_ as $ \a -> do
       yield $ spaceResult' a
       liftIO $ threadDelay 1e4
-    let cdids = chunksOf 20 $ fmap (sr_id . srd_data) as
+    let cdids = chunksOf 20 $ mapMaybe (preview $ _Ctor @"SizedRegionData" . position @3 . to sr_id) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
       msnips <-
@@ -130,10 +132,10 @@ algorithm ws (fmap compileDimension -> V3 x y z) srs = do
 
 startingTree :: WindowSize -> QuadTree (First (SizedRegionData (SearchResult Identity)))
 startingTree (WindowSize w h)
-  = addBarrier (Region (-1000) (-100) 100 (h + 2000))
-  $ addBarrier (Region w (-100) 100 (h + 2000))
-  $ addBarrier (Region (-1000) (-100) (w + 2000) 100)
-  $ addBarrier (Region (-1000) h (w + 2000) 100)
+  -- = addBarrier (Region (-100) (-1000) 100 (h + 2000))
+  = addBarrier (Region w (-1000) 100 (h + 2000))
+  -- $ addBarrier (Region (-1000) (-100) (w + 2000) 100)
+  -- $ addBarrier (Region (-1000) h (w + 2000) 100)
   $ makeTree
   $ Region (-w) (-10000) (2 * w) 20000
 
