@@ -38,7 +38,6 @@ rankBySize :: [SearchResult Identity] -> [Maybe Float]
 rankBySize
   = fmap
   $ stratify (/) [1000, 8000, 20000, 500000]
-  . (flip div 5)
   . fromIntegral
   . sr_size
 
