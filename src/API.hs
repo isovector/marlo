@@ -22,7 +22,7 @@ type API =
 
 
 type SearchEndpoint =
-  "search"
+  "discover"
     :> Header "Cookie" WindowSize
     :> QueryParam "v" SearchVariety
     :> QueryParam "q" (Search Text)

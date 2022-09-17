@@ -71,7 +71,7 @@ searchPage conn dims q dur page cnt res = streamingToSourceT $ do
 searchBar :: SearchVariety -> V3 SearchDimension -> Maybe (Search Text) -> L.Html ()
 searchBar v (V3 x y z) t =
   L.div_ [L.class_ "logo-box"] $ do
-    L.form_ [ L.action_ "/search", L.method_ "GET" ] $ do
+    L.form_ [ L.action_ "/discover", L.method_ "GET" ] $ do
       L.div_ [L.id_ "searchbar"] $ do
         L.input_ $
           [ L.id_ "query"
