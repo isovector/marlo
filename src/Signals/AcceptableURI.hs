@@ -151,6 +151,8 @@ forbidSites =
   , "youtube.com"
   , "zoom.us"
   ]
+  -- thesaurus
+  -- dictionary
 
 
 forbidPaths :: [String]
@@ -179,6 +181,8 @@ forbidPaths =
   , "/profiles/"
   , "/news/"
   , "/commit/"
+  , "/solution/"
+  , "/solutions/"
   , "/tree/"
   , "/blob/"
   , "/vod/"

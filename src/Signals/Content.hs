@@ -97,7 +97,10 @@ hasGoogleAds = fmap or $ match "script" $ do
     [ T.isInfixOf "adsbygoogle" $ fromMaybe "" src
     , T.isInfixOf "adsbygoogle" txt
     , T.isInfixOf "pubads()" txt
+    , T.isInfixOf "GTM-" txt
     ]
+-- /* MonsterInsights Scroll Tracking */ in script
+-- also kill any tagmanager or analytics???
 
 isSpiritualPollution :: URI -> HtmlParser (BitMask DocumentFlag)
 isSpiritualPollution uri = fmap fold $ sequenceA $
