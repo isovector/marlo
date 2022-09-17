@@ -1,4 +1,4 @@
 marlo.sandymaguire.me {
-   status 403 /search
+   respond /search 404
    reverse_proxy 127.0.0.1:8001
 }
