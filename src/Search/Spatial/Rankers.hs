@@ -37,7 +37,7 @@ rankByCss
 rankBySize :: [SearchResult Identity] -> [Maybe Float]
 rankBySize
   = fmap
-  $ stratify (/) [1000, 8000, 20000, 500000]
+  $ stratify (/) [5000, 15000, 40000, 500000]
   . fromIntegral
   . sr_size
 
