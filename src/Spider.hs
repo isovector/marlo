@@ -36,7 +36,7 @@ import           Rel8.Headers (headersToHeaders)
 import           Rel8.StateMask
 import           Rel8.TextSearch
 import           Signals (canonical, rankStats)
-import           Signals.AcceptableURI (isAcceptableLink)
+import           Signals.AcceptableURI (isAcceptableLink, forbidPaths, forbidSites)
 import           Signals.Content hiding (canonical)
 import           Types
 import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS, tryIO, parsePermissiveTree, runScraper)
@@ -47,6 +47,7 @@ nextToExplore = limit 1 $ orderBy random $ do
   disc <- each discoverySchema
   where_ $ disc_canonical disc ==. lit Nothing
        &&. disc_dead      disc ==. lit False
+       &&. quickAcceptableDBUri (disc_uri disc)
   pure disc
 
 
@@ -113,6 +114,19 @@ getDocByCanonicalUri conn (T.pack . show -> uri) = do
         , returning  = Projection $ d_docId . d_table
         }
       pure $ Left doc
+
+
+quickAcceptableDBUri :: Expr T.Text -> Expr Bool
+quickAcceptableDBUri uri = do
+  let paths =
+        foldr1 (||.) $ do
+          z <- forbidPaths
+          pure $ like (lit $ T.pack $ "%" <> z <> "%") uri
+      sites =
+        foldr1 (||.) $ do
+          z <- forbidSites
+          pure $ like (lit $ T.pack $ "%" <> z <> "/%") uri
+  not_ $ paths ||. sites
 
 
 discover :: HasCallStack => Connection -> Discovery Identity -> IO ()
