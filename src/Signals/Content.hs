@@ -14,6 +14,7 @@ import qualified Data.Text as T
 import           Lasercutter.HTML
 import           Network.URI (URI, parseURI, parseURIReference)
 import           Rel8.StateMask (BitMask, flagIf)
+import           Signals.AcceptableURI (isAcceptableLink)
 import           Signals.Listicle (isListicle)
 import           Signals.Schema
 import           Types (DocumentFlag(..))
@@ -82,7 +83,8 @@ title = targetOne "title" text
 
 links :: HtmlParser (Set URI)
 links
-  = fmap S.fromList
+  = fmap (S.filter isAcceptableLink)
+  $ fmap S.fromList
   $ fmap catMaybes
   $ target "a"
   $ proj
