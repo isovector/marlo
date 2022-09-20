@@ -86,6 +86,8 @@ forbidSites =
   , "archive.today"
   , "bandcamp.com"
   , "hobbyking.com"
+  , "ehealthme.com"
+  , "tvtropes.org"
   , "bing.com"
   , "bitly.com"
   , "bloomberg.com"
@@ -150,6 +152,8 @@ forbidSites =
   , "youtu.be"
   , "youtube.com"
   , "zoom.us"
+  , "thesaurus.com"
+  , "dictionary.com"
   ]
   -- thesaurus
   -- dictionary
@@ -177,7 +181,11 @@ forbidPaths =
   , "/user/"
   , "/users/"
   , "/author/"
+  , "/columnists/"
+  , "/people/"
   , "/authors/"
+  , "/member/"
+  , "/members/"
   , "/profiles/"
   , "/news/"
   , "/commit/"

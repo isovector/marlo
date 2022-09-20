@@ -110,3 +110,7 @@ isSpiritualPollution uri = fmap fold $ sequenceA $
   , flagIf IsListicle  <$> isListicle
   ]
 
+-- there are also FEATURES
+-- `span.MathJax` for has math
+-- `code` for has code
+
