@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS discovery (
   canonical int8 REFERENCES documents(id) ON DELETE CASCADE
 );
 
+CREATE INDEX disc_uri_idx ON discovery (uri);
+CREATE INDEX disc_dead_idx ON discovery (dead);
+CREATE INDEX disc_canonical_idx ON discovery (canonical);
+
 -}
 
 module DB.Discovery where

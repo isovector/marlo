@@ -17,5 +17,14 @@ main = do
     , updateWhere = \_ -> not_ . quickAcceptableDBUri . d_uri
     , returning = NumberOfRowsAffected
     }
-  putStrLn $ "deleted " <> show n <> " rows by uri"
+  putStrLn $ "pruned " <> show n <> " documents rows by uri"
+
+  Right m <- doUpdate conn $ Update
+    { from =  pure ()
+    , target = discoverySchema
+    , set = const $ \d -> d { disc_dead = lit True }
+    , updateWhere = \_ -> not_ . quickAcceptableDBUri . disc_uri
+    , returning = NumberOfRowsAffected
+    }
+  putStrLn $ "killed " <> show m <> " discoveries by uri"
 

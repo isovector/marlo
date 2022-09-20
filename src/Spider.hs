@@ -47,7 +47,6 @@ nextToExplore = limit 1 $ orderBy random $ do
   disc <- each discoverySchema
   where_ $ disc_canonical disc ==. lit Nothing
        &&. disc_dead      disc ==. lit False
-       &&. quickAcceptableDBUri (disc_uri disc)
   pure disc
 
 
