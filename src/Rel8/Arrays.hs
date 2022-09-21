@@ -23,6 +23,12 @@ insertAt' sz ix a
   $ arrayPrepend a
   $ arrayFill (sz - ix - 1) null
 
+insertAt :: Int -> Int -> Maybe a -> [Maybe a]
+insertAt sz ix a
+  = mappend (replicate ix Nothing)
+  $ (a :)
+  $ replicate (sz - ix - 1) Nothing
+
 arrayPrepend :: Sql DBType a => Expr a -> Expr [a] -> Expr [a]
 arrayPrepend = function "array_prepend"
 

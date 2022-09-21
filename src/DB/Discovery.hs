@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS discovery (
   canonical int8 REFERENCES documents(id) ON DELETE CASCADE
 );
 
-ALTER TABLE discovery ADD COLUMN distance int2[] not null default(array[0,0,0,0,0,0,0,0]);
+ALTER TABLE discovery ADD COLUMN distance int2[] not null default(cast(array[null,null,null,null,null,null,null,null] as int2[]));
 
 CREATE INDEX disc_uri_idx ON discovery (uri);
 CREATE INDEX disc_dead_idx ON discovery (dead);

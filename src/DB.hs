@@ -87,13 +87,16 @@ import DB.PageStats
 import DB.RootSites
 import DB.SearchResult
 import DB.Titles
+import Data.Coerce (coerce)
 import Data.Function (on)
 import Data.Functor.Identity (Identity)
 import Hasql.Connection (settings, Connection, acquire, ConnectionError)
 import Hasql.Session (QueryError)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
+import Rel8.Arrays (insertAt')
 import Rel8.Machinery
+import Types (Int16)
 
 
 rootNodes :: Insert ()
@@ -101,10 +104,14 @@ rootNodes = Insert
   { into = discoverySchema
   , rows = do
       d <- nextDiscId
-      z <- values rootSites
+      (idx, z) <- values $ zip (fmap lit [0..]) rootSites
       pure $ (lit emptyDiscovery)
         { disc_id  = d
         , disc_uri = z
+        , disc_distance
+            = coerce
+            $ insertAt' @Int16 (lit $ fromIntegral numRootSites) idx
+            $ nullify 0
         }
   , onConflict = DoUpdate $ Upsert
       { index = disc_uri
