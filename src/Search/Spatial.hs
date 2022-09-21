@@ -229,11 +229,12 @@ ySize = view _y $ measureText' (denormalizePt 0) "x"
 
 spaceResult' :: SizedRegionData (SearchResult Identity) -> L.Html ()
 spaceResult' Barrier{} = pure ()
-spaceResult' (SizedRegionData
-                pt
-                (fmap (T.pack . show) -> V3 xscore yscore zscore)
-                (Region x y _ h)
-                d) = do
+spaceResult'
+    (SizedRegionData
+      pt
+      (fmap (T.pack . show) -> V3 xscore yscore zscore)
+      (Region x y _ h)
+      d) = do
   let title = T.strip $ sr_title d
   let uri = unsafeURI $ T.unpack $ sr_uri d
   let did = T.pack $ show $ unDocId $ sr_id d
@@ -260,15 +261,12 @@ spaceResult' (SizedRegionData
         ]
       L.a_ [ L.href_ $ sr_uri d
           , makeAttribute "data-docid" did
-          , L.onmouseover_ $ mconcat
-              [ "tt(this, "
-              , xscore, ", "
-              , yscore, ", "
-              , zscore, ")"
-              ]
+          , makeAttribute "data-xscore" xscore
+          , makeAttribute "data-yscore" yscore
+          , makeAttribute "data-zscore" zscore
+          , L.onmouseover_ "tt(this)"
           , L.onmouseout_  "untt(this)"
           ] $ L.toHtml title
-
 
 data SizedRegionData a
   = SizedRegionData
