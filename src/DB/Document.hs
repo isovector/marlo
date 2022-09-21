@@ -123,6 +123,7 @@ emptyDoc = Document
   , d_title = ""
   , d_wordCount = 0
   , d_flags = mempty
+  , d_features = mempty
   , d_distance = replicate numRootSites Nothing
   , d_stats = PageStats
       { ps_js      = 0
