@@ -17,7 +17,7 @@ import           Rel8.StateMask (BitMask, flagIf)
 import           Signals.AcceptableURI (isAcceptableLink)
 import           Signals.Listicle (isListicle)
 import           Signals.Schema
-import           Types (DocumentFlag(..))
+import           Types
 
 
 mainContent :: HtmlParser Text
@@ -112,7 +112,23 @@ isSpiritualPollution uri = fmap fold $ sequenceA $
   , flagIf IsListicle  <$> isListicle
   ]
 
--- there are also FEATURES
--- `span.MathJax` for has math
--- `code` for has code
+
+features :: HtmlParser (BitMask DocumentFeature)
+features = fmap fold $ sequenceA
+  [ flagIf HasCode <$> containsAny "code"
+  , flagIf HasMath <$> containsAny ".MathJax"
+  , flagIf IsForum <$> isForum
+  ]
+
+
+containsAny :: (Html -> Bool) -> HtmlParser Bool
+containsAny s =  fmap or . target s $ pure True
+
+
+isForum :: HtmlParser Bool
+isForum = fmap or $ sequenceA
+  [ containsAny $ "meta" /\ maybe False (T.isPrefixOf "vBulletin") . getAttr "generator"
+  , containsAny $ "meta" /\ maybe False (T.isPrefixOf "Discourse") . getAttr "generator"
+  , containsAny $ "body" /\ #phpbb
+  ]
 

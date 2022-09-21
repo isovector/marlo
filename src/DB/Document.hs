@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS documents (
   title TEXT NOT NULL,
   search tsvector NOT NULL,
   flags int8 not null,
+  features int8 not null,
   word_count int4 NOT NULL,
   doc_text TEXT NOT NULL,
   distance int2[] NOT NULL,
@@ -18,6 +19,8 @@ CREATE TABLE IF NOT EXISTS documents (
   gifs int2 NOT NULL,
   cookies bool NOT NULL
 );
+
+ALTER TABLE documents ADD COLUMN features int8 not null default(0);
 
 CREATE INDEX distance_idx ON documents (distance);
 CREATE INDEX search_idx ON documents USING GIN (search);
@@ -36,9 +39,10 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)
 import Rel8 hiding (Enum)
+import Rel8.StateMask (BitMask)
 import Rel8.TextSearch
 import Types
-import Rel8.StateMask (BitMask)
+
 
 data Document f = Document
   { d_docId     :: Column f DocId
@@ -49,6 +53,7 @@ data Document f = Document
   , d_wordCount :: Column f Int32
 
   , d_flags     :: Column f (BitMask DocumentFlag)
+  , d_features  :: Column f (BitMask DocumentFeature)
   -- , d_doc_text  :: Column f Text
 
   , d_distance  :: Column f [Maybe Int16]
@@ -81,6 +86,7 @@ documentSchema = TableSchema
       , d_title = "title"
       , d_wordCount = "word_count"
       , d_flags = "flags"
+      , d_features = "features"
       -- , d_doc_text = "doc_text"
       , d_distance = "distance"
       , d_stats = PageStats

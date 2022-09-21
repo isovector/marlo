@@ -196,7 +196,8 @@ reindex conn did fs = void $ tryIO $ do
               , flagIf IsProhibitedURI $ not $ isAcceptableLink uri
               , xpol
               ]
-  print pol
+  feats  <- evaluate $ runL features
+  print (pol, feats)
 
   update_doc <- case isEmpty pol of
     False -> pure id
@@ -247,6 +248,7 @@ reindex conn did fs = void $ tryIO $ do
          in d'
            { d_table = (d_table d')
               { d_domain = lit $ Just dom
+              , d_features = lit feat
               , d_flags = lit pol
               }
            }

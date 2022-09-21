@@ -186,6 +186,11 @@ data DocumentFlag
   | HasAds
   deriving (Eq, Ord, Show, Enum, Bounded, Generic, NFData)
 
+data DocumentFeature
+  = HasMath
+  | HasCode
+  | IsForum
+  deriving (Eq, Ord, Show, Enum, Bounded, Generic, NFData)
 
 ------------------------------------------------------------------------------
 -- | I'm so mad I need to write this every damn time
