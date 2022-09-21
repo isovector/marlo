@@ -124,6 +124,7 @@ algorithm ws (fmap compileDimension -> V3 x y z) srs = do
     . sortByCenterOffset (#srd_region . regionPos) _y
     . tightenY
     . fmap (uncurry $ buildRegion ws)
+    . renormalizeZ
     . renormalizeY n
     . scoreParam x y z
     . fmap (\sr -> sr { sr_title = correctTitle sr })
@@ -183,6 +184,16 @@ renormalizeY n xs = do
       hi = maximum $ fmap (view _y . snd) xs
       z = hi - lo
   fmap (second $ _y %~ \y -> (y - lo) / z * 1080) xs
+
+renormalizeZ
+    :: [(SearchResult Identity, V3 Float)]
+    -> [(SearchResult Identity, V3 Float)]
+renormalizeZ zs = do
+  let lo = minimum $ fmap (view _z . snd) xs
+      hi = maximum $ fmap (view _z . snd) xs
+      rng = hi - lo
+  flip fmap zs $ second $ _z %~ \z ->
+    (z - lo) / rng
 
 
 sortByCenterOffset
@@ -278,7 +289,7 @@ buildRegion (WindowSize ww _) sr (V3 x y prept) =
 
 
 denormalizePt :: Float -> Float
-denormalizePt prept = 10 + prept * 3.3
+denormalizePt prept = 10 + prept * 6
 
 
 doPlace
