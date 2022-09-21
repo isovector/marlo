@@ -56,7 +56,7 @@ data Document f = Document
   , d_features  :: Column f (BitMask DocumentFeature)
   -- , d_doc_text  :: Column f Text
 
-  , d_distance  :: Column f [Maybe Int16]
+  , d_distance  :: Column f (Distance Int16)
   , d_stats     :: PageStats f
   }
   deriving stock Generic
@@ -124,7 +124,7 @@ emptyDoc = Document
   , d_wordCount = 0
   , d_flags = mempty
   , d_features = mempty
-  , d_distance = replicate numRootSites Nothing
+  , d_distance = Distance $ replicate numRootSites Nothing
   , d_stats = PageStats
       { ps_js      = 0
       , ps_css     = 0

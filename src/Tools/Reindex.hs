@@ -39,8 +39,7 @@ canonicalizing conn fs = do
     let did = either id d_docId doc
 
     liftIO
-      $ doUpdate_ conn
-      $ markDiscovered (Just did)
+      $ markDiscovered conn (Just did)
       $ \d -> in_ (disc_uri d)
             $ fmap lit
             $ fmap (T.pack . show)

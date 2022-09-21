@@ -132,13 +132,16 @@ discover :: HasCallStack => Connection -> Discovery Identity -> IO ()
 discover conn disc = do
   mcandl <- getCanonicalUri conn (unsafeURI $ T.unpack $ disc_uri disc)
   putStrLn $ "canonical: " <> show (fmap snd mcandl)
-  mcandoc <-
-    for mcandl $ \(dl, can) -> do
+  let mark x = markDiscovered conn x $ \d -> disc_id d ==. lit (disc_id disc)
+
+  case mcandl of
+    Nothing -> mark Nothing
+    Just (dl, can) -> do
       ed <- getDocByCanonicalUri conn can
       case ed of
         Right d -> do
           putStrLn "already indexed"
-          pure $ d_docId d
+          mark $ Just $ d_docId d
 
         -- It's a new record, so we need to index it
         Left did -> do
@@ -151,14 +154,12 @@ discover conn disc = do
                     , fs_data = dl_body dl
                     }
           writeFilestore fs
+          mark $ Just did
           reindex conn did fs
-          pure did
-
-  doUpdate_ conn $ markDiscovered mcandoc $ \d -> disc_id d ==. lit (disc_id disc)
 
 
-markDiscovered :: Maybe DocId -> (Discovery Expr -> Expr Bool) -> Update ()
-markDiscovered mdoc f =
+markDiscovered :: Connection -> Maybe DocId -> (Discovery Expr -> Expr Bool) -> IO ()
+markDiscovered conn mdoc f = doUpdate_ conn $
     Update
     { target = discoverySchema
     , from = pure ()

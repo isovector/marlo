@@ -14,6 +14,8 @@ import Data.Int (Int16, Int32)
 import Opaleye.Internal.HaskellDB.PrimQuery
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude hiding (null)
+import Types
+import Data.Coerce (coerce)
 
 
 insertAt' :: forall a. (DBType a, Sql DBType a) => Expr Int16 -> Expr Int16 -> Expr (Maybe a) -> Expr [Maybe a]
@@ -28,8 +30,12 @@ arrayPrepend = function "array_prepend"
 arrayInc :: (Sql DBType a, Sql Num a) => Expr [a] -> Expr [a]
 arrayInc = function "array_inc"
 
+incDistance :: Expr (Distance Int16) -> Expr (Distance Int16)
+incDistance = coerce $ arrayInc @Int16
+
 arrayZipWithLeast :: Sql DBOrd a => Expr [a] -> Expr [a] -> Expr [a]
 arrayZipWithLeast = function "array_zip_with_least"
+
 
 arrayZipWithLt :: Sql DBOrd a => Expr [Maybe a] -> Expr [Maybe a] -> Expr [Maybe Bool]
 arrayZipWithLt = function "array_zip_with_lt"

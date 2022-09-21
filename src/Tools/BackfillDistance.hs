@@ -9,9 +9,10 @@ import Rel8
 import Rel8.Arrays
 import Types
 import Utils (random)
+import Data.Coerce (coerce)
 
 
-wrongDistance :: Query (Expr DocId, Expr [Maybe Int16])
+wrongDistance :: Query (Expr DocId, Expr (Distance Int16))
 wrongDistance = do
   e <- each edgesSchema
   src <- each documentSchema
@@ -29,19 +30,19 @@ propagateDistances = Update
   { target = documentSchema
   , from = wrongDistance
   , set = \(_ ,dist) row -> row
-              { d_distance = arrayZipWithLeast (arrayInc dist) (d_distance row)
+              { d_distance = coerce (arrayZipWithLeast @(Maybe Int16)) (incDistance dist) (d_distance row)
               }
   , updateWhere = \(d, _) row -> d_docId row ==. d
   , returning = NumberOfRowsAffected
   }
 
 
-distCard :: Expr [Maybe Int16] -> Expr Int32
-distCard dist
+distCard :: Expr (Distance Int16) -> Expr Int32
+distCard (viewAs -> dist)
   = lit (fromIntegral $ numRootSites) - (arrayCardinality $ arrayPositions dist null)
 
 
-findJoins :: Query ((Expr Text, Expr [Maybe Int16]), (Expr Text, Expr [Maybe Int16]))
+findJoins :: Query ((Expr Text, Expr (Distance Int16)), (Expr Text, Expr (Distance Int16)))
 findJoins = limit 1 $ orderBy random $ do
   e <- each edgesSchema
   src <- each documentSchema

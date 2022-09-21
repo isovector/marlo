@@ -2,8 +2,10 @@
 
 module Types where
 
+import           Control.DeepSeq (NFData)
 import           Control.Monad.Reader
 import           Data.ByteString (ByteString)
+import           Data.Coerce (Coercible, coerce)
 import           Data.Functor.Identity
 import           Data.Hashable (Hashable)
 import           Data.Int (Int64)
@@ -22,7 +24,6 @@ import           Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQue
 import           Text.HTML.Scalpel
 import           Text.Read (readMaybe)
 import           Types.Orphans ()
-import Control.DeepSeq (NFData)
 
 
 data Env = Env
@@ -228,4 +229,15 @@ instance ToHttpApiData SearchDimension where
   toQueryParam ByAssetSize  = "assets"
   toQueryParam ByRelevance  = "relevance"
   toQueryParam ByPopularity = "popularity"
+
+
+newtype Distance a = Distance
+  { getDistance :: [Maybe a]
+  }
+  deriving stock (Eq, Ord, Show, Functor)
+  deriving newtype (DBType, DBEq, DBOrd)
+
+
+viewAs :: Coercible (f (Distance a)) (f [Maybe a]) => f (Distance a) -> f [Maybe a]
+viewAs = coerce
 

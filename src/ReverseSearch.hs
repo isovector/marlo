@@ -52,8 +52,8 @@ reverseSearch conn (T.intercalate "/" -> uri) = do
           graphToHtml [d_uri d] $ fmap d_uri gr
 
 
-isAncestor :: Expr [Maybe Int16] -> Expr [Maybe Int16] -> Expr Bool
-isAncestor a b = arrayAllTrue $ arrayZipWithLt a b
+isAncestor :: Expr (Distance Int16) -> Expr (Distance Int16) -> Expr Bool
+isAncestor a b = arrayAllTrue $ arrayZipWithLt (viewAs a) (viewAs b)
 
 
 reverseDeps :: (Document Expr -> Expr Bool) -> Query (Document Expr)
