@@ -189,8 +189,8 @@ renormalizeZ
     :: [(SearchResult Identity, V3 Float)]
     -> [(SearchResult Identity, V3 Float)]
 renormalizeZ zs = do
-  let lo = minimum $ fmap (view _z . snd) xs
-      hi = maximum $ fmap (view _z . snd) xs
+  let lo = minimum $ fmap (view _z . snd) zs
+      hi = maximum $ fmap (view _z . snd) zs
       rng = hi - lo
   flip fmap zs $ second $ _z %~ \z ->
     (z - lo) / rng
