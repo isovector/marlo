@@ -16,10 +16,13 @@ import Types
 
 compileSearch :: Search Text -> Query (SearchResult Expr)
 compileSearch q = orderBy ((sr_ranking >$< asc) <> (sr_id >$< asc)) $ do
-  d <-
-    case compile' q of
+  d <- do
+    d <- case compile' q of
       Match ts -> matching ts
       Full qu -> qu
+
+    where_ $ d_flags (d_table d) ==. lit mempty
+    pure d
   popularity <- optional $ do
       dom <- each domainsSchema
       where_ $ nullify (dom_id dom) ==. d_domain (d_table d)
@@ -92,7 +95,6 @@ matching :: Tsquery -> Query (Document' Expr)
 matching q = do
   d <- each documentSchema'
   where_ $ match (d_search d) (lit q)
-       &&. d_flags (d_table d) ==. lit mempty
   pure d
 
 

@@ -6,7 +6,7 @@
 module Search.Spatial () where
 
 import           Control.Applicative (ZipList (ZipList), getZipList, liftA3)
-import           Control.Arrow (second)
+import           Control.Arrow (second, (&&&), first)
 import           Control.Concurrent (threadDelay)
 import           Control.Exception
 import           Control.Lens (view, (%~), lens, to, preview)
@@ -66,7 +66,7 @@ instance SearchMethod 'Spatial where
     for_ as $ \a -> do
       yield $ spaceResult' a
       liftIO $ threadDelay 1e4
-    let cdids = chunksOf 20 $ mapMaybe (preview $ _Ctor @"SizedRegionData" . position @3 . to sr_id) as
+    let cdids = chunksOf 20 $ mapMaybe (preview $ _Ctor @"SizedRegionData" . position @4 . to sr_id) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
       msnips <-
@@ -126,6 +126,7 @@ algorithm ws (fmap compileDimension -> V3 x y z) srs = do
     . fmap (uncurry $ buildRegion ws)
     . renormalizeZ
     . renormalizeY n
+    . fmap (second $ id &&& id)
     . scoreParam x y z
     . fmap (\sr -> sr { sr_title = correctTitle sr })
     $ srs
@@ -177,22 +178,22 @@ tightenY (sortOn (r_y . srd_region) -> xs) = do
 -- TODO(sandy): magic number height
 renormalizeY
     :: Float
-    -> [(SearchResult Identity, V3 Float)]
-    -> [(SearchResult Identity, V3 Float)]
+    -> [(SearchResult Identity, (V3 Float, a))]
+    -> [(SearchResult Identity, (V3 Float, a))]
 renormalizeY n xs = do
-  let lo = minimum $ fmap (view _y . snd) xs
-      hi = maximum $ fmap (view _y . snd) xs
+  let lo = minimum $ fmap (view _y . fst . snd) xs
+      hi = maximum $ fmap (view _y . fst . snd) xs
       z = hi - lo
-  fmap (second $ _y %~ \y -> (y - lo) / z * 1080) xs
+  fmap (second $ first $ _y %~ \y -> (y - lo) / z * 1080) xs
 
 renormalizeZ
-    :: [(SearchResult Identity, V3 Float)]
-    -> [(SearchResult Identity, V3 Float)]
+    :: [(SearchResult Identity, (V3 Float, a))]
+    -> [(SearchResult Identity, (V3 Float, a))]
 renormalizeZ zs = do
-  let lo = minimum $ fmap (view _z . snd) zs
-      hi = maximum $ fmap (view _z . snd) zs
+  let lo = minimum $ fmap (view _z . fst . snd) zs
+      hi = maximum $ fmap (view _z . fst . snd) zs
       rng = hi - lo
-  flip fmap zs $ second $ _z %~ \z ->
+  flip fmap zs $ second $ first $ _z %~ \z ->
     (z - lo) / rng
 
 
@@ -228,8 +229,10 @@ ySize = view _y $ measureText' (denormalizePt 0) "x"
 
 spaceResult' :: SizedRegionData (SearchResult Identity) -> L.Html ()
 spaceResult' Barrier{} = pure ()
-spaceResult' (SizedRegionData pt (Region x y _ h) d) = do
+spaceResult' (SizedRegionData pt (V3 xscore yscore zscore) (Region x y _ h) d) = do
   let title = T.strip $ sr_title d
+  let uri = unsafeURI $ T.unpack $ sr_uri d
+  let did = T.pack $ show $ unDocId $ sr_id d
   when (not $ T.null title) $ do
     L.span_
         [ L.class_ "spatial-title"
@@ -246,22 +249,35 @@ spaceResult' (SizedRegionData pt (Region x y _ h) d) = do
             , "pt;"
             ]
         ] $ do
-      let uri = unsafeURI $ T.unpack $ sr_uri d
       L.img_
         [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
         , L.width_  "14" -- (T.pack $ show h)
         , L.height_ "14" -- (T.pack $ show h)
         ]
       L.a_ [ L.href_ $ sr_uri d
-           , makeAttribute "data-docid" $ T.pack $ show $ unDocId $ sr_id d
+           , makeAttribute "data-docid" did
            , L.onmouseover_ "tt(this)"
            , L.onmouseout_  "untt(this)"
            ] $ L.toHtml title
+    L.span_
+        [ L.class_ "score"
+        , L.id_ $ "score-" <> did
+        ] $ do
+      L.span_ [L.class_ "xscore"] $ do
+        "x:"
+        L.toHtml $ show xscore
+      L.span_ [L.class_ "yscore"] $ do
+        "y:"
+        L.toHtml $ show yscore
+      L.span_ [L.class_ "zscore"] $ do
+        "z:"
+        L.toHtml $ show zscore
 
 
 data SizedRegionData a
   = SizedRegionData
     { srd_size   :: Float  -- in pts
+    , srd_score  :: V3 Float
     , srd_region :: Region
     , srd_data   :: a
     }
@@ -274,9 +290,9 @@ data SizedRegionData a
 buildRegion
     :: WindowSize
     -> SearchResult Identity
-    -> V3 Float
+    -> (V3 Float, V3 Float)
     -> SizedRegionData (SearchResult Identity)
-buildRegion (WindowSize ww _) sr (V3 x y prept) =
+buildRegion (WindowSize ww _) sr (V3 x y prept, orig_score) =
   let pt = denormalizePt prept
       V2 w h = fmap round
              $ extendForIcon
@@ -284,6 +300,7 @@ buildRegion (WindowSize ww _) sr (V3 x y prept) =
              $ sr_title sr
    in SizedRegionData
         pt
+        orig_score
         (Region (fitIn ww w $ round $ x * fromIntegral ww) (round y) w h)
         sr
 
