@@ -196,7 +196,7 @@ reindex conn did fs = void $ tryIO $ do
               , flagIf IsProhibitedURI $ not $ isAcceptableLink uri
               , xpol
               ]
-  feats  <- evaluate $ runL features
+  Just !feats  <- evaluate $ runL features
   print (pol, feats)
 
   update_doc <- case isEmpty pol of
@@ -248,7 +248,7 @@ reindex conn did fs = void $ tryIO $ do
          in d'
            { d_table = (d_table d')
               { d_domain = lit $ Just dom
-              , d_features = lit feat
+              , d_features = lit feats
               , d_flags = lit pol
               }
            }
