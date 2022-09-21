@@ -3,7 +3,6 @@ module Tools.BatchTitles where
 import           Control.Monad (when, void)
 import           DB
 import           Data.Foldable (for_)
-import           Data.Int (Int64)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.Text as T
 import           Rel8

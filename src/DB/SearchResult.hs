@@ -2,7 +2,6 @@ module DB.SearchResult where
 
 import DB.PageStats
 import Data.Functor.Identity
-import Data.Int (Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)

@@ -3,9 +3,7 @@ module DB.RootSites where
 import Rel8
 import Data.Text (Text)
 import Data.Int (Int16)
-import Rel8.Arrays (arrayFill)
-import Types (Distance)
-import Data.Coerce (coerce)
+import Types (Distance (Distance))
 
 
 rootSites :: [Expr Text]
@@ -27,6 +25,6 @@ numRootSites :: Int
 numRootSites = length rootSites
 
 
-nullDist :: Expr (Distance Int16)
-nullDist = coerce $ arrayFill @(Maybe Int16) (lit $ fromIntegral numRootSites) Rel8.null
+nullDist :: Distance Int16
+nullDist = Distance $ replicate numRootSites Nothing
 

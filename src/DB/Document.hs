@@ -34,7 +34,6 @@ import DB.PageStats
 import DB.RootSites
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int16, Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)

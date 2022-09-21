@@ -6,7 +6,6 @@ module Search.Compiler
 
 import DB
 import Data.Functor.Contravariant ((>$<))
-import Data.Int (Int32)
 import Data.Text (Text)
 import Prelude hiding (null)
 import Rel8 hiding (max, index)

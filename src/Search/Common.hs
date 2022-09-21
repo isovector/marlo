@@ -7,7 +7,6 @@ import           Control.Monad (when)
 import           DB (Connection)
 import           Data.Bool (bool)
 import           Data.Foldable (for_)
-import           Data.Int (Int64)
 import           Data.Proxy
 import           Data.String (fromString)
 import           Data.Text (Text)

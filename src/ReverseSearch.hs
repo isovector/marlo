@@ -18,7 +18,6 @@ import           Rel8.Arrays
 import           Search.Common
 import           Servant (Handler)
 import           Types
-import Data.Int (Int16)
 
 
 reverseSearch :: Connection -> [Text] -> Handler (L.Html ())

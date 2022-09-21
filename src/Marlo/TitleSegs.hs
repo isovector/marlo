@@ -3,7 +3,6 @@ module Marlo.TitleSegs where
 import DB
 import Data.Foldable (toList)
 import Data.Functor.Contravariant ((>$<))
-import Data.Int (Int64)
 import Data.Text (Text)
 import Prelude hiding (max)
 import Rel8 hiding (filter, bool, index)

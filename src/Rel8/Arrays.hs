@@ -10,7 +10,6 @@
 module Rel8.Arrays where
 
 import Rel8
-import Data.Int (Int16, Int32)
 import Opaleye.Internal.HaskellDB.PrimQuery
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude hiding (null)

@@ -15,8 +15,8 @@ import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.ByteString (ByteString)
 import           Data.Foldable (for_)
-import           Data.Int (Int32)
-import           Data.Maybe (fromMaybe, listToMaybe)
+import           Data.List (sortOn)
+import           Data.Maybe (fromMaybe, listToMaybe, catMaybes)
 import qualified Data.Set as S
 import qualified Data.Text as T
 import           Data.Text.Encoding (decodeUtf8)
@@ -81,6 +81,12 @@ incomingDepth did = aggregate $ do
   disc <- each discoverySchema
   where_ $ disc_canonical disc ==. lit (Just did)
   pure $ Rel8.min $ disc_depth disc
+
+incomingDistance :: DocId -> Query (Expr (Distance Int16))
+incomingDistance did = do
+  disc <- each discoverySchema
+  where_ $ disc_canonical disc ==. lit (Just did)
+  pure $ disc_distance disc
 
 
 getDocByCanonicalUri
@@ -187,8 +193,16 @@ reindex conn did fs = void $ tryIO $ do
 
   Right inc_depth
     <- fmap (fmap (fromMaybe 0 . listToMaybe))
-      $ doSelect conn
-      $ incomingDepth did
+     $ doSelect conn
+     $ incomingDepth did
+  Right dist'
+    <- fmap (fmap $ fmap (+1)
+                  . fromMaybe nullDist
+                  . listToMaybe
+                  . sortOn (minimum . (maxBound:) . catMaybes . getDistance)
+            )
+     $ doSelect conn
+     $ incomingDistance did
   let depth' = inc_depth + 1
 
   Just !xpol <- evaluate $ runL $ isSpiritualPollution uri
@@ -205,7 +219,7 @@ reindex conn did fs = void $ tryIO $ do
     True -> do
       Just !rls <- evaluate $ runL links
       let ls = fmap (normalizeURI . flip relativeTo uri) $ S.toList rls
-      insertEdges conn did depth' ls
+      insertEdges conn did depth' dist' ls
 
       Just !ts <- evaluate $ runL title
       t <- buildTitleSegs conn did ts
@@ -223,9 +237,10 @@ reindex conn did fs = void $ tryIO $ do
 
       pure $ \d -> d
         { d_table = (d_table d)
-          { d_title  = lit t
+          { d_title     = lit t
           , d_wordCount = lit $ fromIntegral num_words
-          , d_stats  = lit stats
+          , d_stats     = lit stats
+          , d_distance  = lit dist'
           }
         , d_doc_text = lit $ T.intercalate " "
             [ ts
@@ -258,8 +273,8 @@ reindex conn did fs = void $ tryIO $ do
     }
 
 
-insertEdges :: Connection -> DocId -> Int32 -> [URI] -> IO ()
-insertEdges conn did depth ls = do
+insertEdges :: Connection -> DocId -> Int32 -> Distance Int16 -> [URI] -> IO ()
+insertEdges conn did depth dist ls = do
   Right discs <- doInsert conn $ Insert
     { into = discoverySchema
     , onConflict = DoNothing
@@ -268,9 +283,10 @@ insertEdges conn did depth ls = do
         discid <- nextDiscId
         dst <- values $ fmap (lit . T.pack . show) ls
         pure $ (lit emptyDiscovery)
-          { disc_id    = discid
-          , disc_uri   = dst
-          , disc_depth = lit depth
+          { disc_id       = discid
+          , disc_uri      = dst
+          , disc_depth    = lit depth
+          , disc_distance = lit dist
           }
     }
 

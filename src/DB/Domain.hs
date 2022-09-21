@@ -18,7 +18,6 @@ module DB.Domain where
 
 import Data.Coerce (coerce)
 import Data.Functor.Identity
-import Data.Int (Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Prelude hiding (null)

@@ -2,7 +2,6 @@ module Tools.BackfillDistance where
 
 import DB
 import Data.Function (fix)
-import Data.Int (Int16, Int64, Int32)
 import Data.Text (Text)
 import Prelude hiding (null)
 import Rel8
@@ -47,12 +46,12 @@ findJoins = limit 1 $ orderBy random $ do
   e <- each edgesSchema
   src <- each documentSchema
   where_ $ e_src e ==. d_docId src
-  where_ $ d_distance src /=. nullDist
+  where_ $ d_distance src /=. lit nullDist
   dstdisc <- each discoverySchema
   where_ $ e_dst e ==. disc_id dstdisc
   dst <- each documentSchema
   where_ $ disc_canonical dstdisc ==. nullify (d_docId dst)
-  where_ $ d_distance dst /=. nullDist
+  where_ $ d_distance dst /=. lit nullDist
   where_ $ distCard (d_distance src) <. distCard (d_distance dst)
   pure ((d_uri src, d_distance src), (d_uri dst, d_distance dst))
 

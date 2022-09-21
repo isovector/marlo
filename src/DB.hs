@@ -87,6 +87,7 @@ import DB.PageStats
 import DB.RootSites
 import DB.SearchResult
 import DB.Titles
+import Data.Function (on)
 import Data.Functor.Identity (Identity)
 import Hasql.Connection (settings, Connection, acquire, ConnectionError)
 import Hasql.Session (QueryError)
@@ -105,7 +106,11 @@ rootNodes = Insert
         { disc_id  = d
         , disc_uri = z
         }
-  , onConflict = DoNothing
+  , onConflict = DoUpdate $ Upsert
+      { index = disc_uri
+      , set = \new old -> old { disc_distance = disc_distance new }
+      , updateWhere = on (==.) disc_uri
+      }
   , returning = pure ()
   }
 

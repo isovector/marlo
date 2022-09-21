@@ -1,6 +1,11 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Types where
+module Types
+  ( module Types
+  , Int16
+  , Int32
+  , Int64
+  ) where
 
 import           Control.DeepSeq (NFData)
 import           Control.Monad.Reader
@@ -8,7 +13,7 @@ import           Data.ByteString (ByteString)
 import           Data.Coerce (Coercible, coerce)
 import           Data.Functor.Identity
 import           Data.Hashable (Hashable)
-import           Data.Int (Int64)
+import           Data.Int (Int64, Int16, Int32)
 import           Data.Maybe (fromMaybe)
 import           Data.Serialize
 import           Data.Text (Text)

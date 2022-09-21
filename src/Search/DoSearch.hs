@@ -5,10 +5,10 @@ module Search.DoSearch where
 import           Control.Applicative (liftA2)
 import           Control.Monad.IO.Class (liftIO)
 import           DB
-import           Data.Int (Int64)
 import           Data.Maybe (fromMaybe, listToMaybe)
 import           Data.Text (Text)
 import           Data.Time (NominalDiffTime)
+import           Linear (V3)
 import qualified Lucid as L
 import           Rel8 hiding (max, index)
 import           Search.Common (searchPage)
@@ -17,7 +17,6 @@ import           Search.Machinery
 import           Servant
 import           Types
 import           Utils (paginate, timeItT)
-import Linear (V3)
 
 
 gatherSearch

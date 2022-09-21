@@ -6,7 +6,6 @@ import           Assets (getAssetSizes)
 import           Control.Applicative (empty)
 import           Control.Monad.Reader
 import           DB
-import           Data.Int (Int64)
 import           Data.List (genericLength)
 import           Data.Maybe (mapMaybe, listToMaybe)
 import           Data.Text (Text)
