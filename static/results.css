@@ -117,3 +117,7 @@ footer > * {
   display: block !important;
 }
 
+.score {
+  display: none;
+}
+

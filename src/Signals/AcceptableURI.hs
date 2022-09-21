@@ -195,6 +195,8 @@ forbidPaths =
   , "/blob/"
   , "/vod/"
   , "/watch/"
+  , "/video/"
+  , "/videos/"
   , "/trending/"
   , "/politics/20"
   , "archive"

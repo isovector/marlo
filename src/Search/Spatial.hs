@@ -234,44 +234,47 @@ spaceResult' (SizedRegionData pt (V3 xscore yscore zscore) (Region x y _ h) d) =
   let uri = unsafeURI $ T.unpack $ sr_uri d
   let did = T.pack $ show $ unDocId $ sr_id d
   when (not $ T.null title) $ do
-    L.span_
-        [ L.class_ "spatial-title"
-        , L.style_ $ mconcat
-            [ "position: absolute;"
-            , "top: "
-            , T.pack $ show $ 250 + y
-            , "; "
-            , "left: "
-            , T.pack $ show $ x
-            , "; "
-            , "font-size: "
-            , T.pack $ show pt
-            , "pt;"
-            ]
+    L.div_
+        [ L.id_ $ "result-" <> did
         ] $ do
-      L.img_
-        [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
-        , L.width_  "14" -- (T.pack $ show h)
-        , L.height_ "14" -- (T.pack $ show h)
-        ]
-      L.a_ [ L.href_ $ sr_uri d
-           , makeAttribute "data-docid" did
-           , L.onmouseover_ "tt(this)"
-           , L.onmouseout_  "untt(this)"
-           ] $ L.toHtml title
-    L.span_
-        [ L.class_ "score"
-        , L.id_ $ "score-" <> did
-        ] $ do
-      L.span_ [L.class_ "xscore"] $ do
-        "x:"
-        L.toHtml $ show xscore
-      L.span_ [L.class_ "yscore"] $ do
-        "y:"
-        L.toHtml $ show yscore
-      L.span_ [L.class_ "zscore"] $ do
-        "z:"
-        L.toHtml $ show zscore
+      L.span_
+          [ L.class_ "spatial-title"
+          , L.style_ $ mconcat
+              [ "position: absolute;"
+              , "top: "
+              , T.pack $ show $ 250 + y
+              , "; "
+              , "left: "
+              , T.pack $ show $ x
+              , "; "
+              , "font-size: "
+              , T.pack $ show pt
+              , "pt;"
+              ]
+          ] $ do
+        L.img_
+          [ L.src_ $ T.pack $ show $ uri { uriPath = "/favicon.ico" }
+          , L.width_  "14" -- (T.pack $ show h)
+          , L.height_ "14" -- (T.pack $ show h)
+          ]
+        L.a_ [ L.href_ $ sr_uri d
+            , makeAttribute "data-docid" did
+            , L.onmouseover_ "tt(this)"
+            , L.onmouseout_  "untt(this)"
+            ] $ L.toHtml title
+      L.span_
+          [ L.class_ "score"
+          , L.id_ $ "score-" <> did
+          ] $ do
+        L.span_ [L.class_ "xscore"] $ do
+          "x: "
+          L.toHtml $ show xscore
+        L.span_ [L.class_ "yscore"] $ do
+          "y: "
+          L.toHtml $ show yscore
+        L.span_ [L.class_ "zscore"] $ do
+          "z: "
+          L.toHtml $ show zscore
 
 
 data SizedRegionData a
