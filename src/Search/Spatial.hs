@@ -118,9 +118,7 @@ algorithm
     -> QuadTree (First (SizedRegionData (SearchResult Identity)))
 algorithm ws (fmap compileDimension -> V3 x y z) srs = do
   let n = fromIntegral $ length srs
-  foldr
-        doPlace
-        (startingTree ws)
+  foldr doPlace (startingTree ws)
     . sortByCenterOffset (#srd_region . regionPos) _y
     . tightenY
     . fmap (uncurry $ buildRegion ws)

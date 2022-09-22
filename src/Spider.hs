@@ -9,7 +9,7 @@ module Spider where
 
 import           Control.Concurrent.Async (async, wait)
 import           Control.Exception
-import           Control.Monad (forever, void)
+import           Control.Monad (forever, void, when)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
@@ -214,47 +214,50 @@ reindex conn did fs = void $ tryIO $ do
   Just !feats  <- evaluate $ runL features
   print (pol, feats)
 
-  update_doc <- case isEmpty pol of
-    False -> pure id
-    True -> do
-      Just !rls <- evaluate $ runL links
-      let ls = fmap (normalizeURI . flip relativeTo uri) $ S.toList rls
-      insertEdges conn did depth' dist' ls
+  update_doc <-
+    case can_index of
+      False -> pure id
+      True -> do
+        Just !rls <- evaluate $ runL links
+        let ls = fmap (normalizeURI . flip relativeTo uri) $ S.toList rls
 
-      Just !ts <- evaluate $ runL title
-      t <- buildTitleSegs conn did ts
+        when (isEmpty pol) $
+          insertEdges conn did depth' dist' ls
 
-      Just !pc <- evaluate $ runL rankContent
-      Just !stats <- run rankStats
+        Just !ts <- evaluate $ runL title
+        t <- buildTitleSegs conn did ts
 
-      let word_count = length . T.words
-          num_words = sum
-            [ word_count ts
-            , word_count $ pc_headings pc
-            , word_count $ pc_content pc
-            , word_count $ pc_comments pc
-            ]
+        Just !pc <- evaluate $ runL rankContent
+        Just !stats <- run rankStats
 
-      pure $ \d -> d
-        { d_table = (d_table d)
-          { d_title     = lit t
-          , d_wordCount = lit $ fromIntegral num_words
-          , d_stats     = lit stats
-          , d_distance  = lit dist'
+        let word_count = length . T.words
+            num_words = sum
+              [ word_count ts
+              , word_count $ pc_headings pc
+              , word_count $ pc_content pc
+              , word_count $ pc_comments pc
+              ]
+
+        pure $ \d -> d
+          { d_table = (d_table d)
+            { d_title     = lit t
+            , d_wordCount = lit $ fromIntegral num_words
+            , d_stats     = lit stats
+            , d_distance  = lit dist'
+            }
+          , d_doc_text = lit $ T.intercalate " "
+              [ ts
+              , pc_headings pc
+              , pc_content pc
+              , pc_comments pc
+              ]
+          , d_search = lit $ Tsvector
+              [ (A, ts)
+              , (B, pc_headings pc)
+              , (C, pc_content pc)
+              , (D, pc_comments pc)
+              ]
           }
-        , d_doc_text = lit $ T.intercalate " "
-            [ ts
-            , pc_headings pc
-            , pc_content pc
-            , pc_comments pc
-            ]
-        , d_search = lit $ Tsvector
-            [ (A, ts)
-            , (B, pc_headings pc)
-            , (C, pc_content pc)
-            , (D, pc_comments pc)
-            ]
-        }
 
   doUpdate_ conn $ Update
     { target = documentSchema'
