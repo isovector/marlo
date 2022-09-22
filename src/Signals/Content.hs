@@ -100,6 +100,7 @@ hasGoogleAds = fmap or $ match "script" $ do
     , T.isInfixOf "adsbygoogle" txt
     , T.isInfixOf "pubads()" txt
     , T.isInfixOf "GTM-" txt
+    , T.isInfixOf "googletag" txt
       -- NOTE(sandy): not strictly a "google" ad
     , T.isInfixOf "fbq(" txt
     , T.isInfixOf "moatvideo" txt

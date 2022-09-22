@@ -51,4 +51,3 @@ canBeFilteredOutBySchemaType uri = do
       Just "TVSeason"       -> flag IsMedia
       Just "TVSeries"       -> flag IsMedia
       _                     -> mempty
-

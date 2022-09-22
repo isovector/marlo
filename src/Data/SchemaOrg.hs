@@ -26,6 +26,7 @@ newtype MetadataType = MetadataType
   deriving (Eq, Ord, Show)
 
 
+-- TODO(sandy): some documents have an array of many of these things!
 instance FromJSON MetadataType where
   parseJSON = withObject "" $ \obj ->
     asum
