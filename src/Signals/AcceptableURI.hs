@@ -164,6 +164,7 @@ forbidPaths :: [String]
 forbidPaths =
   [ "/tag/"
   , "/tags/"
+  , "comment-page-"
   , "/tagged/"
   , "/search/"
   , "/category/"
