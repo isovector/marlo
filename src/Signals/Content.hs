@@ -3,6 +3,7 @@
 
 module Signals.Content where
 
+import           Control.Arrow ((***))
 import           Control.Monad ((<=<), join)
 import           DB (PageContent (PageContent), Identity)
 import           Data.Foldable (fold)
@@ -12,7 +13,7 @@ import qualified Data.Set as S
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Lasercutter.HTML
-import           Network.URI (URI, parseURI, parseURIReference)
+import           Network.URI (URI, parseURI, parseURIReference, relativeTo, escapeURIString, isUnescapedInURI)
 import           Rel8.StateMask (BitMask, flagIf)
 import           Signals.AcceptableURI (isAcceptableLink)
 import           Signals.Listicle (isListicle)
@@ -134,4 +135,46 @@ isForum = fmap or $ sequenceA
   , containsAny $ "meta" /\ maybe False (T.isPrefixOf "Discourse") . getAttr "generator"
   , containsAny $ "body" /\ #phpbb
   ]
+
+
+scriptAssets :: URI -> HtmlParser ([URI], Int64)
+scriptAssets uri
+  = fmap ((catMaybes *** sum) . unzip)
+  $ target "script"
+  $ liftA2 (,)
+      (proj $ normalizeAsset uri <=< getAttr "src")
+      (fmap (fromIntegral . T.length) text)
+
+
+styleAssets :: URI -> HtmlParser ([URI], Int64)
+styleAssets uri
+  = fmap (catMaybes *** sum)
+  $ liftA2 (,)
+      (target ("link" /\ (== Just "stylesheet") . getAttr "rel")
+        $ proj
+        $ normalizeAsset uri <=< getAttr "href")
+      (target "style"
+        $ fmap (fromIntegral . T.length) text)
+
+
+normalizeAsset :: URI -> Text -> Maybe URI
+normalizeAsset here
+  = fmap (flip relativeTo here)
+  . parseURIReference
+  . escapeURIString isUnescapedInURI
+  . T.unpack
+
+
+tweets :: HtmlParser Int
+tweets
+  = fmap length
+  $ target ("blockquote" /\ ".twitter-tweet")
+  $ pure ()
+
+
+gifs :: HtmlParser Int
+gifs
+  = fmap length
+  $ target ("img" /\ maybe False  (T.isSuffixOf ".gif") . getAttr "src")
+  $ pure ()
 

@@ -7,6 +7,7 @@
 
 module Spider where
 
+import           Assets (getAssetSizes)
 import           Control.Concurrent.Async (async, wait)
 import           Control.Exception
 import           Control.Monad (forever, void, when)
@@ -36,11 +37,11 @@ import           Rel8 hiding (evaluate, sum, filter, bool, index, optional)
 import           Rel8.Headers (headersToHeaders)
 import           Rel8.StateMask
 import           Rel8.TextSearch
-import           Signals (canonical, rankStats)
+import           Signals (canonical)
 import           Signals.AcceptableURI (isAcceptableLink, forbidPaths, forbidSites)
 import           Signals.Content hiding (canonical)
 import           Types
-import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS, tryIO, parsePermissiveTree, runScraper)
+import           Utils (runRanker, unsafeURI, random, downloadBody, tryIO, parsePermissiveTree, runScraper)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -182,8 +183,6 @@ markDiscovered conn mdoc f = doUpdate_ conn $
 reindex :: HasCallStack => Connection -> DocId -> Filestore -> IO ()
 reindex conn did fs = void $ tryIO $ do
   let uri = fs_uri fs
-      run = runRankerFS conn fs
-
       !tree = parsePermissiveTree $ decodeUtf8 $ fs_data fs
       runL
         = runScraper
@@ -229,7 +228,21 @@ reindex conn did fs = void $ tryIO $ do
         t <- buildTitleSegs conn did ts
 
         Just !pc <- evaluate $ runL rankContent
-        Just !stats <- run rankStats
+        Just !( (script_uris, script_size)
+              , (style_uris, style_size)
+              , tweet_count
+              , img_count
+              ) <- evaluate $ runL $ (,,,) <$> scriptAssets uri <*> styleAssets uri <*> tweets <*> gifs
+        more_scripts <- getAssetSizes conn $ fmap (T.pack . show) script_uris
+        more_styles  <- getAssetSizes conn $ fmap (T.pack . show) style_uris
+
+        let (stats :: PageStats Identity) = PageStats
+              { ps_js      = fromIntegral $ script_size + sum more_scripts
+              , ps_css     = fromIntegral $ style_size  + sum more_styles
+              , ps_tweets  = fromIntegral $ tweet_count
+              , ps_gifs    = fromIntegral $ img_count
+              , ps_cookies = False
+              }
 
         let word_count = length . T.words
             num_words = sum
