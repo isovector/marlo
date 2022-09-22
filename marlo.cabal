@@ -72,11 +72,9 @@ library
       Search.Spatial.Rankers
       Search.Traditional
       Servant.StreamingUtil
-      Signals
       Signals.AcceptableURI
       Signals.Content
       Signals.Listicle
-      Signals.ReactsTo
       Signals.Schema
       Spider
       Text.HTML.TagSoup.PermissiveTree
@@ -191,7 +189,6 @@ library
     , pretty-show
     , rel8
     , robots-txt
-    , scalpel
     , servant
     , servant-client
     , servant-lucid
@@ -314,7 +311,6 @@ executable marlo
     , pretty-show
     , rel8
     , robots-txt
-    , scalpel
     , servant
     , servant-client
     , servant-lucid
@@ -442,7 +438,6 @@ test-suite marlo-tests
     , pretty-show
     , rel8
     , robots-txt
-    , scalpel
     , servant
     , servant-client
     , servant-lucid
