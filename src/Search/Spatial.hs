@@ -7,7 +7,6 @@ module Search.Spatial () where
 
 import           Control.Applicative (ZipList (ZipList), getZipList, liftA3)
 import           Control.Arrow (second, (&&&), first)
-import           Control.Concurrent (threadDelay)
 import           Control.Exception
 import           Control.Lens (view, (%~), lens, to, preview)
 import           Control.Lens.Combinators (Lens')
@@ -63,9 +62,7 @@ instance SearchMethod 'Spatial where
            $ fmap snd
            $ mapMaybe (traverse getFirst)
            $ tile qt
-    for_ as $ \a -> do
-      yield $ spaceResult' a
-      liftIO $ threadDelay 1e4
+    for_ as $ yield . spaceResult'
     let cdids = chunksOf 20 $ mapMaybe (preview $ _Ctor @"SizedRegionData" . position @4 . to sr_id) as
         q' = compileQuery q
     forM_ cdids $ \dids -> do
