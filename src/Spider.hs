@@ -15,6 +15,7 @@ import           Control.Monad.Trans.Maybe (runMaybeT, MaybeT (MaybeT))
 import           DB
 import           Data.ByteString (ByteString)
 import           Data.Foldable (for_)
+import           Data.Functor.Contravariant ((>$<))
 import           Data.List (sortOn)
 import           Data.Maybe (fromMaybe, listToMaybe, catMaybes)
 import qualified Data.Set as S
@@ -43,7 +44,7 @@ import           Utils (runRanker, unsafeURI, random, downloadBody, runRankerFS,
 
 
 nextToExplore :: Query (Discovery Expr)
-nextToExplore = limit 1 $ orderBy random $ do
+nextToExplore = limit 1 $ orderBy ((disc_depth >$< asc) <> random) $ do
   disc <- each discoverySchema
   where_ $ disc_canonical disc ==. lit Nothing
        &&. disc_dead      disc ==. lit False
