@@ -8,7 +8,6 @@ module Types
   ) where
 
 import           Control.DeepSeq (NFData)
-import           Control.Monad.Reader
 import           Data.ByteString (ByteString)
 import           Data.Coerce (Coercible, coerce)
 import           Data.Functor.Identity
@@ -26,7 +25,6 @@ import           Network.HTTP.Types.Header (ResponseHeaders)
 import           Network.URI
 import           Rel8 (DBType, DBEq, DBOrd, ReadShow(..))
 import           Servant (FromHttpApiData, parseQueryParam, ToHttpApiData, toQueryParam)
-import           Text.HTML.Scalpel
 import           Text.Read (readMaybe)
 import           Types.Orphans ()
 
@@ -35,9 +33,6 @@ data Env = Env
   { e_uri  :: URI
   , e_conn :: Connection
   }
-
-type Ranker = ScraperT Text (ReaderT Env IO)
-
 
 data Download f a = Download
   { dl_mime :: f ByteString

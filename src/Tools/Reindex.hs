@@ -1,5 +1,6 @@
 module Tools.Reindex where
 
+import           Control.Exception (evaluate)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Maybe
 import           DB
@@ -9,11 +10,11 @@ import           Data.Text.Encoding (decodeUtf8)
 import           Marlo.Filestore (streamFilestore)
 import           Network.HttpUtils (determineHttpsAvailability)
 import           Rel8 (in_, lit)
-import           Signals (canonical)
+import           Signals.Content (canonical)
 import           Spider (reindex, getDocByCanonicalUri, markDiscovered)
 import qualified Streaming.Prelude as S
 import           Types
-import           Utils (runRanker)
+import           Utils (parsePermissiveTree, runScraper)
 
 
 main :: Maybe Int -> IO ()
@@ -32,7 +33,11 @@ main start = do
 canonicalizing :: Connection -> Filestore -> IO (Maybe (DocId, Filestore))
 canonicalizing conn fs = do
   let uri = fs_uri fs
-  uri'  <- runRanker (Env uri conn) (decodeUtf8 $ fs_data fs) canonical
+  let !tree = parsePermissiveTree $ decodeUtf8 $ fs_data fs
+      runL
+        = runScraper
+        $ fromMaybe (error "failed to parse the html document!") tree
+  !uri'  <- evaluate $ runL canonical
   runMaybeT $ do
     uri'' <- MaybeT $ determineHttpsAvailability $ fromMaybe uri uri'
     doc <- liftIO $ getDocByCanonicalUri conn uri''

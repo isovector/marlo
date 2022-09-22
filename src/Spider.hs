@@ -37,11 +37,10 @@ import           Rel8 hiding (evaluate, sum, filter, bool, index, optional)
 import           Rel8.Headers (headersToHeaders)
 import           Rel8.StateMask
 import           Rel8.TextSearch
-import           Signals (canonical)
 import           Signals.AcceptableURI (isAcceptableLink, forbidPaths, forbidSites)
-import           Signals.Content hiding (canonical)
+import           Signals.Content
 import           Types
-import           Utils (runRanker, unsafeURI, random, downloadBody, tryIO, parsePermissiveTree, runScraper)
+import           Utils (unsafeURI, random, downloadBody, tryIO, parsePermissiveTree, runScraper)
 
 
 nextToExplore :: Query (Discovery Expr)
@@ -54,17 +53,24 @@ nextToExplore = limit 1 $ orderBy ((disc_depth >$< asc) <> random) $ do
 
 getCanonicalUri
     :: HasCallStack
-    => Connection
-    -> URI
+    => URI
     -> IO (Maybe (Download Maybe ByteString, URI))
-getCanonicalUri conn uri = do
+getCanonicalUri uri = do
   dl <- liftIO $ downloadBody $ show uri
+  let !tree = parsePermissiveTree $ decodeUtf8 $ dl_body dl
+      runL
+        = runScraper
+        $ fromMaybe (error "failed to parse the html document!") tree
   mcanon <- runMaybeT $ do
-    uri''  <- MaybeT $ runRanker (Env uri conn) (decodeUtf8 $ dl_body dl) canonical
+    uri'' <- hoistMaybe $ runL canonical
     MaybeT $ determineHttpsAvailability uri''
   fmap (fmap (dl,)) $ case mcanon of
     Nothing   -> determineHttpsAvailability uri
     Just uri' -> pure $ Just uri'
+
+
+hoistMaybe :: Maybe a -> MaybeT IO a
+hoistMaybe = MaybeT . pure
 
 
 markDead :: Connection -> DiscId -> IO ()
@@ -138,7 +144,7 @@ quickAcceptableDBUri uri = do
 
 discover :: HasCallStack => Connection -> Discovery Identity -> IO ()
 discover conn disc = do
-  mcandl <- getCanonicalUri conn (unsafeURI $ T.unpack $ disc_uri disc)
+  mcandl <- getCanonicalUri (unsafeURI $ T.unpack $ disc_uri disc)
   putStrLn $ "canonical: " <> show (fmap snd mcandl)
   let mark x = markDiscovered conn x $ \d -> disc_id d ==. lit (disc_id disc)
 

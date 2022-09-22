@@ -70,9 +70,10 @@ rankContent = PageContent
   <*> commentsContent
 
 
-canonical :: HtmlParser (Maybe URI)
+canonical :: HtmlParser URI
 canonical
-  = fmap (listToMaybe . catMaybes)
+  = expect
+  $ fmap (listToMaybe . catMaybes)
   $ target ("link" /\ (== Just "canonical") . getAttr "rel")
   $ fmap (parseURI . T.unpack =<<)
   $ proj (getAttr "href")
