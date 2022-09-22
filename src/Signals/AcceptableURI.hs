@@ -154,6 +154,7 @@ forbidSites =
   , "zoom.us"
   , "thesaurus.com"
   , "dictionary.com"
+  , "abc7news.com"
   ]
   -- thesaurus
   -- dictionary

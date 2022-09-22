@@ -17,6 +17,7 @@ ALTER TABLE discovery ADD COLUMN distance int2[] not null default(cast(array[nul
 CREATE INDEX disc_uri_idx ON discovery (uri);
 CREATE INDEX disc_dead_idx ON discovery (dead);
 CREATE INDEX disc_canonical_idx ON discovery (canonical);
+CREATE INDEX disc_depth_idx ON discovery (depth);
 
 -}
 
