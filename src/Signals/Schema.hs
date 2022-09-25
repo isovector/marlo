@@ -41,6 +41,7 @@ canBeFilteredOutBySchemaType uri = do
       Just "AmpStory"       -> flag IsAnticompetitiveTech
       Just "Clip"           -> flag IsMedia
       Just "Episode"        -> flag IsMedia
+      Just "ItemList"       -> flag IsShopping
       Just "Movie"          -> flag IsMedia
       Just "NewsArticle"    ->
         case is_substack || is_medium of
