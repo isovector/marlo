@@ -31,7 +31,7 @@ import           Marlo.Robots
 import           Marlo.TitleSegs (buildTitleSegs)
 import           Marlo.URIs (normalizeURI)
 import           Network.HttpUtils (determineHttpsAvailability)
-import           Network.URI (URI, relativeTo)
+import           Network.URI (URI, relativeTo, parseURI)
 import           Prelude hiding (max)
 import           Rel8 hiding (evaluate, sum, filter, bool, index, optional)
 import           Rel8.Headers (headersToHeaders)
@@ -341,7 +341,13 @@ spiderMain threads = do
         putStrLn $ "fetching " <> T.unpack url
         catch
           (do
-          discover conn disc
+            Just uri <- evaluate $ parseURI $ T.unpack url
+            case isAcceptableLink uri of
+              False -> do
+                putStrLn "unacceptable"
+                markDead conn (disc_id disc)
+              True ->
+                discover conn disc
           )
           (\SomeException{} -> do
             putStrLn "failed"
