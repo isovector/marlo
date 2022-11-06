@@ -34,6 +34,7 @@ isAcceptableLink uri
           , ".iso"
           , ".graph"
           , ".dta"
+          , ".opus"
           , ".mp3"
           , ".mpv"
           , ".avi"
@@ -90,6 +91,7 @@ forbidSites =
   , "archive.today"
   , "bandcamp.com"
   , "hobbyking.com"
+  , "petitiononline.com"
   , "ehealthme.com"
   , "tvtropes.org"
   , "bing.com"
@@ -99,6 +101,7 @@ forbidSites =
   , "clickhole.com"
   , "duckduckgo.com"
   , "ebay.com"
+  , "ebay.ca"
   , "etsy.com"
   , "facebook.com"
   , "flickr.com"
@@ -159,6 +162,7 @@ forbidSites =
   , "thesaurus.com"
   , "dictionary.com"
   , "abc7news.com"
+  , "w3.org"
   ]
   -- thesaurus
   -- dictionary
@@ -176,6 +180,8 @@ forbidPaths =
   , "/collections/"
   , "/topic/"
   , "/topics/"
+  , "/spec/"
+  , "/tr/"
   , "/product/"
   , "/products/"
   , "/comment/"
@@ -190,6 +196,7 @@ forbidPaths =
   , "/columnists/"
   , "/people/"
   , "/authors/"
+  , "/interactive/"
   , "/member/"
   , "/members/"
   , "/profiles/"

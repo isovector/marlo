@@ -18,6 +18,7 @@ rootSites =
   , "https://coffeeadastra.com"   -- coffee
   , "https://spencermounta.in"    -- ?
   , "http://worrydream.com"       -- ?
+  , "http://www.neverendingbooks.org"
   ]
 
 
